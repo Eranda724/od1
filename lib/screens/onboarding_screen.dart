@@ -102,9 +102,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       page['title']!,
                       style: const TextStyle(
-                        color: Color(0xFF4A2C0A), // Dark brown
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFFC72C),
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        shadows: [
+                          Shadow(offset: Offset(-2, -2), color: Colors.black),
+                          Shadow(offset: Offset(2, -2), color: Colors.black),
+                          Shadow(offset: Offset(2, 2), color: Colors.black),
+                          Shadow(offset: Offset(-2, 2), color: Colors.black),
+                        ],
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -141,7 +147,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? const Color(0xFFFF8C42)
+                        ? const Color(0xFFFFC72C)
                         : Colors.black26,
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -158,16 +164,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: ElevatedButton(
               onPressed: _getStarted,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF8C42),
-                foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 54),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
               ),
               child: const Text('Get Started 🥔'),
             ),

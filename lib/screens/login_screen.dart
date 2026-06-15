@@ -64,8 +64,32 @@ class _LoginScreenState extends State<LoginScreen> {
             Image.asset('assets/images/login.png', height: 120),
             const SizedBox(height: 16),
             const Text(
-              'Streak Couch',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              'Potato',
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFFFFC72C),
+                shadows: [
+                  Shadow(offset: Offset(-2.5, -2.5), color: Colors.black),
+                  Shadow(offset: Offset(2.5, -2.5), color: Colors.black),
+                  Shadow(offset: Offset(2.5, 2.5), color: Colors.black),
+                  Shadow(offset: Offset(-2.5, 2.5), color: Colors.black),
+                ],
+              ),
+            ),
+            const Text(
+              '60 Second Routine',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                shadows: [
+                  Shadow(offset: Offset(-1.5, -1.5), color: Colors.black),
+                  Shadow(offset: Offset(1.5, -1.5), color: Colors.black),
+                  Shadow(offset: Offset(1.5, 1.5), color: Colors.black),
+                  Shadow(offset: Offset(-1.5, 1.5), color: Colors.black),
+                ],
+              ),
             ),
             const SizedBox(height: 32),
             TextField(

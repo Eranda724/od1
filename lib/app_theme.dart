@@ -5,46 +5,55 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFFFF8C42), // warm orange = energy + cozy
+        seedColor: const Color(0xFFFFC72C), // Bright Golden Yellow
         brightness: Brightness.light,
       ),
-      scaffoldBackgroundColor: const Color(0xFFFFF8F0), // warm cream background
+      scaffoldBackgroundColor: const Color(0xFFF4ECE1), // Warm cream background
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFFF8C42),
-        foregroundColor: Colors.white,
+        backgroundColor: Color(0xFFFFC72C),
+        foregroundColor: Colors.black,
         centerTitle: true,
         elevation: 0,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFFFF8C42),
-          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFFFFC72C),
+          foregroundColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
+            side: const BorderSide(color: Colors.black, width: 2), // Adds retro black border to buttons
           ),
           textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
             letterSpacing: 0.5,
           ),
         ),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 3,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(16)),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Colors.black, width: 2),
         ),
       ),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF4A2C0A), // dark brown
+          fontSize: 32,
+          fontWeight: FontWeight.w900,
+          color: Color(0xFFFFC72C), // Golden Yellow
+          shadows: [
+            Shadow(offset: Offset(-2, -2), color: Colors.black),
+            Shadow(offset: Offset(2, -2), color: Colors.black),
+            Shadow(offset: Offset(2, 2), color: Colors.black),
+            Shadow(offset: Offset(-2, 2), color: Colors.black),
+          ],
         ),
         bodyLarge: TextStyle(
           fontSize: 16,
-          color: Color(0xFF4A2C0A),
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );

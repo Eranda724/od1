@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Potato Couch',
+      title: 'Potato',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.potatoCouchTheme,
       home: const StartRouter(),
@@ -77,10 +77,10 @@ class _StartRouterState extends State<StartRouter> {
   Widget build(BuildContext context) {
     // Show a simple loading screen while routing
     return const Scaffold(
-      backgroundColor: Color(0xFFFFF8F0),
+      backgroundColor: Color(0xFFF4ECE1),
       body: Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFFF8C42),
+          color: Color(0xFFFFC72C),
         ),
       ),
     );
