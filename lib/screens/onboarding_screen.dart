@@ -102,25 +102,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       page['title']!,
                       style: const TextStyle(
-                        color: Color(0xFFFFC72C),
+                        color: Color.fromARGB(255, 213, 94, 3),
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
-                        shadows: [
-                          Shadow(offset: Offset(-2, -2), color: Colors.black),
-                          Shadow(offset: Offset(2, -2), color: Colors.black),
-                          Shadow(offset: Offset(2, 2), color: Colors.black),
-                          Shadow(offset: Offset(-2, 2), color: Colors.black),
-                        ],
+                        letterSpacing: 0.3,
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Text(
                       page['subtitle']!,
                       style: const TextStyle(
-                        color: Colors.black54,
+                        color: Color(0xFF444444),
                         fontSize: 16,
-                        height: 1.5,
+                        fontWeight: FontWeight.w500,
+                        height: 1.6,
+                        letterSpacing: 0.2,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -165,8 +162,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onPressed: _getStarted,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
+                side: BorderSide.none,
               ),
-              child: const Text('Get Started 🥔'),
+              child: const Text('Get Started'),
             ),
           ),
 
