@@ -17,12 +17,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _pages = [
     {
-      'image': 'assets/images/po1.png',
+      'image': 'assets/images/po2.png',
       'title': 'Build Daily Habits 🔥',
       'subtitle': 'Just 60 seconds a day keeps your streak alive.',
     },
     {
-      'image': 'assets/images/po2.png',
+      'image': 'assets/images/po1.png',
       'title': 'Track Your Progress 💪',
       'subtitle': 'Every rep counts. Watch your lifetime totals grow.',
     },
@@ -162,7 +162,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               onPressed: _getStarted,
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
-                side: BorderSide.none,
               ),
               child: const Text('Get Started'),
             ),
