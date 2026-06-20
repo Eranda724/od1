@@ -21,7 +21,7 @@ class CongratulationScreen extends StatefulWidget {
   /// Called when the button is pressed. The caller decides whether to
   /// push the next exercise's start screen or the daily summary screen —
   /// this screen only needs to know whether more exercises remain.
-  final VoidCallback onContinue;
+  final void Function(BuildContext) onContinue;
 
   const CongratulationScreen({
     super.key,
@@ -175,7 +175,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: widget.onContinue,
+                  onPressed: () => widget.onContinue(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isLast ? PCColors.yellow : PCColors.green,
                     foregroundColor: isLast ? PCColors.brownDark : Colors.white,

@@ -167,8 +167,8 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             unit: widget.unit,
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,
-            onContinue: () {
-              Navigator.of(context).pushReplacement(
+            onContinue: (navContext) {
+              Navigator.of(navContext).pushReplacement(
                 MaterialPageRoute(
                   builder: (_) => DailySummaryScreen(
                     completedExercises: [
