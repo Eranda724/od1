@@ -43,3 +43,15 @@ class AppSettings extends ChangeNotifier {
     'en': '🇬🇧  English',
   };
 }
+
+class PCColors {
+  static const Color yellow     = Color(0xFFFFC93C);
+  static const Color yellowDark = Color(0xFFF4A41E);
+  static const Color brown      = Color(0xFF6D4C2C);
+  static const Color brownDark  = Color(0xFF4A3219);
+  static const Color cream      = Color(0xFFFFF6E5);
+  static const Color green      = Color(0xFF4CAF7D);
+  static const Color greenDark  = Color(0xFF2E8B57);
+  static const Color background = Color(0xFFFAF1E4);
+}
+
