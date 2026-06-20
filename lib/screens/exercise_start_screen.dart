@@ -5,9 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import '../app_settings.dart';
 import '../models/exercise_item.dart';
-import 'countdown_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'exercise_screen.dart';
+import 'session_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared sizing tokens (no color changes — just reusing PCColors consistently)
@@ -74,11 +72,14 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   Timer? _slideshowTimer;
 
   // ── Ready Time ─────────────────────────────────────────────────────────────
-  bool _wantsReadyTime = true;
+  bool _wantsReadyTime = false;
   int _readyTimeSeconds = 3;
   final GlobalKey _timerKey = GlobalKey();
 
   // ── 3-2-1 countdown ────────────────────────────────────────────────────────
+  bool _isCountingDown = false;
+  int _currentCount = 0;
+  Timer? _countdownTimer;
   // Logic moved to countdown_screen.dart
 
   @override
@@ -192,6 +193,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   @override
   void dispose() {
     _slideshowTimer?.cancel();
+    _countdownTimer?.cancel();
     for (final ctrl in _videoControllers.values) {
       ctrl.dispose();
     }
@@ -200,23 +202,52 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   // ── Countdown ──────────────────────────────────────────────────────────────
   void _startCountdown() {
+    if (_isCountingDown) return; // already counting
+
     _slideshowTimer?.cancel();
     for (final ctrl in _videoControllers.values) {
       ctrl.pause();
     }
 
-    if (_wantsReadyTime) {
+    String? bgUrl;
+    try {
+      bgUrl = widget.mediaItems.firstWhere((m) => !m.isVideo).url;
+    } catch (_) {}
+
+    void navigate() {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => CountdownScreen(readyTimeSeconds: _readyTimeSeconds),
+          builder: (_) => ActiveSessionScreen(
+            exerciseId: widget.exerciseId,
+            exerciseName: widget.exerciseName,
+            backgroundImageUrl: bgUrl,
+            unit: widget.unit,
+            challengeSeconds: widget.defaultTimer,
+          ),
         ),
       );
+    }
+
+    if (_wantsReadyTime && _readyTimeSeconds > 0) {
+      setState(() {
+        _isCountingDown = true;
+        _currentCount = _readyTimeSeconds;
+      });
+      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          _currentCount--;
+        });
+        if (_currentCount <= 0) {
+          timer.cancel();
+          navigate();
+        }
+      });
     } else {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ExerciseScreen(user: FirebaseAuth.instance.currentUser),
-        ),
-      );
+      navigate();
     }
   }
 
@@ -527,7 +558,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             }
           },
         ),
-        const Text('Ready Time', style: TextStyle(
+        Text('Ready time(${_readyTimeSeconds}s)', style: const TextStyle(
             fontWeight: FontWeight.w800, color: PCColors.brownDark, fontSize: 13)),
         const SizedBox(width: 8),
         // Dropdown — same subtle border style as rep/timer boxes
@@ -684,13 +715,27 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                           border: Border.all(color: Colors.white, width: 3),
                         ),
                         alignment: Alignment.center,
-                        child: const Text(
-                          'START\nNOW',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 26, fontWeight: FontWeight.w900,
-                            color: Colors.white, letterSpacing: 1,
-                          ),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
+                          child: _isCountingDown
+                              ? Text(
+                                  '$_currentCount',
+                                  key: const ValueKey('count'),
+                                  style: const TextStyle(
+                                    fontSize: 60, fontWeight: FontWeight.w900,
+                                    color: Colors.white, height: 1.1,
+                                  ),
+                                )
+                              : const Text(
+                                  'START\nNOW',
+                                  key: ValueKey('start'),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 26, fontWeight: FontWeight.w900,
+                                    color: Colors.white, letterSpacing: 1,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
