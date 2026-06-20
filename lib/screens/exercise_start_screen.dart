@@ -6,19 +6,29 @@ import 'package:video_player/video_player.dart';
 import '../app_settings.dart';
 import '../models/exercise_item.dart';
 import 'countdown_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'exercise_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Theme palette (local copy)
+// Shared sizing tokens (no color changes — just reusing PCColors consistently)
 // ─────────────────────────────────────────────────────────────────────────────
 class _ControlStyle {
-  static const double cardRadius  = 14;
+  static const double cardRadius = 14;
+
   static const TextStyle smallLabel = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w800,
     color: PCColors.brown,
     letterSpacing: 0.8,
   );
+
+  // One subtle border used by every secondary/content card
+  // (description box, rep box, timer box, ready-time dropdown).
+  static Border subtleBorder() =>
+      Border.all(color: PCColors.brown.withValues(alpha: 0.3), width: 1.5);
+
+  // One bold border used by hero/emphasis elements (stats bar, popups, dialogs).
+  static Border boldBorder() => Border.all(color: PCColors.brown, width: 1.5);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -64,7 +74,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   Timer? _slideshowTimer;
 
   // ── Ready Time ─────────────────────────────────────────────────────────────
-  int _readyTimeSeconds = 10;
+  bool _wantsReadyTime = true;
+  int _readyTimeSeconds = 3;
   final GlobalKey _timerKey = GlobalKey();
 
   // ── 3-2-1 countdown ────────────────────────────────────────────────────────
@@ -82,12 +93,23 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   Future<void> _loadSavedPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTime = prefs.getInt('readyTime_${widget.exerciseId}');
-    if (savedTime != null && mounted) setState(() => _readyTimeSeconds = savedTime);
+    final wantsTime = prefs.getBool('wantsReadyTime_${widget.exerciseId}');
+    if (mounted) {
+      setState(() {
+        if (savedTime != null) _readyTimeSeconds = savedTime;
+        if (wantsTime != null) _wantsReadyTime = wantsTime;
+      });
+    }
   }
 
   Future<void> _saveTime(int t) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('readyTime_${widget.exerciseId}', t);
+  }
+
+  Future<void> _saveWantsReadyTime(bool v) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('wantsReadyTime_${widget.exerciseId}', v);
   }
 
   // ── Video management & Slideshow ───────────────────────────────────────────
@@ -149,13 +171,13 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   void _selectMedia(int index) {
     if (index == _activeIndex) return;
     _slideshowTimer?.cancel();
-    
+
     // Pause the previous video if any
     _videoControllers[_activeIndex]?.pause();
     setState(() {
       _activeIndex = index;
     });
-    
+
     // Init & play the new one
     _initVideoAt(index);
     final ctrl = _videoControllers[index];
@@ -163,7 +185,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       ctrl.seekTo(Duration.zero);
       ctrl.play();
     }
-    
+
     _scheduleSlideshowForCurrentMedia();
   }
 
@@ -182,18 +204,27 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     for (final ctrl in _videoControllers.values) {
       ctrl.pause();
     }
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => CountdownScreen(readyTimeSeconds: _readyTimeSeconds),
-      ),
-    );
+
+    if (_wantsReadyTime) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => CountdownScreen(readyTimeSeconds: _readyTimeSeconds),
+        ),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ExerciseScreen(user: FirebaseAuth.instance.currentUser),
+        ),
+      );
+    }
   }
 
   // ── Timer popup menu ───────────────────────────────────────────────────────
   void _showTimerMenu() async {
     final box = _timerKey.currentContext!.findRenderObject() as RenderBox;
     final offset = box.localToGlobal(Offset.zero);
-    final size   = box.size;
+    final size = box.size;
 
     final result = await showMenu<int>(
       context: context,
@@ -206,7 +237,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         offset.dx, offset.dy + size.height + 6, offset.dx + size.width, 0,
       ),
       items: [
-        for (final s in [5, 10, 15, 20, 30])
+        for (final s in [3, 5, 10])
           PopupMenuItem<int>(
             value: s,
             height: 44,
@@ -218,7 +249,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           child: _TimerOption(
             label: 'Custom…',
             icon: Icons.edit_rounded,
-            selected: ![5, 10, 15, 20, 30].contains(_readyTimeSeconds),
+            selected: ![3, 5, 10].contains(_readyTimeSeconds),
           ),
         ),
       ],
@@ -235,7 +266,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   void _showCustomTimeDialog() {
     final ctrl = TextEditingController(
-      text: [5,10,15,20,30].contains(_readyTimeSeconds) ? '' : '$_readyTimeSeconds',
+      text: [3, 5, 10].contains(_readyTimeSeconds) ? '' : '$_readyTimeSeconds',
     );
     showDialog(
       context: context,
@@ -371,8 +402,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         itemCount: widget.mediaItems.length,
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
-          final item    = widget.mediaItems[i];
-          final active  = i == _activeIndex;
+          final item = widget.mediaItems[i];
+          final active = i == _activeIndex;
           return GestureDetector(
             onTap: () => _selectMedia(i),
             child: AnimatedContainer(
@@ -452,7 +483,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     ),
   );
 
-  // ── Rep counter widget ─────────────────────────────────────────────────────
   Widget _buildRepCounter() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -465,7 +495,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ── Exercise Timer widget ──────────────────────────────────────────────────
   Widget _buildExerciseTimer() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -480,28 +509,52 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   // ── Ready Time widget ──────────────────────────────────────────────────────
   Widget _buildReadyTimeWidget() {
-    return GestureDetector(
-      key: _timerKey,
-      onTap: _showTimerMenu,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(_ControlStyle.cardRadius),
-          border: Border.all(color: PCColors.brown.withValues(alpha: 0.3), width: 1.5),
+    return Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: 8,
+      children: [
+        // Checkbox
+        Checkbox(
+          value: _wantsReadyTime,
+          activeColor: PCColors.green,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          side: const BorderSide(color: PCColors.brown, width: 1.5),
+          onChanged: (val) {
+            if (val != null) {
+              setState(() => _wantsReadyTime = val);
+              _saveWantsReadyTime(val);
+            }
+          },
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('READY IN: ', style: _ControlStyle.smallLabel),
-            Text('${_readyTimeSeconds}s', style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
-            const SizedBox(width: 4),
-            const Icon(Icons.arrow_drop_down_rounded, size: 20, color: PCColors.brown),
-          ],
-        ),
-      ),
+        const Text('Ready Time', style: TextStyle(
+            fontWeight: FontWeight.w800, color: PCColors.brownDark, fontSize: 13)),
+        const SizedBox(width: 8),
+        // Dropdown — same subtle border style as rep/timer boxes
+        if (_wantsReadyTime)
+          GestureDetector(
+            key: _timerKey,
+            onTap: _showTimerMenu,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(_ControlStyle.cardRadius),
+                border: _ControlStyle.subtleBorder(),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('${_readyTimeSeconds}s', style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down_rounded, size: 20, color: PCColors.brown),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -565,33 +618,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     _buildThumbnailStrip(),
                     if (widget.mediaItems.length >= 2) const SizedBox(height: 10),
 
-                    // Admin Description
-                    if (widget.description != null && widget.description!.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(_ControlStyle.cardRadius),
-                            border: Border.all(color: PCColors.brown.withValues(alpha: 0.2), width: 1.5),
-                          ),
-                          child: Text(
-                            widget.description!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: PCColors.brown.withValues(alpha: 0.85),
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-                    ],
-                    // Stats bar
+
+                    // Stats bar — bold border (hero element), unchanged colors
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Container(
@@ -602,7 +630,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                             colors: [PCColors.yellow, PCColors.yellowDark],
                             begin: Alignment.topLeft, end: Alignment.bottomRight,
                           ),
-                          border: Border.all(color: PCColors.brown, width: 1),
+                          border: _ControlStyle.boldBorder(),
                           boxShadow: const [BoxShadow(
                               color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
                         ),
@@ -620,8 +648,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     ),
                     const SizedBox(height: 18),
 
-
-                    // Controls
+                    // Controls: [Rep box] [Ready Time] [Timer box]
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
@@ -630,47 +657,41 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                           Expanded(flex: 3, child: _buildRepCounter()),
                           Expanded(
                             flex: 5,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // START button
-                                InkWell(
-                                  onTap: _startCountdown,
-                                  customBorder: const CircleBorder(),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 300),
-                                    width: 130, height: 130,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: const LinearGradient(
-                                        colors: [PCColors.green, PCColors.greenDark],
-                                        begin: Alignment.topLeft, end: Alignment.bottomRight,
-                                      ),
-                                      boxShadow: [BoxShadow(
-                                        color: PCColors.greenDark.withValues(alpha: 0.45),
-                                        blurRadius: 18, offset: const Offset(0, 6),
-                                      )],
-                                      border: Border.all(color: Colors.white, width: 3),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: const Text(
-                                      'START\nNOW',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontSize: 26, fontWeight: FontWeight.w900,
-                                        color: Colors.white, letterSpacing: 1,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                // READY TIME dropdown
-                                _buildReadyTimeWidget(),
-                              ],
-                            ),
+                            child: _buildReadyTimeWidget(),
                           ),
                           Expanded(flex: 3, child: _buildExerciseTimer()),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    // START NOW Button
+                    InkWell(
+                      onTap: _startCountdown,
+                      customBorder: const CircleBorder(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 130, height: 130,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: const LinearGradient(
+                            colors: [PCColors.green, PCColors.greenDark],
+                            begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          ),
+                          boxShadow: [BoxShadow(
+                            color: PCColors.greenDark.withValues(alpha: 0.45),
+                            blurRadius: 18, offset: const Offset(0, 6),
+                          )],
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          'START\nNOW',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.w900,
+                            color: Colors.white, letterSpacing: 1,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
