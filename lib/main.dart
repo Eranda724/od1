@@ -7,24 +7,51 @@ import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 import 'app_theme.dart';
+import 'app_settings.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // Load persisted settings before first frame
+  await AppSettings().load();
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final _settings = AppSettings();
+
+  @override
+  void initState() {
+    super.initState();
+    _settings.addListener(_onSettingsChanged);
+  }
+
+  @override
+  void dispose() {
+    _settings.removeListener(_onSettingsChanged);
+    super.dispose();
+  }
+
+  void _onSettingsChanged() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Potato',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.potatoCouchTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _settings.themeMode,
+      locale: _settings.locale,
       home: const StartRouter(),
     );
   }
@@ -53,19 +80,16 @@ class _StartRouterState extends State<StartRouter> {
     if (!mounted) return;
 
     if (user != null) {
-      // Already logged in → go straight to home
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else if (!hasSeenOnboarding) {
-      // Brand new user → show onboarding
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const OnboardingScreen()),
       );
     } else {
-      // Returning user, not logged in → go to login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -75,7 +99,6 @@ class _StartRouterState extends State<StartRouter> {
 
   @override
   Widget build(BuildContext context) {
-    // Show a simple loading screen while routing
     return const Scaffold(
       backgroundColor: Color(0xFFF4ECE1),
       body: Center(
