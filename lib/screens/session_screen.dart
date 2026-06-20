@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../app_settings.dart';
-// import 'rep_entry_screen.dart'; // ← point this at your actual rep entry screen
+import 'reps_count_screen.dart';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -12,6 +12,9 @@ class ActiveSessionScreen extends StatefulWidget {
   final String? backgroundImageUrl;
   final String unit; // e.g. "reps", "seconds"
   final int challengeSeconds;
+  final int streak;
+  final int lifetimeTotal;
+  final int defaultReps;
 
   const ActiveSessionScreen({
     super.key,
@@ -20,6 +23,9 @@ class ActiveSessionScreen extends StatefulWidget {
     this.backgroundImageUrl,
     this.unit = 'reps',
     required this.challengeSeconds,
+    required this.streak,
+    required this.lifetimeTotal,
+    required this.defaultReps,
   });
 
   @override
@@ -27,9 +33,9 @@ class ActiveSessionScreen extends StatefulWidget {
 }
 
 class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
-  // ── Countdown Timer ──────────────────────────────────────────────────────
+  // ── Countdown/Stopwatch Timer ────────────────────────────────────────────
   Timer? _tickTimer;
-  late int _remainingSeconds;
+  late int _seconds;
 
   // ── Rotating tips ────────────────────────────────────────────────────────
   // Swap this list for your real "during-session" message bank later —
@@ -53,14 +59,18 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   }
 
   void _startSession() {
-    _remainingSeconds = widget.challengeSeconds;
+    _seconds = widget.challengeSeconds;
 
-    // Update displayed remaining time every second.
+    // Update displayed time every second.
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
+      if (widget.challengeSeconds > 0) {
+        if (_seconds > 0) {
+          setState(() => _seconds--);
+        } else {
+          _stopSession();
+        }
       } else {
-        _stopSession();
+        setState(() => _seconds++);
       }
     });
 
@@ -74,22 +84,24 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
 
-    final secondsCompleted = widget.challengeSeconds - _remainingSeconds;
+    final secondsCompleted = widget.challengeSeconds > 0 
+        ? widget.challengeSeconds - _seconds 
+        : _seconds;
+        
+    final todayAmount = widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time' 
+        ? secondsCompleted 
+        : widget.defaultReps;
 
-    // TODO: replace with your actual rep-entry screen/route.
-    // Navigator.of(context).pushReplacement(
-    //   MaterialPageRoute(
-    //     builder: (_) => RepEntryScreen(
-    //       exerciseId: widget.exerciseId,
-    //       exerciseName: widget.exerciseName,
-    //       secondsElapsed: secondsCompleted,
-    //       unit: widget.unit,
-    //     ),
-    //   ),
-    // );
-
-    // Placeholder so this file compiles stand-alone — remove once wired up.
-    Navigator.of(context).pop(secondsCompleted);
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => RepEntryScreen(
+          exerciseId: widget.exerciseId,
+          exerciseName: widget.exerciseName,
+          unit: widget.unit,
+          defaultReps: todayAmount,
+        ),
+      ),
+    );
   }
 
   @override
@@ -153,9 +165,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
                 const Spacer(),
 
-                // Big remaining timer
+                // Big timer
                 Text(
-                  _formatRemaining(_remainingSeconds),
+                  _formatRemaining(_seconds),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 64,
@@ -164,7 +176,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'TIME REMAINING',
+                  widget.challengeSeconds > 0 ? 'TIME REMAINING' : 'TIME ELAPSED',
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
