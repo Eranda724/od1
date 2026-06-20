@@ -3,23 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-// Removed redundant import of exercise_item.dart because exercise_screen.dart exports ExerciseMedia
+import '../app_settings.dart';
+import '../models/exercise_item.dart';
+import 'countdown_screen.dart';
 import 'exercise_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Theme palette (local copy)
 // ─────────────────────────────────────────────────────────────────────────────
-class PCColors {
-  static const Color yellow     = Color(0xFFFFC93C);
-  static const Color yellowDark = Color(0xFFF4A41E);
-  static const Color brown      = Color(0xFF6D4C2C);
-  static const Color brownDark  = Color(0xFF4A3219);
-  static const Color cream      = Color(0xFFFFF6E5);
-  static const Color green      = Color(0xFF4CAF7D);
-  static const Color greenDark  = Color(0xFF2E8B57);
-}
-
 class _ControlStyle {
   static const double cardRadius  = 14;
   static const TextStyle smallLabel = TextStyle(
@@ -36,6 +27,7 @@ class _ControlStyle {
 class ExerciseStartScreen extends StatefulWidget {
   final String exerciseId;
   final String exerciseName;
+  final String? description;
   final int streak;
   final int lifetimeTotal;
   final int defaultReps;
@@ -50,6 +42,7 @@ class ExerciseStartScreen extends StatefulWidget {
     super.key,
     required this.exerciseId,
     required this.exerciseName,
+    this.description,
     required this.streak,
     required this.lifetimeTotal,
     this.defaultReps = 10,
@@ -66,25 +59,23 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   // ── Active media index ─────────────────────────────────────────────────────
   int _activeIndex = 0;
 
-  // ── Video controllers  (one per video item, lazily initialised) ────────────
+  // ── Video controllers & Slideshow ──────────────────────────────────────────
   final Map<int, VideoPlayerController> _videoControllers = {};
-  final Map<int, int> _loopCounts = {};
-  static const int _maxLoops = 3;
+  Timer? _slideshowTimer;
 
   // ── Ready Time ─────────────────────────────────────────────────────────────
   int _readyTimeSeconds = 10;
   final GlobalKey _timerKey = GlobalKey();
 
   // ── 3-2-1 countdown ────────────────────────────────────────────────────────
-  bool _isStarting = false;
-  int _countdown = 3;
-  Timer? _countdownTimer;
+  // Logic moved to countdown_screen.dart
 
   @override
   void initState() {
     super.initState();
     _loadSavedPrefs();
     _initVideoAt(0); // pre-load first item if it's a video
+    _scheduleSlideshowForCurrentMedia();
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -99,7 +90,33 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     await prefs.setInt('readyTime_${widget.exerciseId}', t);
   }
 
-  // ── Video management ───────────────────────────────────────────────────────
+  // ── Video management & Slideshow ───────────────────────────────────────────
+  void _scheduleSlideshowForCurrentMedia() {
+    _slideshowTimer?.cancel();
+    if (widget.mediaItems.isEmpty || widget.mediaItems.length == 1) return;
+
+    final item = widget.mediaItems[_activeIndex];
+    if (!item.isVideo) {
+      // It's an image, wait 3 seconds then go to next
+      _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
+    } else {
+      // It's a video. We handle the transition in the video listener below,
+      // but if the video is already finished, schedule it here.
+      final ctrl = _videoControllers[_activeIndex];
+      if (ctrl != null && ctrl.value.isInitialized) {
+        if (ctrl.value.position >= ctrl.value.duration && ctrl.value.duration != Duration.zero) {
+          _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
+        }
+      }
+    }
+  }
+
+  void _nextMedia() {
+    if (!mounted || widget.mediaItems.isEmpty) return;
+    final nextIndex = (_activeIndex + 1) % widget.mediaItems.length;
+    _selectMedia(nextIndex);
+  }
+
   void _initVideoAt(int index) {
     if (index >= widget.mediaItems.length) return;
     final item = widget.mediaItems[index];
@@ -108,20 +125,20 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
     final ctrl = VideoPlayerController.networkUrl(Uri.parse(item.url));
     ctrl.initialize().then((_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        if (index == _activeIndex) _scheduleSlideshowForCurrentMedia();
+      }
       ctrl.play();
     });
 
     ctrl.addListener(() {
       if (ctrl.value.position >= ctrl.value.duration &&
           ctrl.value.duration != Duration.zero) {
-        final count = (_loopCounts[index] ?? 0) + 1;
-        _loopCounts[index] = count;
-        if (count < _maxLoops) {
-          ctrl.seekTo(Duration.zero);
-          ctrl.play();
-        } else {
-          ctrl.pause();
+        // Video finished. Pause it and start 3s timer to switch.
+        ctrl.pause();
+        if (index == _activeIndex && (_slideshowTimer == null || !_slideshowTimer!.isActive)) {
+          _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
         }
       }
     });
@@ -131,42 +148,45 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   void _selectMedia(int index) {
     if (index == _activeIndex) return;
+    _slideshowTimer?.cancel();
+    
     // Pause the previous video if any
     _videoControllers[_activeIndex]?.pause();
     setState(() {
       _activeIndex = index;
-      _loopCounts[index] = 0;
     });
+    
     // Init & play the new one
     _initVideoAt(index);
-    _videoControllers[index]?.seekTo(Duration.zero);
-    _videoControllers[index]?.play();
+    final ctrl = _videoControllers[index];
+    if (ctrl != null) {
+      ctrl.seekTo(Duration.zero);
+      ctrl.play();
+    }
+    
+    _scheduleSlideshowForCurrentMedia();
   }
 
   @override
   void dispose() {
+    _slideshowTimer?.cancel();
     for (final ctrl in _videoControllers.values) {
       ctrl.dispose();
     }
-    _countdownTimer?.cancel();
     super.dispose();
   }
 
   // ── Countdown ──────────────────────────────────────────────────────────────
   void _startCountdown() {
-    setState(() { _isStarting = true; _countdown = _readyTimeSeconds; });
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_countdown > 1) {
-        setState(() => _countdown--);
-      } else {
-        timer.cancel();
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => ExerciseScreen(user: FirebaseAuth.instance.currentUser),
-          ),
-        );
-      }
-    });
+    _slideshowTimer?.cancel();
+    for (final ctrl in _videoControllers.values) {
+      ctrl.pause();
+    }
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => CountdownScreen(readyTimeSeconds: _readyTimeSeconds),
+      ),
+    );
   }
 
   // ── Timer popup menu ───────────────────────────────────────────────────────
@@ -311,6 +331,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               ),
               onPressed: () => setState(() {
                 ctrl.value.isPlaying ? ctrl.pause() : ctrl.play();
+                if (!ctrl.value.isPlaying) _slideshowTimer?.cancel();
               }),
             ),
           ],
@@ -544,6 +565,32 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     _buildThumbnailStrip(),
                     if (widget.mediaItems.length >= 2) const SizedBox(height: 10),
 
+                    // Admin Description
+                    if (widget.description != null && widget.description!.isNotEmpty) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(_ControlStyle.cardRadius),
+                            border: Border.all(color: PCColors.brown.withValues(alpha: 0.2), width: 1.5),
+                          ),
+                          child: Text(
+                            widget.description!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: PCColors.brown.withValues(alpha: 0.85),
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                    ],
                     // Stats bar
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -573,6 +620,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     ),
                     const SizedBox(height: 18),
 
+
                     // Controls
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -587,31 +635,28 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                               children: [
                                 // START button
                                 InkWell(
-                                  onTap: _isStarting ? null : _startCountdown,
+                                  onTap: _startCountdown,
                                   customBorder: const CircleBorder(),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
                                     width: 130, height: 130,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      gradient: LinearGradient(
-                                        colors: _isStarting
-                                            ? [PCColors.yellow, PCColors.yellowDark]
-                                            : [PCColors.green, PCColors.greenDark],
+                                      gradient: const LinearGradient(
+                                        colors: [PCColors.green, PCColors.greenDark],
                                         begin: Alignment.topLeft, end: Alignment.bottomRight,
                                       ),
                                       boxShadow: [BoxShadow(
-                                        color: (_isStarting ? PCColors.yellowDark : PCColors.greenDark)
-                                            .withValues(alpha: 0.45),
+                                        color: PCColors.greenDark.withValues(alpha: 0.45),
                                         blurRadius: 18, offset: const Offset(0, 6),
                                       )],
                                       border: Border.all(color: Colors.white, width: 3),
                                     ),
                                     alignment: Alignment.center,
-                                    child: Text(
-                                      _isStarting ? '$_countdown' : 'START\nNOW',
+                                    child: const Text(
+                                      'START\nNOW',
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 26, fontWeight: FontWeight.w900,
                                         color: Colors.white, letterSpacing: 1,
                                       ),

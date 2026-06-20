@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+export '../models/exercise_item.dart' show ExerciseMedia;
+import 'exercise_start_screen.dart';
 
 class ExerciseScreen extends StatelessWidget {
   final User? user;
@@ -93,7 +95,41 @@ class ExerciseScreen extends StatelessWidget {
                         Text('$icon $lifetime Total $displayName ($unit)'),
                         const SizedBox(height: 12),
                         ElevatedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ExerciseStartScreen(
+                                  exerciseId: id,
+                                  exerciseName: displayName,
+                                  description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                                  streak: streak,
+                                  lifetimeTotal: lifetime,
+                                  defaultReps: def?.defaultReps ?? 10,
+                                  defaultTimer: def?.defaultTimer ?? 30,
+                                  unit: unit,
+                                  // Use Firestore media list if available,
+                                  // otherwise fall back to a mock list of multiple items
+                                  mediaItems: (def?.mediaItems.isNotEmpty == true)
+                                      ? def!.mediaItems
+                                      : [
+                                          const ExerciseMedia(
+                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
+                                            isVideo: true,
+                                          ),
+                                          const ExerciseMedia(
+                                            url: 'https://picsum.photos/seed/workout1/800/600',
+                                            isVideo: false,
+                                          ),
+                                          const ExerciseMedia(
+                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
+                                            isVideo: true,
+                                          ),
+                                        ],
+                                ),
+                              ),
+                            );
+                          },
                           child: const Text('Start Exercise'),
                         ),
                       ],
