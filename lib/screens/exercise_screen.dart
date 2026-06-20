@@ -105,8 +105,8 @@ class ExerciseScreen extends StatelessWidget {
                                   description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
                                   streak: streak,
                                   lifetimeTotal: lifetime,
-                                  defaultReps: def?.defaultReps ?? 10,
-                                  defaultTimer: def?.defaultTimer ?? 30,
+                                  defaultReps: def?.defaultReps ?? 0,
+                                  defaultTimer: def?.defaultTimer ?? 0,
                                   unit: unit,
                                   // Use Firestore media list if available,
                                   // otherwise fall back to a mock list of multiple items

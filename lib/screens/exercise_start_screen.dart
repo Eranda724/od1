@@ -223,6 +223,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             backgroundImageUrl: bgUrl,
             unit: widget.unit,
             challengeSeconds: widget.defaultTimer,
+            streak: widget.streak,
+            lifetimeTotal: widget.lifetimeTotal,
+            defaultReps: widget.defaultReps,
           ),
         ),
       );
@@ -685,12 +688,16 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(flex: 3, child: _buildRepCounter()),
+                          if (widget.defaultReps > 0) Expanded(flex: 3, child: _buildRepCounter()),
+                          if (widget.defaultReps <= 0 && widget.defaultTimer > 0) const Expanded(flex: 3, child: SizedBox()),
+                          
                           Expanded(
                             flex: 5,
                             child: _buildReadyTimeWidget(),
                           ),
-                          Expanded(flex: 3, child: _buildExerciseTimer()),
+                          
+                          if (widget.defaultTimer > 0) Expanded(flex: 3, child: _buildExerciseTimer()),
+                          if (widget.defaultTimer <= 0 && widget.defaultReps > 0) const Expanded(flex: 3, child: SizedBox()),
                         ],
                       ),
                     ),

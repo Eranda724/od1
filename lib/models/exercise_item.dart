@@ -33,8 +33,8 @@ class ExerciseItem {
     this.description,
     required this.icon,
     required this.unit,
-    this.defaultReps = 10,
-    this.defaultTimer = 30,
+    this.defaultReps = 0,
+    this.defaultTimer = 0,
     this.mediaItems = const [],
   });
 
@@ -69,8 +69,8 @@ class ExerciseItem {
       description: data['description'] as String?,
       icon: data['icon'] ?? '💪',
       unit: data['unit'] ?? 'reps',
-      defaultReps: (data['defaultReps'] as num?)?.toInt() ?? 10,
-      defaultTimer: (data['defaultTimer'] as num?)?.toInt() ?? 30,
+      defaultReps: (data['defaultReps'] as num?)?.toInt() ?? 0,
+      defaultTimer: (data['defaultTimer'] as num?)?.toInt() ?? 0,
       mediaItems: items,
     );
   }
