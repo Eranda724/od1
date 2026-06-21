@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import 'congradulation_screen.dart';
-import 'daily_summary_screen.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -98,24 +97,23 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       _error = null;
     });
 
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .collection('exercises')
-        .doc(widget.exerciseId);
+    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
 
     final today = _todayKey();
     final yesterday = _yesterdayKey();
 
     try {
       final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
-        final snap = await tx.get(docRef);
+        final snap = await tx.get(userRef);
         final data = snap.data() ?? {};
 
-        final prevLifetime = (data['lifetimeTotal'] ?? 0) as int;
-        final prevStreak = (data['currentStreak'] ?? 0) as int;
-        final lastDate = data['lastCompletedDate'] as String?;
-        final prevTodayReps = (data['todayReps'] ?? 0) as int;
+        final exercisesMap = (data['exercises'] as Map<String, dynamic>?) ?? {};
+        final exerciseData = (exercisesMap[widget.exerciseId] as Map<String, dynamic>?) ?? {};
+
+        final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
+        final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
+        final lastDate = exerciseData['lastCompletedDate'] as String?;
+        final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
 
         int newStreak;
         int newTodayReps;
@@ -137,13 +135,17 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
         final newLifetime = prevLifetime + _reps;
 
-        tx.set(docRef, {
-          'lifetimeTotal': newLifetime,
-          'currentStreak': newStreak,
-          'lastCompletedDate': today,
-          'todayReps': newTodayReps,
-          'exerciseName': widget.exerciseName,
-          'updatedAt': FieldValue.serverTimestamp(),
+        tx.set(userRef, {
+          'exercises': {
+            widget.exerciseId: {
+              'lifetimeTotal': newLifetime,
+              'currentStreak': newStreak,
+              'lastCompletedDate': today,
+              'todayReps': newTodayReps,
+              'exerciseName': widget.exerciseName,
+              'updatedAt': FieldValue.serverTimestamp(),
+            }
+          }
         }, SetOptions(merge: true));
 
         return {
@@ -168,21 +170,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,
             onContinue: (navContext) {
-              Navigator.of(navContext).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => DailySummaryScreen(
-                    completedExercises: [
-                      ExerciseDaySummary(
-                        exerciseName: widget.exerciseName,
-                        unit: widget.unit,
-                        todayReps: result['todayReps']!,
-                        currentStreak: result['currentStreak']!,
-                        lifetimeTotal: result['lifetimeTotal']!,
-                      ),
-                    ],
-                  ),
-                ),
-              );
+              Navigator.of(navContext).popUntil((route) => route.isFirst);
             },
           ),
         ),

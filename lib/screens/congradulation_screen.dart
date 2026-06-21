@@ -190,11 +190,11 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isLast ? 'View Summary' : 'Next Exercise',
+                        isLast ? 'View Summary' : 'Back to Exercises',
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(width: 6),
-                      Icon(isLast ? Icons.flag_rounded : Icons.arrow_forward_rounded, size: 20),
+                      Icon(isLast ? Icons.flag_rounded : Icons.list_rounded, size: 20),
                     ],
                   ),
                 ),
