@@ -8,19 +8,23 @@ class AppSettings extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.light;
   String _languageCode = 'en';
+  bool _isGridView = false;
 
   ThemeMode get themeMode => _themeMode;
   String get languageCode => _languageCode;
+  bool get isGridView => _isGridView;
   Locale get locale => Locale(_languageCode);
 
   static const _keyTheme = 'themeMode';
   static const _keyLang = 'languageCode';
+  static const _keyGrid = 'isGridView';
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
     final isDark = prefs.getBool(_keyTheme) ?? false;
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     _languageCode = prefs.getString(_keyLang) ?? 'en';
+    _isGridView = prefs.getBool(_keyGrid) ?? false;
     notifyListeners();
   }
 
@@ -38,8 +42,27 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setGridView(bool value) async {
+    _isGridView = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyGrid, value);
+    notifyListeners();
+  }
+
   /// Supported languages: code -> native label
   static const Map<String, String> supportedLanguages = {
     'en': '🇬🇧  English',
   };
 }
+
+class PCColors {
+  static const Color yellow     = Color(0xFFFFC93C);
+  static const Color yellowDark = Color(0xFFF4A41E);
+  static const Color brown      = Color(0xFF6D4C2C);
+  static const Color brownDark  = Color(0xFF4A3219);
+  static const Color cream      = Color(0xFFFFF6E5);
+  static const Color green      = Color(0xFF4CAF7D);
+  static const Color greenDark  = Color(0xFF2E8B57);
+  static const Color background = Color(0xFFFAF1E4);
+}
+

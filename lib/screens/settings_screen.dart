@@ -30,6 +30,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _card(
             child: Column(
               children: [
+                SwitchListTile(
+                  secondary: const Icon(Icons.grid_view_rounded),
+                  title: const Text('Exercise Grid View'),
+                  value: _settings.isGridView,
+                  activeColor: const Color(0xFF4CAF7D), // PCColors.green
+                  onChanged: (v) async {
+                    await _settings.setGridView(v);
+                    setState(() {});
+                  },
+                ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.light_mode_rounded),
                   title: const Text('Light Mode'),
