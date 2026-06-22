@@ -1,8 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/exercise_item.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
@@ -23,7 +20,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
   late TextEditingController _repsController;
   late TextEditingController _timerController;
 
-  List<ExerciseMedia> _mediaItems = [];
   bool _isLoading = false;
 
   @override
@@ -35,10 +31,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     _unitController = TextEditingController(text: e?.unit ?? 'reps');
     _repsController = TextEditingController(text: (e?.defaultReps ?? 10).toString());
     _timerController = TextEditingController(text: (e?.defaultTimer ?? 30).toString());
-    
-    if (e != null) {
-      _mediaItems = List.from(e.mediaItems);
-    }
   }
 
   @override
@@ -49,25 +41,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     _repsController.dispose();
     _timerController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickMedia() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? media = await picker.pickMedia();
-    
-    if (media != null) {
-      final name = media.name.toLowerCase();
-      final isVideo = name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.avi') || media.mimeType?.startsWith('video/') == true;
-      setState(() {
-        _mediaItems.add(ExerciseMedia(url: media.path, isVideo: isVideo));
-      });
-    }
-  }
-
-  void _removeMediaItem(int index) {
-    setState(() {
-      _mediaItems.removeAt(index);
-    });
   }
 
   Future<void> _save() async {
@@ -86,25 +59,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     setState(() => _isLoading = true);
 
     try {
-      List<ExerciseMedia> uploadedMedia = [];
-      for (var m in _mediaItems) {
-        if (m.url.startsWith('http') || m.url.startsWith('https')) {
-          uploadedMedia.add(m);
-        } else {
-          final fileName = m.url.split('/').last.split('\\').last;
-          final ref = FirebaseStorage.instance.ref().child('exercises').child(id).child('${DateTime.now().millisecondsSinceEpoch}_$fileName');
-          
-          try {
-            await ref.putFile(File(m.url));
-          } catch (e) {
-            throw Exception('Upload failed. Please ensure Firebase Storage is enabled in your Firebase Console and you have restarted the app. Details: $e');
-          }
-          
-          final downloadUrl = await ref.getDownloadURL();
-          uploadedMedia.add(ExerciseMedia(url: downloadUrl, isVideo: m.isVideo));
-        }
-      }
-
       final item = ExerciseItem(
         id: id,
         name: name,
@@ -113,7 +67,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         unit: _unitController.text.trim(),
         defaultReps: int.tryParse(_repsController.text.trim()) ?? 0,
         defaultTimer: int.tryParse(_timerController.text.trim()) ?? 0,
-        mediaItems: uploadedMedia,
+        mediaItems: [],
       );
 
       await FirebaseFirestore.instance
@@ -193,38 +147,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
               controller: _unitController,
               decoration: const InputDecoration(labelText: 'Unit (reps/s)', border: OutlineInputBorder()),
             ),
-            const SizedBox(height: 24),
-
-            // Media
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Media Items', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton.icon(
-                  onPressed: _pickMedia,
-                  icon: const Icon(Icons.upload_file),
-                  label: const Text('Upload Media'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (_mediaItems.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('No media items added. Exercise will show a placeholder.', style: TextStyle(color: Colors.grey)),
-              ),
-            for (int i = 0; i < _mediaItems.length; i++)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(_mediaItems[i].isVideo ? Icons.videocam : Icons.image, color: Colors.blueGrey),
-                title: Text(_mediaItems[i].url.split('/').last, maxLines: 1, overflow: TextOverflow.ellipsis),
-                subtitle: Text(_mediaItems[i].isVideo ? 'Video' : 'Image'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _removeMediaItem(i),
-                ),
-              ),
-            
             const SizedBox(height: 24),
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),

@@ -153,22 +153,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   defaultReps: def?.defaultReps ?? 0,
                                   defaultTimer: def?.defaultTimer ?? 0,
                                   unit: unit,
-                                  mediaItems: (def?.mediaItems.isNotEmpty == true)
-                                      ? def!.mediaItems
-                                      : [
-                                          const ExerciseMedia(
-                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-                                            isVideo: true,
-                                          ),
-                                          const ExerciseMedia(
-                                            url: 'https://picsum.photos/seed/workout1/800/600',
-                                            isVideo: false,
-                                          ),
-                                          const ExerciseMedia(
-                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-                                            isVideo: true,
-                                          ),
-                                        ],
                                 ),
                               ),
                             );

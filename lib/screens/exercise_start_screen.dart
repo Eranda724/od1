@@ -2,8 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../models/exercise_item.dart';
 import 'session_screen.dart';
@@ -43,10 +41,6 @@ class ExerciseStartScreen extends StatefulWidget {
   final int defaultTimer;
   final String unit;
 
-  /// All media assets for this exercise (images + videos).
-  /// If empty the screen shows a placeholder.
-  final List<ExerciseMedia> mediaItems;
-
   const ExerciseStartScreen({
     super.key,
     required this.exerciseId,
@@ -57,7 +51,6 @@ class ExerciseStartScreen extends StatefulWidget {
     this.defaultReps = 10,
     this.defaultTimer = 30,
     this.unit = 'reps',
-    this.mediaItems = const [],
   });
 
   @override
@@ -65,12 +58,7 @@ class ExerciseStartScreen extends StatefulWidget {
 }
 
 class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
-  // ── Active media index ─────────────────────────────────────────────────────
-  int _activeIndex = 0;
 
-  // ── Video controllers & Slideshow ──────────────────────────────────────────
-  final Map<int, VideoPlayerController> _videoControllers = {};
-  Timer? _slideshowTimer;
 
   // ── Ready Time ─────────────────────────────────────────────────────────────
   bool _wantsReadyTime = false;
@@ -87,8 +75,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   void initState() {
     super.initState();
     _loadSavedPrefs();
-    _initVideoAt(0); // pre-load first item if it's a video
-    _scheduleSlideshowForCurrentMedia();
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -114,90 +100,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     await prefs.setBool('wantsReadyTime_${widget.exerciseId}', v);
   }
 
-  // ── Video management & Slideshow ───────────────────────────────────────────
-  void _scheduleSlideshowForCurrentMedia() {
-    _slideshowTimer?.cancel();
-    if (widget.mediaItems.isEmpty || widget.mediaItems.length == 1) return;
 
-    final item = widget.mediaItems[_activeIndex];
-    if (!item.isVideo) {
-      // It's an image, wait 3 seconds then go to next
-      _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
-    } else {
-      // It's a video. We handle the transition in the video listener below,
-      // but if the video is already finished, schedule it here.
-      final ctrl = _videoControllers[_activeIndex];
-      if (ctrl != null && ctrl.value.isInitialized) {
-        if (ctrl.value.position >= ctrl.value.duration && ctrl.value.duration != Duration.zero) {
-          _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
-        }
-      }
-    }
-  }
-
-  void _nextMedia() {
-    if (!mounted || widget.mediaItems.isEmpty) return;
-    final nextIndex = (_activeIndex + 1) % widget.mediaItems.length;
-    _selectMedia(nextIndex);
-  }
-
-  void _initVideoAt(int index) {
-    if (index >= widget.mediaItems.length) return;
-    final item = widget.mediaItems[index];
-    if (!item.isVideo) return;
-    if (_videoControllers.containsKey(index)) return; // already init
-
-    final ctrl = VideoPlayerController.networkUrl(Uri.parse(item.url));
-    ctrl.initialize().then((_) {
-      if (mounted) {
-        setState(() {});
-        if (index == _activeIndex) _scheduleSlideshowForCurrentMedia();
-      }
-      ctrl.play();
-    });
-
-    ctrl.addListener(() {
-      if (ctrl.value.position >= ctrl.value.duration &&
-          ctrl.value.duration != Duration.zero) {
-        // Video finished. Pause it and start 3s timer to switch.
-        ctrl.pause();
-        if (index == _activeIndex && (_slideshowTimer == null || !_slideshowTimer!.isActive)) {
-          _slideshowTimer = Timer(const Duration(seconds: 3), _nextMedia);
-        }
-      }
-    });
-
-    _videoControllers[index] = ctrl;
-  }
-
-  void _selectMedia(int index) {
-    if (index == _activeIndex) return;
-    _slideshowTimer?.cancel();
-
-    // Pause the previous video if any
-    _videoControllers[_activeIndex]?.pause();
-    setState(() {
-      _activeIndex = index;
-    });
-
-    // Init & play the new one
-    _initVideoAt(index);
-    final ctrl = _videoControllers[index];
-    if (ctrl != null) {
-      ctrl.seekTo(Duration.zero);
-      ctrl.play();
-    }
-
-    _scheduleSlideshowForCurrentMedia();
-  }
 
   @override
   void dispose() {
-    _slideshowTimer?.cancel();
     _countdownTimer?.cancel();
-    for (final ctrl in _videoControllers.values) {
-      ctrl.dispose();
-    }
     super.dispose();
   }
 
@@ -205,23 +112,13 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   void _startCountdown() {
     if (_isCountingDown) return; // already counting
 
-    _slideshowTimer?.cancel();
-    for (final ctrl in _videoControllers.values) {
-      ctrl.pause();
-    }
-
-    String? bgUrl;
-    try {
-      bgUrl = widget.mediaItems.firstWhere((m) => !m.isVideo).url;
-    } catch (_) {}
-
     void navigate() {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ActiveSessionScreen(
             exerciseId: widget.exerciseId,
             exerciseName: widget.exerciseName,
-            backgroundImageUrl: bgUrl,
+            backgroundImageUrl: null,
             unit: widget.unit,
             challengeSeconds: widget.defaultTimer,
             streak: widget.streak,
@@ -350,180 +247,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // Build helpers
-  // ─────────────────────────────────────────────────────────────────────────────
 
-  /// Main media display for [index].
-  Widget _buildMainMedia(int index) {
-    if (widget.mediaItems.isEmpty) {
-      return _placeholder();
-    }
-    final item = widget.mediaItems[index];
-    if (item.isVideo) {
-      final ctrl = _videoControllers[index];
-      if (ctrl != null && ctrl.value.isInitialized) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.cover,
-                child: SizedBox(
-                  width: ctrl.value.size.width,
-                  height: ctrl.value.size.height,
-                  child: VideoPlayer(ctrl),
-                ),
-              ),
-            ),
-            // Scrim
-            Positioned(
-              left: 0, right: 0, bottom: 0,
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter, end: Alignment.topCenter,
-                    colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
-                  ),
-                ),
-              ),
-            ),
-            // Play/pause
-            IconButton(
-              icon: Icon(
-                ctrl.value.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
-                size: 56, color: Colors.white.withValues(alpha: 0.85),
-              ),
-              onPressed: () => setState(() {
-                ctrl.value.isPlaying ? ctrl.pause() : ctrl.play();
-                if (!ctrl.value.isPlaying) _slideshowTimer?.cancel();
-              }),
-            ),
-          ],
-        );
-      }
-      // Loading spinner while video initialises
-      return Container(
-        color: PCColors.brownDark.withValues(alpha: 0.1),
-        child: const Center(child: CircularProgressIndicator(color: PCColors.yellow)),
-      );
-    }
-    // Image
-    return CachedNetworkImage(
-      imageUrl: item.url, 
-      fit: BoxFit.cover, 
-      width: double.infinity,
-      errorWidget: (context, url, error) => _placeholder(),
-    );
-  }
-
-  Widget _placeholder() => Container(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topCenter, end: Alignment.bottomCenter,
-        colors: [PCColors.yellow.withValues(alpha: 0.3), PCColors.cream],
-      ),
-    ),
-    child: Center(child: Icon(Icons.fitness_center, size: 80,
-        color: PCColors.brown.withValues(alpha: 0.35))),
-  );
-
-  /// Horizontal thumbnail strip — shown only when there are ≥ 2 media items.
-  Widget _buildThumbnailStrip() {
-    if (widget.mediaItems.length < 2) return const SizedBox.shrink();
-
-    return SizedBox(
-      height: 68,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: widget.mediaItems.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final item = widget.mediaItems[i];
-          final active = i == _activeIndex;
-          return GestureDetector(
-            onTap: () => _selectMedia(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 72,
-              height: 64,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: active ? PCColors.yellow : PCColors.brown.withValues(alpha: 0.35),
-                  width: active ? 2.5 : 1.5,
-                ),
-                boxShadow: active
-                    ? [BoxShadow(color: PCColors.yellow.withValues(alpha: 0.55),
-                                 blurRadius: 6, offset: const Offset(0, 2))]
-                    : [],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.5),
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Thumbnail background
-                    item.isVideo
-                        ? _videoThumbnail(i)
-                        : CachedNetworkImage(
-                            imageUrl: item.url, 
-                            fit: BoxFit.cover,
-                            errorWidget: (context, url, error) => _thumbnailPlaceholder(item.isVideo),
-                          ),
-                    // Video icon overlay
-                    if (item.isVideo)
-                      Center(
-                        child: Icon(Icons.play_circle_rounded,
-                            size: 24,
-                            color: Colors.white.withValues(alpha: 0.9)),
-                      ),
-                    // Active highlight overlay
-                    if (active)
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.5),
-                          color: PCColors.yellow.withValues(alpha: 0.18),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  /// For a video thumbnail we show a dark placeholder with number badge
-  Widget _videoThumbnail(int index) {
-    final ctrl = _videoControllers[index];
-    if (ctrl != null && ctrl.value.isInitialized) {
-      // Show first frame via VideoPlayer (tiny)
-      return FittedBox(
-        fit: BoxFit.cover,
-        child: SizedBox(
-          width: ctrl.value.size.width,
-          height: ctrl.value.size.height,
-          child: VideoPlayer(ctrl),
-        ),
-      );
-    }
-    return _thumbnailPlaceholder(true);
-  }
-
-  Widget _thumbnailPlaceholder(bool isVideo) => Container(
-    color: PCColors.brownDark.withValues(alpha: 0.12),
-    child: Center(
-      child: Icon(
-        isVideo ? Icons.videocam_rounded : Icons.image_rounded,
-        size: 22, color: PCColors.brown.withValues(alpha: 0.5),
-      ),
-    ),
-  );
 
   Widget _buildRepCounter() {
     return Column(
@@ -643,22 +367,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       ),
                     ),
 
-                    // Main media
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: SizedBox(
-                        height: h * 0.32,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(_ControlStyle.cardRadius + 10),
-                          child: _buildMainMedia(_activeIndex),
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 10),
-
-                    // Thumbnail strip (only if >1 media)
-                    _buildThumbnailStrip(),
-                    if (widget.mediaItems.length >= 2) const SizedBox(height: 10),
 
 
                     // Stats bar — bold border (hero element), unchanged colors

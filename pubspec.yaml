@@ -42,9 +42,6 @@ dependencies:
   video_player: ^2.11.1
   confetti: ^0.8.0
   share_plus: ^13.1.0
-  firebase_storage: ^12.4.10
-  image_picker: ^1.2.2
-  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
