@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 import '../admin/admin_exercise_screen.dart';
 
 class AdminScreen extends StatelessWidget {
@@ -50,10 +51,7 @@ class AdminScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: Text(
-                          exercise.icon.isNotEmpty ? exercise.icon : '💪',
-                          style: const TextStyle(fontSize: 24),
-                        ),
+                        child: buildExerciseIconWidget(exercise.icon, size: 26),
                       ),
                     ),
                     title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

@@ -23,7 +23,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
   bool _isLoading = false;
   bool _isDetailsCustom = false;
-  String _selectedIcon = '💪';
+  String _selectedIcon = 'default';
 
   @override
   void initState() {
@@ -31,8 +31,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     final e = widget.existing;
     _nameController = TextEditingController(text: e?.name ?? '');
     _descController = TextEditingController(text: e?.description ?? '');
-    _selectedIcon = e?.icon ?? '💪';
-    if (!exerciseEmojis.contains(_selectedIcon)) _selectedIcon = '💪';
+    _selectedIcon = e?.icon ?? 'default';
+    if (!exerciseIcons.any((item) => item.id == _selectedIcon)) {
+      _selectedIcon = 'default';
+    }
     _repsController = TextEditingController(text: (e?.defaultReps ?? 0).toString());
     _timerController = TextEditingController(text: (e?.defaultTimer ?? 0).toString());
     _daysController = TextEditingController(text: (e?.defaultDays ?? 0).toString());
@@ -120,20 +122,61 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
               validator: (v) => v!.trim().isEmpty ? 'Required' : null,
             ),
             const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              value: _selectedIcon,
-              decoration: const InputDecoration(labelText: 'Exercise Icon', border: OutlineInputBorder()),
-              items: exerciseEmojis.map((emoji) {
-                return DropdownMenuItem(
-                  value: emoji,
-                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
-                );
-              }).toList(),
-              onChanged: (val) {
-                if (val != null) {
-                  setState(() => _selectedIcon = val);
-                }
-              },
+            Row(
+              children: [
+                const Expanded(
+                  child: Text('Exercise Icon', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedIcon,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      isDense: true,
+                    ),
+                    items: [
+                      // ── Material Icons section ──────────────────────────────
+                      const DropdownMenuItem<String>(
+                        enabled: false,
+                        value: '__header_icons__',
+                        child: Text('Material Icons', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                      ),
+                      ...exerciseIcons.map((item) {
+                        return DropdownMenuItem<String>(
+                          value: item.id,
+                          child: Row(
+                            children: [
+                              Icon(item.icon, size: 20, color: Colors.black87),
+                              const SizedBox(width: 8),
+                              Text(item.label, style: const TextStyle(fontSize: 13)),
+                            ],
+                          ),
+                        );
+                      }),
+                      // ── Emoji section ───────────────────────────────────────
+                      const DropdownMenuItem<String>(
+                        enabled: false,
+                        value: '__header_emojis__',
+                        child: Text('Emojis', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                      ),
+                      ...exerciseEmojis.map((emoji) {
+                        return DropdownMenuItem<String>(
+                          value: emoji,
+                          child: Text(emoji, style: const TextStyle(fontSize: 22)),
+                        );
+                      }),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _selectedIcon = val);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 24),
@@ -161,7 +204,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
             const SizedBox(height: 12),
             _buildDetailCounter('Reps', _repsController),
             const SizedBox(height: 16),
-            _buildDetailCounter('Timer', _timerController),
+            _buildDetailCounter('Timer(seconds)', _timerController),
             const SizedBox(height: 16),
             _buildDetailCounter('Days', _daysController),
             const SizedBox(height: 24),

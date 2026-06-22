@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 export '../models/exercise_item.dart' show ExerciseMedia;
 import 'exercise_start_screen.dart';
 import '../app_settings.dart';
@@ -146,7 +147,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           children: [
                             Expanded(
                               child: Text(
-                                streak > 0 ? '🔥 $streak-Day\n$displayName' : displayName,
+                                displayName,
                                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -159,7 +160,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         ),
                         Expanded(
                           child: Center(
-                            child: Text(icon, style: const TextStyle(fontSize: 48)),
+                            child: buildExerciseIconWidget(icon, size: 48),
                           ),
                         ),
                         if (hasGoals)
@@ -167,7 +168,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         if (streak > 0 || lifetime > 0)
                           Padding(
                             padding: const EdgeInsets.only(top: 2),
-                            child: Text('$icon $lifetime Total ($unit)', style: const TextStyle(fontSize: 11)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 11)),
+                              ],
+                            ),
                           ),
                         const SizedBox(height: 8),
                         SizedBox(
@@ -210,7 +216,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: Center(
-                              child: Text(icon, style: const TextStyle(fontSize: 28)),
+                              child: buildExerciseIconWidget(icon, size: 28),
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -219,7 +225,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  streak > 0 ? '🔥 $streak-Day $displayName Streak' : displayName,
+                                  displayName,
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                                 if (hasGoals) ...[
@@ -228,7 +234,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ],
                                 if (streak > 0 || lifetime > 0) ...[
                                   const SizedBox(height: 4),
-                                  Text('$icon $lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
+                                  Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
                                 ],
                               ],
                             ),
