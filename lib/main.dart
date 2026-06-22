@@ -8,6 +8,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
+import 'admin/admin_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,7 +83,23 @@ class _StartRouterState extends State<StartRouter> {
     if (user != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(
+          builder: (context) => FutureBuilder<bool>(
+            future: checkIsAdmin(user.uid),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const Scaffold(
+                  backgroundColor: Color(0xFFFAF1E4),
+                  body: Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFFC93C)),
+                  ),
+                );
+              }
+              final isAdmin = snapshot.data ?? false;
+              return HomeScreen(isAdmin: isAdmin);
+            },
+          ),
+        ),
       );
     } else if (!hasSeenOnboarding) {
       Navigator.pushReplacement(

@@ -65,18 +65,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
         final data = userSnapshot.data!.data() as Map<String, dynamic>?;
 
-        final selectedExercises =
-            data == null || (data['selectedExercises'] ?? []).isEmpty
-                ? ['pushups', 'squats', 'situps']
-                : List<String>.from(data['selectedExercises']);
-
-        final exercises = data == null
-            ? {
-                'pushups': {'currentStreak': 47, 'lifetimeTotal': 12450},
-                'squats': {'currentStreak': 0, 'lifetimeTotal': 647},
-                'situps': {'currentStreak': 3, 'lifetimeTotal': 1210},
-              }
-            : Map<String, dynamic>.from(data['exercises'] ?? {});
+        final selectedExercises = List<String>.from(data?['selectedExercises'] ?? []);
+        final exercises = Map<String, dynamic>.from(data?['exercises'] ?? {});
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance

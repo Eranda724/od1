@@ -67,7 +67,6 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin — Manage Exercises')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showExerciseDialog(context),
         child: const Icon(Icons.add),

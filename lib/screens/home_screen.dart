@@ -5,9 +5,11 @@ import 'login_screen.dart';
 import 'settings_screen.dart';
 import 'exercise_screen.dart';
 import 'leaderboard_screen.dart';
+import 'admin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool isAdmin;
+  const HomeScreen({super.key, this.isAdmin = false});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: widget.isAdmin ? 3 : 2, vsync: this);
     _settings.addListener(_onSettingsChanged);
   }
 
@@ -65,9 +67,10 @@ class _HomeScreenState extends State<HomeScreen>
             fontSize: 14,
           ),
           indicatorWeight: 3,
-          tabs: const [
-            Tab(text: 'Exercise'),
-            Tab(text: 'Leaderboard'),
+          tabs: [
+            const Tab(text: 'Exercise'),
+            const Tab(text: 'Leaderboard'),
+            if (widget.isAdmin) const Tab(text: 'Admin'),
           ],
         ),
       ),
@@ -76,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           ExerciseScreen(user: user),
           LeaderboardScreen(currentUid: user?.uid),
+          if (widget.isAdmin) const AdminScreen(),
         ],
       ),
     );
