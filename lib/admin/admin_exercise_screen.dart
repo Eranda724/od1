@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
   final ExerciseItem? existing;
@@ -16,11 +17,13 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
   late TextEditingController _nameController;
   late TextEditingController _descController;
-  late TextEditingController _unitController;
   late TextEditingController _repsController;
   late TextEditingController _timerController;
+  late TextEditingController _daysController;
 
   bool _isLoading = false;
+  bool _isDetailsCustom = false;
+  String _selectedIcon = '💪';
 
   @override
   void initState() {
@@ -28,18 +31,24 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     final e = widget.existing;
     _nameController = TextEditingController(text: e?.name ?? '');
     _descController = TextEditingController(text: e?.description ?? '');
-    _unitController = TextEditingController(text: e?.unit ?? 'reps');
-    _repsController = TextEditingController(text: (e?.defaultReps ?? 10).toString());
-    _timerController = TextEditingController(text: (e?.defaultTimer ?? 30).toString());
+    _selectedIcon = e?.icon ?? '💪';
+    if (!exerciseEmojis.contains(_selectedIcon)) _selectedIcon = '💪';
+    _repsController = TextEditingController(text: (e?.defaultReps ?? 0).toString());
+    _timerController = TextEditingController(text: (e?.defaultTimer ?? 0).toString());
+    _daysController = TextEditingController(text: (e?.defaultDays ?? 0).toString());
+
+    if ((e?.defaultReps ?? 0) > 0 || (e?.defaultTimer ?? 0) > 0 || (e?.defaultDays ?? 0) > 0) {
+      _isDetailsCustom = true;
+    }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _descController.dispose();
-    _unitController.dispose();
     _repsController.dispose();
     _timerController.dispose();
+    _daysController.dispose();
     super.dispose();
   }
 
@@ -63,10 +72,11 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         id: id,
         name: name,
         description: _descController.text.trim(),
-        icon: widget.existing?.icon ?? '💪',
-        unit: _unitController.text.trim(),
-        defaultReps: int.tryParse(_repsController.text.trim()) ?? 0,
-        defaultTimer: int.tryParse(_timerController.text.trim()) ?? 0,
+        icon: _selectedIcon,
+        unit: 'reps',
+        defaultReps: _isDetailsCustom ? (int.tryParse(_repsController.text.trim()) ?? 0) : 0,
+        defaultTimer: _isDetailsCustom ? (int.tryParse(_timerController.text.trim()) ?? 0) : 0,
+        defaultDays: _isDetailsCustom ? (int.tryParse(_daysController.text.trim()) ?? 0) : 0,
         mediaItems: [],
       );
 
@@ -95,22 +105,6 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
       appBar: AppBar(
         title: Text(isEdit ? 'Edit Exercise' : 'Add Exercise'),
         backgroundColor: const Color(0xFFFFC72C),
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.check_rounded, size: 28),
-              onPressed: _save,
-            ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -125,28 +119,51 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
               decoration: const InputDecoration(labelText: 'Exercise Name (e.g. Push-Ups)', border: OutlineInputBorder()),
               validator: (v) => v!.trim().isEmpty ? 'Required' : null,
             ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedIcon,
+              decoration: const InputDecoration(labelText: 'Exercise Icon', border: OutlineInputBorder()),
+              items: exerciseEmojis.map((emoji) {
+                return DropdownMenuItem(
+                  value: emoji,
+                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                );
+              }).toList(),
+              onChanged: (val) {
+                if (val != null) {
+                  setState(() => _selectedIcon = val);
+                }
+              },
+            ),
 
             const SizedBox(height: 24),
 
-            // Settings
-            const Text('Default Settings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _repsController,
-              decoration: const InputDecoration(labelText: 'Default Reps', border: OutlineInputBorder()),
-              keyboardType: TextInputType.number,
+            // Details
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _isDetailsCustom = !_isDetailsCustom;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isDetailsCustom ? const Color(0xFFFFC72C) : Colors.grey.shade200,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
+                  ),
+                  child: Text(_isDetailsCustom ? 'Save' : 'Edit', style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            TextFormField(
-              controller: _timerController,
-              decoration: const InputDecoration(labelText: 'Default Timer (s)', border: OutlineInputBorder()),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _unitController,
-              decoration: const InputDecoration(labelText: 'Unit (reps/s)', border: OutlineInputBorder()),
-            ),
+            _buildDetailCounter('Reps', _repsController),
+            const SizedBox(height: 16),
+            _buildDetailCounter('Timer', _timerController),
+            const SizedBox(height: 16),
+            _buildDetailCounter('Days', _daysController),
             const SizedBox(height: 24),
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -166,11 +183,66 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                 ],
               ),
             ),
-            
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _save,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFC72C),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: _isLoading 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                  : const Text('Save Exercise', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+            ),
             const SizedBox(height: 40),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildDetailCounter(String label, TextEditingController controller) {
+    return Row(
+      children: [
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+        IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          color: _isDetailsCustom ? Colors.black : Colors.grey,
+          onPressed: _isDetailsCustom ? () {
+            int val = int.tryParse(controller.text) ?? 0;
+            if (val > 0) controller.text = (val - 1).toString();
+          } : null,
+        ),
+        SizedBox(
+          width: 80,
+          child: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            enabled: _isDetailsCustom,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(vertical: 8),
+              border: const OutlineInputBorder(),
+              disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300)),
+              filled: !_isDetailsCustom,
+              fillColor: Colors.grey.shade200,
+            ),
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.add_circle_outline),
+          color: _isDetailsCustom ? Colors.black : Colors.grey,
+          onPressed: _isDetailsCustom ? () {
+            int val = int.tryParse(controller.text) ?? 0;
+            controller.text = (val + 1).toString();
+          } : null,
+        ),
+      ],
     );
   }
 }
