@@ -23,6 +23,8 @@ class ExerciseItem {
   final String unit;
   final int defaultReps;
   final int defaultTimer; // Admin-configured exercise duration (in seconds)
+  final int defaultDays; // Admin-configured number of days
+
   /// All media assets admin uploaded for this exercise.
   /// Stored in Firestore as  exercises/{id}/mediaItems  (array of maps).
   final List<ExerciseMedia> mediaItems;
@@ -35,6 +37,7 @@ class ExerciseItem {
     required this.unit,
     this.defaultReps = 0,
     this.defaultTimer = 0,
+    this.defaultDays = 0,
     this.mediaItems = const [],
   });
 
@@ -71,6 +74,7 @@ class ExerciseItem {
       unit: data['unit'] ?? 'reps',
       defaultReps: (data['defaultReps'] as num?)?.toInt() ?? 0,
       defaultTimer: (data['defaultTimer'] as num?)?.toInt() ?? 0,
+      defaultDays: (data['defaultDays'] as num?)?.toInt() ?? 0,
       mediaItems: items,
     );
   }
@@ -82,6 +86,7 @@ class ExerciseItem {
         'unit': unit,
         'defaultReps': defaultReps,
         'defaultTimer': defaultTimer,
+        'defaultDays': defaultDays,
         'mediaItems': mediaItems.map((m) => m.toMap()).toList(),
       };
 }

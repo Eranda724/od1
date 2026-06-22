@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'onboarding_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
-import 'home_screen.dart';
-import 'admin_screen.dart';
+import '../main.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   String? _errorMessage;
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
   Future<void> _login() async {
     setState(() {
@@ -34,14 +33,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted) {
-        final user = FirebaseAuth.instance.currentUser;
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user!.uid).get();
-        final isAdmin = doc.data()?['isAdmin'] == true;
-
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => isAdmin ? const AdminScreen() : const HomeScreen(),
+            builder: (context) => const StartRouter(),
           ),
         );
       }
@@ -152,11 +147,21 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Password',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword;
+                    });
+                  },
+                ),
               ),
-              obscureText: true,
+              obscureText: _obscurePassword,
             ),
             const SizedBox(height: 0.2),
             Align(

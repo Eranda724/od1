@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 export '../models/exercise_item.dart' show ExerciseMedia;
 import 'exercise_start_screen.dart';
 import '../app_settings.dart';
@@ -63,20 +64,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final data = userSnapshot.data!.data() as Map<String, dynamic>?;
+        final data = userSnapshot.data?.data() as Map<String, dynamic>?;
 
-        final selectedExercises =
-            data == null || (data['selectedExercises'] ?? []).isEmpty
-                ? ['pushups', 'squats', 'situps']
-                : List<String>.from(data['selectedExercises']);
-
-        final exercises = data == null
-            ? {
-                'pushups': {'currentStreak': 47, 'lifetimeTotal': 12450},
-                'squats': {'currentStreak': 0, 'lifetimeTotal': 647},
-                'situps': {'currentStreak': 3, 'lifetimeTotal': 1210},
-              }
-            : Map<String, dynamic>.from(data['exercises'] ?? {});
+        final exercises = Map<String, dynamic>.from(data?['exercises'] ?? {});
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -95,7 +85,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             final todoExercises = <String>[];
             final doneExercises = <String>[];
 
-            for (final id in selectedExercises) {
+            // Show all exercises available in the database
+            for (final id in exerciseDefs.keys) {
               final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
               final lastCompleted = exerciseData['lastCompletedDate'] as String?;
               if (lastCompleted == today) {
@@ -115,84 +106,160 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               final icon = def?.icon ?? '💪';
               final unit = def?.unit ?? 'reps';
 
-              return Card(
-                margin: _settings.isGridView ? EdgeInsets.zero : const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
+              final goals = <String>[];
+              if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} Reps');
+              if ((def?.defaultTimer ?? 0) > 0) goals.add('${def!.defaultTimer}s');
+              if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} Days');
+
+              void startExercise() {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ExerciseStartScreen(
+                      exerciseId: id,
+                      exerciseName: displayName,
+                      description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                      streak: streak,
+                      lifetimeTotal: lifetime,
+                      defaultReps: def?.defaultReps ?? 0,
+                      defaultTimer: def?.defaultTimer ?? 0,
+                      unit: unit,
+                    ),
+                  ),
+                );
+              }
+
+              Widget gridCard() {
+                return Card(
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                  ),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                displayName,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            if (isDone)
+                              const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                          ],
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: buildExerciseIconWidget(icon, size: 48),
+                          ),
+                        ),
+                        if (hasGoals)
+                          Text('🎯 ${goals.join(' • ')}', style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                        if (streak > 0 || lifetime > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: startExercise,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              minimumSize: const Size(0, 36),
+                            ),
+                            child: Text(isDone ? 'Do Again' : 'Start', style: const TextStyle(fontSize: 13)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              Widget listCard() {
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                  ),
+                  elevation: 2,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: startExercise,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                      child: Row(
                         children: [
+                          Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC72C).withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Center(
+                              child: buildExerciseIconWidget(icon, size: 28),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
                           Expanded(
-                            child: Text(
-                              streak > 0
-                                  ? '🔥 $streak-Day\n$displayName Streak'
-                                  : '😔 0-Day\n$displayName Streak',
-                              style: TextStyle(
-                                  fontSize: _settings.isGridView ? 14 : 18, fontWeight: FontWeight.bold),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayName,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
+                                if (hasGoals) ...[
+                                  const SizedBox(height: 4),
+                                  Text('🎯 ${goals.join(' • ')}', style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                                ],
+                                if (streak > 0 || lifetime > 0) ...[
+                                  const SizedBox(height: 4),
+                                  Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
+                                ],
+                              ],
                             ),
                           ),
                           if (isDone)
-                            const Icon(Icons.check_circle, color: Colors.green),
+                            const Padding(
+                              padding: EdgeInsets.only(right: 8.0),
+                              child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                            ),
+                          ElevatedButton(
+                            onPressed: startExercise,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            ),
+                            child: Text(isDone ? 'Again' : 'Start'),
+                          ),
                         ],
                       ),
-                      if (_settings.isGridView) const Spacer() else const SizedBox(height: 8),
-                      Text('$icon $lifetime Total ($unit)', style: TextStyle(fontSize: _settings.isGridView ? 12 : 14)),
-                      if (_settings.isGridView) const Spacer() else const SizedBox(height: 12),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ExerciseStartScreen(
-                                  exerciseId: id,
-                                  exerciseName: displayName,
-                                  description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
-                                  streak: streak,
-                                  lifetimeTotal: lifetime,
-                                  defaultReps: def?.defaultReps ?? 0,
-                                  defaultTimer: def?.defaultTimer ?? 0,
-                                  unit: unit,
-                                  mediaItems: (def?.mediaItems.isNotEmpty == true)
-                                      ? def!.mediaItems
-                                      : [
-                                          const ExerciseMedia(
-                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4',
-                                            isVideo: true,
-                                          ),
-                                          const ExerciseMedia(
-                                            url: 'https://picsum.photos/seed/workout1/800/600',
-                                            isVideo: false,
-                                          ),
-                                          const ExerciseMedia(
-                                            url: 'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-                                            isVideo: true,
-                                          ),
-                                        ],
-                                ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                          ),
-                          child: Text(isDone ? 'Do Again' : 'Start', style: TextStyle(fontSize: _settings.isGridView ? 12 : 14)),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              );
+                );
+              }
+
+              return _settings.isGridView ? gridCard() : listCard();
             }
 
             Widget buildSection(String title, List<String> ids, bool isDone, Color titleColor) {
@@ -231,7 +298,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 if (todoExercises.isEmpty && doneExercises.isEmpty)
                   const Padding(
                     padding: EdgeInsets.only(top: 32.0),
-                    child: Center(child: Text('No exercises selected.')),
+                    child: Center(child: Text('No exercises available. Admin needs to add some!')),
                   ),
                 buildSection('To Do', todoExercises, false, Colors.black),
                 buildSection('Completed Today', doneExercises, true, Colors.green),

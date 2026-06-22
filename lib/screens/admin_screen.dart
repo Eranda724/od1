@@ -1,75 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
+import '../admin/admin_exercise_screen.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
-  void _showExerciseDialog(BuildContext context, {ExerciseItem? existing}) {
-    final nameController = TextEditingController(text: existing?.name ?? '');
-    final iconController = TextEditingController(text: existing?.icon ?? '');
-    final unitController = TextEditingController(text: existing?.unit ?? 'reps');
-    final idController = TextEditingController(text: existing?.id ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(existing == null ? 'Add Exercise' : 'Edit Exercise'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: idController,
-              enabled: existing == null,
-              decoration: const InputDecoration(
-                labelText: 'ID (e.g. pushups, no spaces)',
-              ),
-            ),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: 'Display Name (e.g. Push-Ups)'),
-            ),
-            TextField(
-              controller: iconController,
-              decoration: const InputDecoration(labelText: 'Icon (emoji, e.g. 💪)'),
-            ),
-            TextField(
-              controller: unitController,
-              decoration: const InputDecoration(labelText: 'Unit (e.g. reps)'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final id = idController.text.trim();
-              if (id.isEmpty || nameController.text.trim().isEmpty) return;
-
-              await FirebaseFirestore.instance.collection('exercises').doc(id).set({
-                'name': nameController.text.trim(),
-                'icon': iconController.text.trim(),
-                'unit': unitController.text.trim(),
-              });
-
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Admin — Manage Exercises')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showExerciseDialog(context),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AdminExerciseScreen()),
+        ),
         child: const Icon(Icons.add),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -91,27 +36,75 @@ class AdminScreen extends StatelessWidget {
             itemCount: exercises.length,
             itemBuilder: (context, index) {
               final exercise = exercises[index];
-              return ListTile(
-                leading: Text(exercise.icon, style: const TextStyle(fontSize: 24)),
-                title: Text(exercise.name),
-                subtitle: Text('ID: ${exercise.id}  •  Unit: ${exercise.unit}'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showExerciseDialog(context, existing: exercise),
+              return Card(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: buildExerciseIconWidget(exercise.icon, size: 26),
+                      ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('exercises')
-                            .doc(exercise.id)
-                            .delete();
-                      },
+                    title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Text(
+                        'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : "Any"}\n'
+                        'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : "Any"}\n'
+                        'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : "Any"}',
+                        style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+                      ),
                     ),
-                  ],
+                    isThreeLine: true,
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AdminExerciseScreen(existing: exercise),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (c) => AlertDialog(
+                                title: const Text('Delete Exercise?'),
+                                content: Text('Are you sure you want to delete "${exercise.name}"?'),
+                                actions: [
+                                  TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(c, true), 
+                                    child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              await FirebaseFirestore.instance
+                                  .collection('exercises')
+                                  .doc(exercise.id)
+                                  .delete();
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },

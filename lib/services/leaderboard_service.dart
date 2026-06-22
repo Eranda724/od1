@@ -70,115 +70,6 @@ class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
   static final _auth = FirebaseAuth.instance;
 
-  // ── Mock data ────────────────────────────────────────────────────────────────
-  /// Shown when no real Firestore data exists yet (dev / empty db).
-  static const _mockRaw = [
-    {
-      'uid': 'mock_1',
-      'name': 'CoachPotato',
-      'daily': 340,
-      'weekly': 1850,
-      'monthly': 6420,
-    },
-    {
-      'uid': 'mock_2',
-      'name': 'IronCouch',
-      'daily': 290,
-      'weekly': 1540,
-      'monthly': 5870,
-    },
-    {
-      'uid': 'mock_3',
-      'name': 'SquatKing',
-      'daily': 260,
-      'weekly': 1210,
-      'monthly': 4930,
-    },
-    {
-      'uid': 'mock_4',
-      'name': 'PushUpQueen',
-      'daily': 210,
-      'weekly': 980,
-      'monthly': 3760,
-    },
-    {
-      'uid': 'mock_5',
-      'name': 'LazyStar',
-      'daily': 180,
-      'weekly': 850,
-      'monthly': 3100,
-    },
-    {
-      'uid': 'mock_6',
-      'name': 'SofaSurfer',
-      'daily': 150,
-      'weekly': 720,
-      'monthly': 2540,
-    },
-    {
-      'uid': 'mock_7',
-      'name': 'GrumpyRep',
-      'daily': 110,
-      'weekly': 560,
-      'monthly': 1980,
-    },
-    {
-      'uid': 'mock_8',
-      'name': 'TinyGains',
-      'daily': 80,
-      'weekly': 390,
-      'monthly': 1250,
-    },
-    {
-      'uid': 'mock_9',
-      'name': 'OneMoreRep',
-      'daily': 50,
-      'weekly': 240,
-      'monthly': 780,
-    },
-    {
-      'uid': 'mock_10',
-      'name': 'JustStarted',
-      'daily': 20,
-      'weekly': 90,
-      'monthly': 210,
-    },
-  ];
-
-  static List<LeaderboardEntry> _mockEntries(LeaderboardPeriod period) {
-    final sorted = [..._mockRaw];
-    sorted.sort((a, b) {
-      final aScore = _mockScore(a, period);
-      final bScore = _mockScore(b, period);
-      return bScore.compareTo(aScore);
-    });
-
-    return sorted.asMap().entries.map((e) {
-      final rank = e.key + 1;
-      final m = e.value;
-      return LeaderboardEntry(
-        uid: m['uid'] as String,
-        displayName: m['name'] as String,
-        avatar: _avatarFor(rank),
-        score: _mockScore(m, period),
-        dailyScore: m['daily'] as int,
-        weeklyScore: m['weekly'] as int,
-        monthlyScore: m['monthly'] as int,
-      );
-    }).toList();
-  }
-
-  static int _mockScore(Map<String, Object> m, LeaderboardPeriod period) {
-    switch (period) {
-      case LeaderboardPeriod.daily:
-        return m['daily'] as int;
-      case LeaderboardPeriod.weekly:
-        return m['weekly'] as int;
-      case LeaderboardPeriod.monthly:
-        return m['monthly'] as int;
-    }
-  }
-
   // ── Avatars based on score rank ──────────────────────────────────────────────
   static String _avatarFor(int rank) {
     switch (rank) {
@@ -194,7 +85,6 @@ class LeaderboardService {
   }
 
   /// Returns a stream of the top 50 users sorted by the given period's score.
-  /// Falls back to [_mockEntries] when Firestore returns no results.
   static Stream<List<LeaderboardEntry>> stream(LeaderboardPeriod period) {
     return _db
         .collection('users')
@@ -226,8 +116,7 @@ class LeaderboardService {
           monthlyScore: monthly,
         ));
       }
-      // Fall back to mock data when Firestore is empty
-      return entries.isEmpty ? _mockEntries(period) : entries;
+      return entries;
     });
   }
 
