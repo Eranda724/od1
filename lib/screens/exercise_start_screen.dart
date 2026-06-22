@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../models/exercise_item.dart';
 import 'session_screen.dart';
@@ -409,8 +410,12 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       );
     }
     // Image
-    return Image.network(item.url, fit: BoxFit.cover, width: double.infinity,
-        errorBuilder: (context, error, stackTrace) => _placeholder());
+    return CachedNetworkImage(
+      imageUrl: item.url, 
+      fit: BoxFit.cover, 
+      width: double.infinity,
+      errorWidget: (context, url, error) => _placeholder(),
+    );
   }
 
   Widget _placeholder() => Container(
@@ -463,8 +468,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     // Thumbnail background
                     item.isVideo
                         ? _videoThumbnail(i)
-                        : Image.network(item.url, fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => _thumbnailPlaceholder(item.isVideo)),
+                        : CachedNetworkImage(
+                            imageUrl: item.url, 
+                            fit: BoxFit.cover,
+                            errorWidget: (context, url, error) => _thumbnailPlaceholder(item.isVideo),
+                          ),
                     // Video icon overlay
                     if (item.isVideo)
                       Center(
