@@ -1,31 +1,75 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../app_settings.dart';
-import '../models/exercise_item.dart';
 import 'session_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared sizing tokens (no color changes — just reusing PCColors consistently)
+// Design Tokens
 // ─────────────────────────────────────────────────────────────────────────────
-class _ControlStyle {
-  static const double cardRadius = 14;
+class _PCSpacing {
+  static const double xs = 4.0;
+  static const double sm = 8.0;
+  static const double md = 12.0;
+  static const double lg = 16.0;
+  static const double xl = 20.0;
+  static const double xxl = 24.0;
+  static const double xxxl = 32.0;
+}
 
-  static const TextStyle smallLabel = TextStyle(
+class _PCRadii {
+  static const double sm = 10.0;
+  static const double md = 14.0;
+  static const double lg = 20.0;
+}
+
+class _PCTextStyles {
+  static const TextStyle screenTitle = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w900,
+    letterSpacing: 1.5,
+    color: PCColors.brownDark,
+  );
+
+  static const TextStyle sectionLabel = TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w800,
     color: PCColors.brown,
     letterSpacing: 0.8,
   );
 
-  // One subtle border used by every secondary/content card
-  // (description box, rep box, timer box, ready-time dropdown).
-  static Border subtleBorder() =>
-      Border.all(color: PCColors.brown.withValues(alpha: 0.3), width: 1.5);
+  static const TextStyle heroNumber = TextStyle(
+    fontSize: 42,
+    fontWeight: FontWeight.w900,
+    color: PCColors.brownDark,
+  );
 
-  // One bold border used by hero/emphasis elements (stats bar, popups, dialogs).
-  static Border boldBorder() => Border.all(color: PCColors.brown, width: 1.5);
+  static const TextStyle statLabel = TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w800,
+    color: PCColors.brownDark,
+  );
+
+  static const TextStyle startButton = TextStyle(
+    fontSize: 32,
+    fontWeight: FontWeight.w900,
+    color: Colors.white,
+    letterSpacing: 1.2,
+  );
+
+  static const TextStyle countdownNumber = TextStyle(
+    fontSize: 72,
+    fontWeight: FontWeight.w900,
+    color: Colors.white,
+  );
+
+  static const TextStyle bodyText = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: PCColors.brownDark,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,23 +102,31 @@ class ExerciseStartScreen extends StatefulWidget {
 }
 
 class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
-
-
   // ── Ready Time ─────────────────────────────────────────────────────────────
   bool _wantsReadyTime = false;
   int _readyTimeSeconds = 3;
   final GlobalKey _timerKey = GlobalKey();
 
-  // ── 3-2-1 countdown ────────────────────────────────────────────────────────
+  // ── Countdown ───────────────────────────────────────────────────────────────
   bool _isCountingDown = false;
-  int _currentCount = 0;
+  int _currentCount = 3;
   Timer? _countdownTimer;
-  // Logic moved to countdown_screen.dart
+
+  late final String _randomImage;
 
   @override
   void initState() {
     super.initState();
     _loadSavedPrefs();
+
+    final images = [
+      'assets/images/po1.png',
+      'assets/images/po2.png',
+      'assets/images/po3.png',
+      'assets/images/login.png',
+      'assets/images/register.png',
+    ];
+    _randomImage = images[Random().nextInt(images.length)];
   }
 
   // ── Persistence ────────────────────────────────────────────────────────────
@@ -100,8 +152,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     await prefs.setBool('wantsReadyTime_${widget.exerciseId}', v);
   }
 
-
-
   @override
   void dispose() {
     _countdownTimer?.cancel();
@@ -110,7 +160,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   // ── Countdown ──────────────────────────────────────────────────────────────
   void _startCountdown() {
-    if (_isCountingDown) return; // already counting
+    if (_isCountingDown) return;
 
     void navigate() {
       Navigator.of(context).pushReplacement(
@@ -166,18 +216,21 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         side: const BorderSide(color: PCColors.brown, width: 1.5),
       ),
       position: RelativeRect.fromLTRB(
-        offset.dx, offset.dy + size.height + 6, offset.dx + size.width, 0,
+        offset.dx,
+        offset.dy + size.height + 6,
+        offset.dx + size.width,
+        0,
       ),
       items: [
         for (final s in [3, 5, 10])
           PopupMenuItem<int>(
             value: s,
-            height: 44,
+            height: 48,
             child: _TimerOption(seconds: s, selected: _readyTimeSeconds == s),
           ),
         PopupMenuItem<int>(
           value: -1,
-          height: 44,
+          height: 48,
           child: _TimerOption(
             label: 'Custom…',
             icon: Icons.edit_rounded,
@@ -208,19 +261,33 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: PCColors.brown, width: 2),
         ),
-        title: const Text('Ready Time',
-            style: TextStyle(fontWeight: FontWeight.w900, color: PCColors.brownDark)),
+        title: const Text(
+          'Ready Time',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+            color: PCColors.brownDark,
+          ),
+        ),
         content: TextField(
           controller: ctrl,
           autofocus: true,
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: PCColors.brownDark),
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: PCColors.brownDark,
+          ),
           decoration: InputDecoration(
             suffixText: 's',
-            suffixStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: PCColors.brown),
-            filled: true, fillColor: Colors.white,
+            suffixStyle: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: PCColors.brown,
+            ),
+            filled: true,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: PCColors.brown, width: 2),
@@ -228,99 +295,228 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel', style: TextStyle(color: PCColors.brown))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: PCColors.brown),
+            ),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: PCColors.yellow, foregroundColor: PCColors.brownDark,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: PCColors.yellow,
+              foregroundColor: PCColors.brownDark,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               final v = int.tryParse(ctrl.text);
-              if (v != null && v > 0) { setState(() => _readyTimeSeconds = v); _saveTime(v); }
+              if (v != null && v > 0) {
+                setState(() => _readyTimeSeconds = v);
+                _saveTime(v);
+              }
               Navigator.pop(ctx);
             },
-            child: const Text('Set', style: TextStyle(fontWeight: FontWeight.w800)),
+            child: const Text(
+              'Set',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),
     );
   }
 
-
-
-  Widget _buildRepCounter() {
+  // ── Detail Card ────────────────────────────────────────────────────────────
+  Widget _buildDetailCard({
+    required String label,
+    required String value,
+    required IconData icon,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.unit.toUpperCase(), style: _ControlStyle.smallLabel),
-        const SizedBox(height: 6),
-        Text('${widget.defaultReps}', style: const TextStyle(
-            fontSize: 36, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: PCColors.brown),
+            const SizedBox(width: _PCSpacing.xs),
+            Text(
+              label,
+              style: _PCTextStyles.sectionLabel.copyWith(fontSize: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: _PCSpacing.xs),
+        Text(
+          value,
+          style: _PCTextStyles.heroNumber.copyWith(fontSize: 42, color: PCColors.brownDark),
+        ),
       ],
+    );
+  }
+
+  Widget _buildRepCounter() {
+    return _buildDetailCard(
+      label: widget.unit.toUpperCase(),
+      value: '${widget.defaultReps}',
+      icon: Icons.fitness_center_rounded,
     );
   }
 
   Widget _buildExerciseTimer() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('TIMER', style: _ControlStyle.smallLabel),
-        const SizedBox(height: 6),
-        Text('${widget.defaultTimer}s', style: const TextStyle(
-            fontSize: 36, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
-      ],
+    return _buildDetailCard(
+      label: 'TIMER',
+      value: '${widget.defaultTimer}s',
+      icon: Icons.timer_outlined,
     );
   }
 
-  // ── Ready Time widget ──────────────────────────────────────────────────────
+  // ── Ready Time widget ─────────────────────────────────────────────────────
   Widget _buildReadyTimeWidget() {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 8,
-      children: [
-        // Checkbox
-        Checkbox(
-          value: _wantsReadyTime,
-          activeColor: PCColors.green,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          side: const BorderSide(color: PCColors.brown, width: 1.5),
-          onChanged: (val) {
-            if (val != null) {
-              setState(() => _wantsReadyTime = val);
-              _saveWantsReadyTime(val);
-            }
-          },
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: _PCSpacing.lg,
+        vertical: _PCSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(_PCRadii.md),
+        border: Border.all(
+          color: PCColors.brown.withValues(alpha: 0.25),
+          width: 1.5,
         ),
-        Text('Ready time(${_readyTimeSeconds}s)', style: const TextStyle(
-            fontWeight: FontWeight.w800, color: PCColors.brownDark, fontSize: 13)),
-        const SizedBox(width: 8),
-        // Dropdown — same subtle border style as rep/timer boxes
-        if (_wantsReadyTime)
-          GestureDetector(
-            key: _timerKey,
-            onTap: _showTimerMenu,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(_ControlStyle.cardRadius),
-                border: _ControlStyle.subtleBorder(),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.hourglass_top_rounded,
+                size: 20,
+                color: PCColors.brown,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${_readyTimeSeconds}s', style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down_rounded, size: 20, color: PCColors.brown),
-                ],
-              ),
-            ),
+              const SizedBox(width: _PCSpacing.xs),
+              Text('READY TIME', style: _PCTextStyles.sectionLabel.copyWith(fontSize: 16)),
+            ],
           ),
-      ],
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _wantsReadyTime ? '${_readyTimeSeconds}s' : 'OFF',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: _wantsReadyTime ? PCColors.brownDark : PCColors.brown,
+                ),
+              ),
+              const SizedBox(width: _PCSpacing.sm),
+              Checkbox(
+                value: _wantsReadyTime,
+                activeColor: PCColors.green,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                side: const BorderSide(color: PCColors.brown, width: 1.5),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _wantsReadyTime = val);
+                    _saveWantsReadyTime(val);
+                  }
+                },
+              ),
+              if (_wantsReadyTime) ...[
+                const SizedBox(width: _PCSpacing.sm),
+                GestureDetector(
+                  key: _timerKey,
+                  onTap: _showTimerMenu,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _PCSpacing.md,
+                      vertical: _PCSpacing.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: PCColors.cream,
+                      borderRadius: BorderRadius.circular(_PCRadii.sm),
+                      border: Border.all(color: PCColors.brown.withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_drop_down_rounded,
+                      size: 20,
+                      color: PCColors.brown,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Start Button ──────────────────────────────────────────────────────────
+  Widget _buildStartButton() {
+    return InkWell(
+      onTap: _startCountdown,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 180,
+        height: 180,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [PCColors.green, PCColors.greenDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: PCColors.greenDark.withValues(alpha: 0.5),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: PCColors.green.withValues(alpha: 0.3),
+              blurRadius: 48,
+              offset: const Offset(0, 0),
+            ),
+          ],
+          border: Border.all(color: Colors.white, width: 4),
+        ),
+        alignment: Alignment.center,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) =>
+              ScaleTransition(scale: animation, child: child),
+          child: _isCountingDown
+              ? Text(
+                  '$_currentCount',
+                  key: const ValueKey('count'),
+                  style: _PCTextStyles.countdownNumber,
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'START\nNOW',
+                      textAlign: TextAlign.center,
+                      style: _PCTextStyles.startButton,
+                    ),
+                    const Icon(
+                      Icons.play_arrow_rounded,
+                      size: 48,
+                      color: Colors.white,
+                    ),
+                    
+                  ],
+                ),
+        ),
+      ),
     );
   }
 
@@ -334,140 +530,146 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         backgroundColor: PCColors.yellow,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: PCColors.brownDark),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: PCColors.brownDark,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.menu_rounded, color: PCColors.brownDark),
+            icon: const Icon(
+              Icons.menu_rounded,
+              color: PCColors.brownDark,
+            ),
             onPressed: () {},
           ),
         ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final h = constraints.maxHeight;
-          return SingleChildScrollView(
-            physics: const ClampingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: h),
-              child: IntrinsicHeight(
+          return Column(
+            children: [
+              // ── Header Section ──────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  _PCSpacing.xl,
+                  _PCSpacing.lg,
+                  _PCSpacing.xl,
+                  _PCSpacing.sm,
+                ),
                 child: Column(
                   children: [
                     // Exercise name
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10, bottom: 10),
-                      child: Text(
-                        widget.exerciseName.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5, color: PCColors.brownDark,
+                    Text(
+                      widget.exerciseName.toUpperCase(),
+                      style: _PCTextStyles.screenTitle,
+                      textAlign: TextAlign.center,
+                    ),
+                    if (widget.description != null &&
+                        widget.description!.isNotEmpty) ...[
+                      const SizedBox(height: _PCSpacing.sm),
+                      Text(
+                        widget.description!,
+                        style: _PCTextStyles.bodyText.copyWith(
+                          color: PCColors.brown,
                         ),
                         textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-
-                    // Stats bar — bold border (hero element), unchanged colors
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(_ControlStyle.cardRadius + 6),
-                          gradient: const LinearGradient(
-                            colors: [PCColors.yellow, PCColors.yellowDark],
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                          ),
-                          border: _ControlStyle.boldBorder(),
-                          boxShadow: const [BoxShadow(
-                              color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _StatPill(icon: '🔥', label: '${widget.streak}-Day Streak'),
-                            Container(width: 1, height: 24,
-                                color: PCColors.brown.withValues(alpha: 0.35)),
-                            _StatPill(icon: '💪', label: '${widget.lifetimeTotal} Lifetime'),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // Controls: [Rep box] [Ready Time] [Timer box]
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          if (widget.defaultReps > 0) Expanded(flex: 3, child: _buildRepCounter()),
-                          if (widget.defaultReps <= 0 && widget.defaultTimer > 0) const Expanded(flex: 3, child: SizedBox()),
-                          
-                          Expanded(
-                            flex: 5,
-                            child: _buildReadyTimeWidget(),
-                          ),
-                          
-                          if (widget.defaultTimer > 0) Expanded(flex: 3, child: _buildExerciseTimer()),
-                          if (widget.defaultTimer <= 0 && widget.defaultReps > 0) const Expanded(flex: 3, child: SizedBox()),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                    // START NOW Button
-                    InkWell(
-                      onTap: _startCountdown,
-                      customBorder: const CircleBorder(),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: 130, height: 130,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [PCColors.green, PCColors.greenDark],
-                            begin: Alignment.topLeft, end: Alignment.bottomRight,
-                          ),
-                          boxShadow: [BoxShadow(
-                            color: PCColors.greenDark.withValues(alpha: 0.45),
-                            blurRadius: 18, offset: const Offset(0, 6),
-                          )],
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-                        alignment: Alignment.center,
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 300),
-                          transitionBuilder: (child, animation) => ScaleTransition(scale: animation, child: child),
-                          child: _isCountingDown
-                              ? Text(
-                                  '$_currentCount',
-                                  key: const ValueKey('count'),
-                                  style: const TextStyle(
-                                    fontSize: 60, fontWeight: FontWeight.w900,
-                                    color: Colors.white, height: 1.1,
-                                  ),
-                                )
-                              : const Text(
-                                  'START\nNOW',
-                                  key: ValueKey('start'),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 26, fontWeight: FontWeight.w900,
-                                    color: Colors.white, letterSpacing: 1,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    ],
                   ],
                 ),
               ),
-            ),
+
+              const SizedBox(height: _PCSpacing.lg),
+
+              // ── Stats Bar ───────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(_PCRadii.lg),
+                    gradient: const LinearGradient(
+                      colors: [PCColors.yellow, PCColors.yellowDark],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    border: Border.all(color: PCColors.brown, width: 1.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _PCSpacing.lg,
+                    vertical: _PCSpacing.md,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _StatPill(icon: '🔥', label: '${widget.streak}-Day Streak'),
+                      Container(
+                        width: 1,
+                        height: 28,
+                        color: PCColors.brown.withValues(alpha: 0.35),
+                      ),
+                      _StatPill(
+                        icon: '💪',
+                        label: '${widget.lifetimeTotal} Lifetime',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: _PCSpacing.xl),
+
+              // ── Detail Cards ─────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+                child: Column(
+                  children: [
+                    if (widget.defaultReps > 0 || widget.defaultTimer > 0) ...[
+                      Row(
+                        children: [
+                          if (widget.defaultReps > 0)
+                            Expanded(child: _buildRepCounter()),
+                          if (widget.defaultReps > 0 && widget.defaultTimer > 0)
+                            const SizedBox(width: _PCSpacing.md),
+                          if (widget.defaultTimer > 0)
+                            Expanded(child: _buildExerciseTimer()),
+                        ],
+                      ),
+                      const SizedBox(height: _PCSpacing.md),
+                    ],
+                    _buildReadyTimeWidget(),
+                  ],
+                ),
+              ),
+
+              // ── Random Image Spacer ───────────────────────────────────────────
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: _PCSpacing.md, horizontal: _PCSpacing.xl),
+                  child: Image.asset(
+                    _randomImage,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+
+              // ── Large Start Button ──────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.only(bottom: _PCSpacing.xxxl),
+                child: _buildStartButton(),
+              ),
+            ],
           );
         },
       ),
@@ -483,20 +685,41 @@ class _TimerOption extends StatelessWidget {
   final String? label;
   final IconData? icon;
   final bool selected;
-  const _TimerOption({this.seconds, this.label, this.icon, this.selected = false});
+
+  const _TimerOption({
+    this.seconds,
+    this.label,
+    this.icon,
+    this.selected = false,
+  });
+
   @override
   Widget build(BuildContext context) {
     final text = label ?? '${seconds}s';
     return Row(
       children: [
-        Icon(icon ?? Icons.timer_rounded, size: 18,
-            color: selected ? PCColors.yellowDark : PCColors.brown),
-        const SizedBox(width: 10),
-        Text(text, style: TextStyle(
+        Icon(
+          icon ?? Icons.timer_rounded,
+          size: 20,
+          color: selected ? PCColors.yellowDark : PCColors.brown,
+        ),
+        const SizedBox(width: _PCSpacing.md),
+        Text(
+          text,
+          style: TextStyle(
             fontSize: 16,
             fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-            color: selected ? PCColors.brownDark : PCColors.brown)),
-        if (selected) ...[const Spacer(), const Icon(Icons.check_rounded, size: 18, color: PCColors.green)],
+            color: selected ? PCColors.brownDark : PCColors.brown,
+          ),
+        ),
+        if (selected) ...[
+          const Spacer(),
+          const Icon(
+            Icons.check_rounded,
+            size: 20,
+            color: PCColors.green,
+          ),
+        ],
       ],
     );
   }
@@ -508,14 +731,19 @@ class _TimerOption extends StatelessWidget {
 class _StatPill extends StatelessWidget {
   final String icon;
   final String label;
+
   const _StatPill({required this.icon, required this.label});
+
   @override
   Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Text(icon, style: const TextStyle(fontSize: 18)),
-      const SizedBox(width: 6),
-      Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: PCColors.brownDark)),
-    ],
-  );
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 20)),
+          const SizedBox(width: _PCSpacing.sm),
+          Text(
+            label,
+            style: _PCTextStyles.statLabel,
+          ),
+        ],
+      );
 }
