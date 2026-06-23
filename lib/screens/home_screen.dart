@@ -4,6 +4,7 @@ import '../app_settings.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
 import 'exercise_screen.dart';
+import 'streak_screen.dart';
 import 'leaderboard_screen.dart';
 import 'admin_screen.dart';
 
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: widget.isAdmin ? 3 : 2, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _settings.addListener(_onSettingsChanged);
   }
 
@@ -55,22 +56,48 @@ class _HomeScreenState extends State<HomeScreen>
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
         title: const Text('Potato 🥔'),
+        actions: [
+          if (widget.isAdmin)
+            Padding(
+              padding: const EdgeInsets.only(right: 12, top: 8, bottom: 8),
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AdminScreen()),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 1.5),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                child: const Text('Admin'),
+              ),
+            ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 14,
+            fontSize: 13,
             letterSpacing: 0.5,
           ),
           unselectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 14,
+            fontSize: 13,
           ),
           indicatorWeight: 3,
-          tabs: [
-            const Tab(text: 'Exercise'),
-            const Tab(text: 'Leaderboard'),
-            if (widget.isAdmin) const Tab(text: 'Admin'),
+          tabs: const [
+            Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Exercise'),
+            Tab(icon: Icon(Icons.local_fire_department_rounded), text: 'Streaks'),
+            Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Leaderboard'),
+            Tab(icon: Icon(Icons.people_rounded), text: 'Social'),
           ],
         ),
       ),
@@ -78,8 +105,9 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _tabController,
         children: [
           ExerciseScreen(user: user),
+          const StreakScreen(),
           LeaderboardScreen(currentUid: user?.uid),
-          if (widget.isAdmin) const AdminScreen(),
+          const _SocialPlaceholder(),
         ],
       ),
     );
@@ -202,6 +230,47 @@ class _HomeScreenState extends State<HomeScreen>
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Social tab — placeholder until Friends feature is implemented
+// ─────────────────────────────────────────────────────────────────────────────
+class _SocialPlaceholder extends StatelessWidget {
+  const _SocialPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('👥', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            const Text(
+              'Social',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF4A3219),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Friends & challenges\ncoming soon!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: const Color(0xFF6D4C2C).withValues(alpha: 0.7),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
