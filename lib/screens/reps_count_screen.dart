@@ -135,7 +135,26 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
         final newLifetime = prevLifetime + _reps;
 
+        // ── Overall streak (any exercise each day) ── Option A ─────────
+        final prevOverallStreak = (data['overallStreak'] ?? 0) as int;
+        final overallLastDate   = data['overallLastDate'] as String?;
+
+        int newOverallStreak;
+        if (overallLastDate == today) {
+          // Already exercised today — overall streak stays the same
+          newOverallStreak = prevOverallStreak;
+        } else if (overallLastDate == yesterday) {
+          // Exercised yesterday — overall streak continues
+          newOverallStreak = prevOverallStreak + 1;
+        } else {
+          // First time or gap — reset to 1
+          newOverallStreak = 1;
+        }
+        // ──────────────────────────────────────────────────────────────
+
         tx.set(userRef, {
+          'overallStreak': newOverallStreak,
+          'overallLastDate': today,
           'exercises': {
             widget.exerciseId: {
               'lifetimeTotal': newLifetime,
@@ -152,6 +171,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
           'lifetimeTotal': newLifetime,
           'currentStreak': newStreak,
           'todayReps': newTodayReps,
+          'overallStreak': newOverallStreak,
         };
       });
 
@@ -166,6 +186,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             dayStreak: result['currentStreak']!,
             todayReps: result['todayReps']!,
             lifetimeTotal: result['lifetimeTotal']!,
+            overallStreak: result['overallStreak']!,
             unit: widget.unit,
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,

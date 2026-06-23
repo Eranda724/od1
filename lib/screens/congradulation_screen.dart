@@ -11,16 +11,15 @@ class CongratulationScreen extends StatefulWidget {
   final int dayStreak;
   final int todayReps;
   final int lifetimeTotal;
-  final String unit; // e.g. "reps"
+  final String unit;
+  final int overallStreak;  // NEW: consecutive days any exercise was done
 
   /// 1-based index of this exercise in the user's session (e.g. 2 of 3).
   /// Pass null (or totalExercises == 1) to hide the progress indicator.
   final int? exerciseIndex;
   final int? totalExercises;
 
-  /// Called when the button is pressed. The caller decides whether to
-  /// push the next exercise's start screen or the daily summary screen —
-  /// this screen only needs to know whether more exercises remain.
+  /// Called when the button is pressed.
   final void Function(BuildContext) onContinue;
 
   const CongratulationScreen({
@@ -30,6 +29,7 @@ class CongratulationScreen extends StatefulWidget {
     required this.todayReps,
     required this.lifetimeTotal,
     this.unit = 'reps',
+    this.overallStreak = 0,
     this.exerciseIndex,
     this.totalExercises,
     required this.onContinue,
@@ -125,7 +125,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
               const SizedBox(height: 28),
 
-              // ── Animated streak ──────────────────────────────────────────
+              // ── Animated exercise streak ──────────────────────────────────
               ScaleTransition(
                 scale: _scale,
                 child: Column(
@@ -140,9 +140,46 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         color: PCColors.brownDark,
                       ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${widget.exerciseName} streak',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: PCColors.brown.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ],
                 ),
               ),
+
+              // ── Overall streak badge ───────────────────────────────────────
+              if (widget.overallStreak > 0) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: PCColors.yellow.withValues(alpha: 0.25),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: PCColors.brown.withValues(alpha: 0.4), width: 1.5),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('🏆', style: TextStyle(fontSize: 18)),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${widget.overallStreak}-Day Overall Streak',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: PCColors.brownDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 32),
 
