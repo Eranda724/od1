@@ -98,17 +98,18 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
     });
 
     final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final exRef = userRef.collection('exercises').doc(widget.exerciseId);
 
     final today = _todayKey();
     final yesterday = _yesterdayKey();
 
     try {
       final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
-        final snap = await tx.get(userRef);
-        final data = snap.data() ?? {};
+        final userSnap = await tx.get(userRef);
+        final userData = userSnap.data() ?? {};
 
-        final exercisesMap = (data['exercises'] as Map<String, dynamic>?) ?? {};
-        final exerciseData = (exercisesMap[widget.exerciseId] as Map<String, dynamic>?) ?? {};
+        final exSnap = await tx.get(exRef);
+        final exerciseData = exSnap.data() ?? {};
 
         final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
         final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
@@ -136,8 +137,8 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         final newLifetime = prevLifetime + _reps;
 
         // ── Overall streak (any exercise each day) ── Option A ─────────
-        final prevOverallStreak = (data['overallStreak'] ?? 0) as int;
-        final overallLastDate   = data['overallLastDate'] as String?;
+        final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
+        final overallLastDate   = userData['overallLastDate'] as String?;
 
         int newOverallStreak;
         if (overallLastDate == today) {
@@ -152,19 +153,18 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         }
         // ──────────────────────────────────────────────────────────────
 
+        tx.set(exRef, {
+          'lifetimeTotal': newLifetime,
+          'currentStreak': newStreak,
+          'lastCompletedDate': today,
+          'todayReps': newTodayReps,
+          'exerciseName': widget.exerciseName,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+
         tx.set(userRef, {
           'overallStreak': newOverallStreak,
           'overallLastDate': today,
-          'exercises': {
-            widget.exerciseId: {
-              'lifetimeTotal': newLifetime,
-              'currentStreak': newStreak,
-              'lastCompletedDate': today,
-              'todayReps': newTodayReps,
-              'exerciseName': widget.exerciseName,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }
-          }
         }, SetOptions(merge: true));
 
         return {

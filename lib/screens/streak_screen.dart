@@ -33,6 +33,9 @@ class StreakScreen extends StatelessWidget {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, userSnap) {
+        if (userSnap.hasError) {
+          return Center(child: Text('Error: ${userSnap.error}'));
+        }
         if (!userSnap.hasData) {
           return const Center(child: CircularProgressIndicator(color: PCColors.yellow));
         }
@@ -40,13 +43,28 @@ class StreakScreen extends StatelessWidget {
         final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
         final overallStreak = (data['overallStreak'] ?? 0) as int;
         final overallLastDate = data['overallLastDate'] as String?;
-        final exercisesMap = Map<String, dynamic>.from(data['exercises'] ?? {});
         final today = _todayKey();
         final last7 = _last7Days();
 
         return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').snapshots(),
+          builder: (context, userExSnap) {
+            if (userExSnap.hasError) {
+              return Center(child: Text('Error: ${userExSnap.error}'));
+            }
+            final exercisesMap = <String, dynamic>{};
+            if (userExSnap.hasData) {
+              for (final doc in userExSnap.data!.docs) {
+                exercisesMap[doc.id] = doc.data() as Map<String, dynamic>;
+              }
+            }
+
+        return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
           builder: (context, exSnap) {
+            if (exSnap.hasError) {
+              return Center(child: Text('Error: ${exSnap.error}'));
+            }
             final defs = <String, ExerciseItem>{};
             if (exSnap.hasData) {
               for (final doc in exSnap.data!.docs) {
@@ -112,6 +130,8 @@ class StreakScreen extends StatelessWidget {
                   }),
               ],
             );
+          },
+        );
           },
         );
       },

@@ -24,6 +24,9 @@ class AdminScreen extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
