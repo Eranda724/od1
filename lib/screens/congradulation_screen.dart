@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import '../app_settings.dart';
 
@@ -47,6 +49,8 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final AnimationController _controller;
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
+  AudioPlayer? _player;
+  Timer? _confettiTimer;
 
   @override
   void initState() {
@@ -63,16 +67,32 @@ class _CongratulationScreenState extends State<CongratulationScreen>
           .chain(CurveTween(curve: Curves.easeOut)), weight: 30),
     ]).animate(_controller);
     _controller.forward();
-    
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _confettiController.play();
+
+    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
+    _confettiController.play(); // fireworks start immediately
+
+    // ── Play sound after 3s ────────────────────────────────────────────────
+    _confettiTimer = Timer(const Duration(seconds: 1), () {
+      if (mounted) _playSound();
+    });
   }
 
   @override
   void dispose() {
+    _confettiTimer?.cancel();
     _confettiController.dispose();
     _controller.dispose();
+    _player?.dispose();
     super.dispose();
+  }
+
+  Future<void> _playSound() async {
+    try {
+      _player = AudioPlayer();
+      await _player!.play(AssetSource('sounds/congradulation.mp3'));
+    } catch (_) {
+      // Sound failure is non-critical — silently ignore
+    }
   }
 
   @override
@@ -227,7 +247,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isLast ? 'View Summary' : 'Back to Exercises',
+                        'Back to Exercises',
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(width: 6),

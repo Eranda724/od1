@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
-import 'congradulation_screen.dart';
+import 'celebration_screen.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -181,7 +181,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => CongratulationScreen(
+          builder: (_) => CelebrationScreen(
             exerciseName: widget.exerciseName,
             dayStreak: result['currentStreak']!,
             todayReps: result['todayReps']!,
