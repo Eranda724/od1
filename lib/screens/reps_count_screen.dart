@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/streak_service.dart';
+import '../services/notification_service.dart';
 import '../app_settings.dart';
 import 'celebration_screen.dart';
 
@@ -94,6 +95,11 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         exerciseName: widget.exerciseName,
         reps: _reps,
       );
+
+      if (!mounted) return;
+
+      // Cancel the evening streak-saver notification — user worked out today!
+      await NotificationService.instance.cancelTodayEveningReminder();
 
       if (!mounted) return;
 

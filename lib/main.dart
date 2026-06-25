@@ -9,6 +9,7 @@ import 'screens/home_screen.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
 import 'admin/admin_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,9 @@ void main() async {
   );
   // Load persisted settings before first frame
   await AppSettings().load();
+  // Initialize notifications and schedule daily reminders
+  await NotificationService.instance.init();
+  await NotificationService.instance.refreshSchedule();
   runApp(const MyApp());
 }
 
