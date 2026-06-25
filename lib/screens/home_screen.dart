@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
+import 'profile_screen.dart';
 import 'exercise_screen.dart';
 import 'streak_screen.dart';
 import 'leaderboard_screen.dart';
+import 'social_screen.dart';
 import 'admin_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -108,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen>
           ExerciseScreen(user: user),
           const StreakScreen(),
           LeaderboardScreen(currentUid: user?.uid),
-          const _SocialPlaceholder(),
+          const SocialScreen(),
         ],
       ),
     );
@@ -123,7 +125,10 @@ class _HomeScreenState extends State<HomeScreen>
       onSelected: (value) async {
         switch (value) {
           case 'profile':
-            _showProfileDialog(user);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
             break;
           case 'settings':
             Navigator.push(
@@ -149,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen>
             const Icon(Icons.person_outline_rounded, size: 20),
             const SizedBox(width: 10),
             Text(
-              user?.email?.split('@').first ?? 'Profile',
+              user?.displayName ?? 'Profile',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ]),
@@ -204,75 +209,6 @@ class _HomeScreenState extends State<HomeScreen>
           ]),
         ),
       ],
-    );
-  }
-
-  void _showProfileDialog(User? user) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircleAvatar(
-              radius: 32,
-              child: Icon(Icons.person, size: 36),
-            ),
-            const SizedBox(height: 12),
-            Text(user?.email ?? 'Unknown',
-                style: const TextStyle(fontSize: 15)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Social tab — placeholder until Friends feature is implemented
-// ─────────────────────────────────────────────────────────────────────────────
-class _SocialPlaceholder extends StatelessWidget {
-  const _SocialPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('👥', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            const Text(
-              'Social',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF4A3219),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Friends & challenges\ncoming soon!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: const Color(0xFF6D4C2C).withValues(alpha: 0.7),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
