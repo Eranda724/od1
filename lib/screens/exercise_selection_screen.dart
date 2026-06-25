@@ -34,6 +34,8 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     batch.set(userRef, {
       'email': user.email,
       'selectedExercises': _selected.toList(),
+      'freezesAvailable': 0,
+      'freezeLastRefillDate': null,
       'createdAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 

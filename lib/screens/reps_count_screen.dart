@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/streak_service.dart';
 import '../app_settings.dart';
 import 'celebration_screen.dart';
 
@@ -66,20 +66,10 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
     });
   }
 
-  String _todayKey() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-  }
+  // Removed unused key functions since they moved to service
 
-  String _yesterdayKey() {
-    final y = DateTime.now().subtract(const Duration(days: 1));
-    return '${y.year}-${y.month.toString().padLeft(2, '0')}-${y.day.toString().padLeft(2, '0')}';
-  }
-
-  /// Reads + updates the exercise doc in one transaction:
-  /// users/{uid}/exercises/{exerciseId}
-  /// fields: lifetimeTotal (int), currentStreak (int),
-  ///         lastCompletedDate (String "yyyy-MM-dd"), todayReps (int)
+  /// Calls StreakService to update user + exercise stats, then navigates
+  /// to the Congratulation screen.
   Future<void> _submit() async {
     if (_reps <= 0) {
       setState(() => _error = 'Enter at least 1 ${widget.unit}.');
@@ -97,83 +87,13 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       _error = null;
     });
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-    final exRef = userRef.collection('exercises').doc(widget.exerciseId);
-
-    final today = _todayKey();
-    final yesterday = _yesterdayKey();
-
     try {
-      final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
-        final userSnap = await tx.get(userRef);
-        final userData = userSnap.data() ?? {};
-
-        final exSnap = await tx.get(exRef);
-        final exerciseData = exSnap.data() ?? {};
-
-        final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
-        final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
-        final lastDate = exerciseData['lastCompletedDate'] as String?;
-        final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
-
-        int newStreak;
-        int newTodayReps;
-
-        if (lastDate == today) {
-          // Already logged today — streak doesn't change, but today's
-          // reps accumulate (in case they do a second session same day).
-          newStreak = prevStreak;
-          newTodayReps = prevTodayReps + _reps;
-        } else if (lastDate == yesterday) {
-          // Logged yesterday — streak continues.
-          newStreak = prevStreak + 1;
-          newTodayReps = _reps;
-        } else {
-          // First time, or streak was broken.
-          newStreak = 1;
-          newTodayReps = _reps;
-        }
-
-        final newLifetime = prevLifetime + _reps;
-
-        // ── Overall streak (any exercise each day) ── Option A ─────────
-        final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
-        final overallLastDate   = userData['overallLastDate'] as String?;
-
-        int newOverallStreak;
-        if (overallLastDate == today) {
-          // Already exercised today — overall streak stays the same
-          newOverallStreak = prevOverallStreak;
-        } else if (overallLastDate == yesterday) {
-          // Exercised yesterday — overall streak continues
-          newOverallStreak = prevOverallStreak + 1;
-        } else {
-          // First time or gap — reset to 1
-          newOverallStreak = 1;
-        }
-        // ──────────────────────────────────────────────────────────────
-
-        tx.set(exRef, {
-          'lifetimeTotal': newLifetime,
-          'currentStreak': newStreak,
-          'lastCompletedDate': today,
-          'todayReps': newTodayReps,
-          'exerciseName': widget.exerciseName,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
-
-        tx.set(userRef, {
-          'overallStreak': newOverallStreak,
-          'overallLastDate': today,
-        }, SetOptions(merge: true));
-
-        return {
-          'lifetimeTotal': newLifetime,
-          'currentStreak': newStreak,
-          'todayReps': newTodayReps,
-          'overallStreak': newOverallStreak,
-        };
-      });
+      final result = await StreakService.logExercise(
+        uid: user.uid,
+        exerciseId: widget.exerciseId,
+        exerciseName: widget.exerciseName,
+        reps: _reps,
+      );
 
       if (!mounted) return;
 

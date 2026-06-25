@@ -43,6 +43,8 @@ class StreakScreen extends StatelessWidget {
         final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
         final overallStreak = (data['overallStreak'] ?? 0) as int;
         final overallLastDate = data['overallLastDate'] as String?;
+        final freezesAvailable = (data['freezesAvailable'] ?? 0) as int;
+        final freezeLastRefillDate = data['freezeLastRefillDate'] as String?;
         final today = _todayKey();
         final last7 = _last7Days();
 
@@ -82,6 +84,8 @@ class StreakScreen extends StatelessWidget {
                   today: today,
                   last7Days: last7,
                   exercisesMap: exercisesMap,
+                  freezesAvailable: freezesAvailable,
+                  freezeLastRefillDate: freezeLastRefillDate,
                 ),
 
                 const SizedBox(height: 24),
@@ -148,6 +152,8 @@ class _OverallStreakCard extends StatelessWidget {
   final String today;
   final List<String> last7Days;
   final Map<String, dynamic> exercisesMap;
+  final int freezesAvailable;
+  final String? freezeLastRefillDate;
 
   const _OverallStreakCard({
     required this.overallStreak,
@@ -155,6 +161,8 @@ class _OverallStreakCard extends StatelessWidget {
     required this.today,
     required this.last7Days,
     required this.exercisesMap,
+    required this.freezesAvailable,
+    required this.freezeLastRefillDate,
   });
 
   // A day is "active" in the overall streak if any exercise was done that day.
@@ -168,6 +176,17 @@ class _OverallStreakCard extends StatelessWidget {
       }
     }
     return active;
+  }
+
+  String _timeUntilNextFreeze() {
+    if (freezesAvailable >= 2) return 'Freezes full';
+    if (freezeLastRefillDate == null) return 'Next freeze soon';
+    final refillObj = DateTime.parse(freezeLastRefillDate!);
+    final todayObj = DateTime.parse(today);
+    final daysSince = todayObj.difference(refillObj).inDays;
+    final daysLeft = 7 - daysSince;
+    if (daysLeft <= 0) return 'Next freeze today!';
+    return 'Next freeze in $daysLeft day${daysLeft > 1 ? 's' : ''}';
   }
 
   @override
@@ -207,6 +226,24 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              if (freezesAvailable > 0)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.blueAccent.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.blueAccent, width: 1),
+                  ),
+                  child: Text(
+                    '❄️ $freezesAvailable/2',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               if (isActiveToday)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -252,6 +289,15 @@ class _OverallStreakCard extends StatelessWidget {
                     color: Colors.white70,
                     height: 1.4,
                   ),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                _timeUntilNextFreeze(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white38,
                 ),
               ),
             ],
