@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 /// Represents one leaderboard entry.
 class LeaderboardEntry {
@@ -68,7 +67,6 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
 
 class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
-  static final _auth = FirebaseAuth.instance;
 
   // ── Avatars based on score rank ──────────────────────────────────────────────
   static String _avatarFor(int rank) {
@@ -134,54 +132,48 @@ class LeaderboardService {
 
   // ── Score update helpers (call these when an exercise is completed) ──────────
 
-  /// Adds [points] to the current user's daily, weekly, and monthly scores.
-  /// Call this from ExerciseScreen after a workout is completed.
-  static Future<void> addScore(int points) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+  /// Pure function to calculate new scores based on previous scores and points added.
+  static Map<String, dynamic> calculateNewScores({
+    required Map<String, dynamic> existing,
+    required int points,
+    required DateTime now,
+  }) {
+    final lastUpdated = (existing['lastUpdated'] as Timestamp?)?.toDate();
+    final newScores = Map<String, dynamic>.from(existing);
 
-    final now = DateTime.now();
-    final userRef = _db.collection('users').doc(uid);
+    newScores['daily'] = _resetIfStale(
+          existing['daily'],
+          lastUpdated,
+          _isSameDay,
+          now,
+        ) +
+        points;
+    newScores['weekly'] = _resetIfStale(
+          existing['weekly'],
+          lastUpdated,
+          _isSameWeek,
+          now,
+        ) +
+        points;
+    newScores['monthly'] = _resetIfStale(
+          existing['monthly'],
+          lastUpdated,
+          _isSameMonth,
+          now,
+        ) +
+        points;
+    newScores['lastUpdated'] = Timestamp.fromDate(now);
 
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(userRef);
-      final data = snap.data() ?? {};
-      final existing = Map<String, dynamic>.from(
-          (data['scores'] as Map<String, dynamic>?) ?? {});
-
-      // Reset stale periods
-      final lastUpdated = (existing['lastUpdated'] as Timestamp?)?.toDate();
-      existing['daily'] = _resetIfStale(
-            existing['daily'],
-            lastUpdated,
-            _isSameDay,
-          ) +
-          points;
-      existing['weekly'] = _resetIfStale(
-            existing['weekly'],
-            lastUpdated,
-            _isSameWeek,
-          ) +
-          points;
-      existing['monthly'] = _resetIfStale(
-            existing['monthly'],
-            lastUpdated,
-            _isSameMonth,
-          ) +
-          points;
-      existing['lastUpdated'] = Timestamp.fromDate(now);
-
-      tx.set(userRef, {'scores': existing}, SetOptions(merge: true));
-    });
+    return newScores;
   }
 
   static int _resetIfStale(
     dynamic current,
     DateTime? lastUpdated,
     bool Function(DateTime, DateTime) isSamePeriod,
+    DateTime now,
   ) {
     if (current == null || lastUpdated == null) return 0;
-    final now = DateTime.now();
     return isSamePeriod(lastUpdated, now) ? (current as num).toInt() : 0;
   }
 

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
+import 'leaderboard_service.dart';
 
 class StreakService {
   static String _todayKey() {
@@ -101,11 +102,19 @@ class StreakService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
+      // ── Leaderboard Scores ──
+      final newScores = LeaderboardService.calculateNewScores(
+        existing: Map<String, dynamic>.from(userData['scores'] as Map<String, dynamic>? ?? {}),
+        points: reps,
+        now: DateTime.now(),
+      );
+
       tx.set(userRef, {
         'overallStreak': newOverallStreak,
         'overallLastDate': today,
         'freezesAvailable': freezesAvailable,
         'freezeLastRefillDate': freezeLastRefillDate,
+        'scores': newScores,
       }, SetOptions(merge: true));
 
       return {
