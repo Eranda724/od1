@@ -101,9 +101,8 @@ class LeaderboardService {
         final monthly = (scores['monthly'] as num?)?.toInt() ?? 0;
         final score = _scoreForPeriod(scores, period);
         if (score == 0 && rank > 3) continue; // hide zero scorers below podium
-        final name = (data['displayName'] as String?)?.trim().isNotEmpty == true
-            ? data['displayName'] as String
-            : (data['email'] as String?)?.split('@').first ?? 'User';
+        // Name resolution priority: displayName → username → email prefix → 'User'
+        final name = _resolveName(data);
         entries.add(LeaderboardEntry(
           uid: doc.id,
           displayName: name,
@@ -128,6 +127,21 @@ class LeaderboardService {
       case LeaderboardPeriod.monthly:
         return (scores['monthly'] as num?)?.toInt() ?? 0;
     }
+  }
+
+  /// Resolves the best available display name for a user document.
+  /// Priority: displayName → username → email prefix → 'User'
+  static String _resolveName(Map<String, dynamic> data) {
+    final displayName = (data['displayName'] as String?)?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+
+    final username = (data['username'] as String?)?.trim();
+    if (username != null && username.isNotEmpty) return username;
+
+    final email = data['email'] as String?;
+    if (email != null && email.contains('@')) return email.split('@').first;
+
+    return 'User';
   }
 
   // ── Score update helpers (call these when an exercise is completed) ──────────
