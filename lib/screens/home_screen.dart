@@ -83,20 +83,21 @@ class _HomeScreenState extends State<HomeScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 2),
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w800,
-            fontSize: 13,
-            letterSpacing: 0.5,
+            fontSize: 11,
+            letterSpacing: 0.2,
           ),
           unselectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 13,
+            fontSize: 11,
           ),
           indicatorWeight: 3,
           tabs: const [
             Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Exercise'),
             Tab(icon: Icon(Icons.local_fire_department_rounded), text: 'Streaks'),
-            Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Leaderboard'),
+            Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Rankings'),
             Tab(icon: Icon(Icons.people_rounded), text: 'Social'),
           ],
         ),
