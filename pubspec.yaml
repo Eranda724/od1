@@ -36,11 +36,7 @@ flutter:
   assets:
     - assets/sounds/celebrate.mp3
     - assets/sounds/congradulation.mp3
-    - assets/images/po1.png
-    - assets/images/po2.png
-    - assets/images/po3.png
-    - assets/images/login.png
-    - assets/images/register.png
+    - assets/images/
 
 flutter_launcher_icons:
   android: true
@@ -57,3 +53,5 @@ flutter_native_splash:
     color: "#FFC93C"
     branding: "assets/icon/splash_logo.png"
     branding_bottom_padding: 200
+
+share_plus: latest_version

@@ -125,6 +125,15 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       'assets/images/po3.png',
       'assets/images/login.png',
       'assets/images/register.png',
+      'assets/images/basket.png',
+      'assets/images/bicy.png',
+      'assets/images/dance.png',
+      'assets/images/foot.png',
+      'assets/images/jump.png',
+      'assets/images/plank.png',
+      'assets/images/put.png',
+      'assets/images/tennis.png',
+      'assets/images/weifht.png',
     ];
     _randomImage = images[Random().nextInt(images.length)];
   }
