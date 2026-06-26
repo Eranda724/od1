@@ -51,9 +51,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.userChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
+        return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
@@ -114,10 +117,16 @@ class _HomeScreenState extends State<HomeScreen>
         ],
       ),
     );
+      },
+    );
   }
 
   Widget _buildMenuButton(User? user) {
     final isDark = _settings.themeMode == ThemeMode.dark;
+    String dispName = user?.displayName ?? '';
+    if (dispName.trim().isEmpty) {
+      dispName = 'Profile';
+    }
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu_rounded),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -154,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen>
             const Icon(Icons.person_outline_rounded, size: 20),
             const SizedBox(width: 10),
             Text(
-              user?.displayName ?? 'Profile',
+              dispName,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ]),

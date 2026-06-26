@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'exercise_selection_screen.dart';
+import 'home_screen.dart';
 import '../app_settings.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -27,16 +27,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
+      final typedName = _usernameController.text.trim();
+      if (typedName.isEmpty) {
+        throw FirebaseAuthException(code: 'invalid-username', message: 'Username is required.');
+      }
+
+      // Check uniqueness before creating the auth account
+      final isTaken = await _isUsernameTaken(typedName);
+      if (isTaken) {
+        throw FirebaseAuthException(code: 'username-taken', message: 'This username is already taken. Please choose another.');
+      }
+
       final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Determine the display name: use what user typed, or auto-generate potato0001 style
-      final typedName = _usernameController.text.trim();
-      final displayName = typedName.isNotEmpty
-          ? typedName
-          : await _generateUniqueName();
+      final displayName = typedName;
 
       // Save to Firebase Auth profile
       await credential.user?.updateDisplayName(displayName);
@@ -46,18 +53,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
         await FirebaseFirestore.instance
             .collection('users')
             .doc(credential.user!.uid)
-            .set({'displayName': displayName}, SetOptions(merge: true));
+            .set({
+              'displayName': displayName,
+              'email': credential.user!.email,
+            }, SetOptions(merge: true));
       }
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ExerciseSelectionScreen()),
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = e.message ?? 'Registration failed';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Database error: $e';
       });
     } finally {
       setState(() {
@@ -66,11 +80,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  /// Generates a unique name like potato0001 by counting existing users.
-  Future<String> _generateUniqueName() async {
-    final snap = await FirebaseFirestore.instance.collection('users').count().get();
-    final count = (snap.count ?? 0) + 1;
-    return 'potato${count.toString().padLeft(4, '0')}';
+  Future<bool> _isUsernameTaken(String username) async {
+    final usersRef = FirebaseFirestore.instance.collection('users');
+    
+    // Check displayName
+    var snap = await usersRef.where('displayName', isEqualTo: username).limit(1).get();
+    if (snap.docs.isNotEmpty) return true;
+
+    // Check legacy username
+    snap = await usersRef.where('username', isEqualTo: username).limit(1).get();
+    return snap.docs.isNotEmpty;
   }
 
   @override
