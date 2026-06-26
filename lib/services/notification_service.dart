@@ -17,6 +17,7 @@ class NotificationService {
 
   static const int _morningId = 1;
   static const int _eveningId = 2;
+  static const int _friendId = 3;
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Initialization
@@ -66,6 +67,21 @@ class NotificationService {
   /// Cancels ALL notifications — used when user disables notifications in settings.
   Future<void> cancelAll() async {
     await _plugin.cancelAll();
+  }
+
+  /// Show a friend activity notification right now
+  Future<void> showFriendActivityNotification(String friendName, String detail) async {
+    if (!AppSettings().notificationsEnabled) return;
+    await _plugin.show(
+      id: _friendId,
+      title: '🤝 Friend Update',
+      body: '$friendName $detail',
+      notificationDetails: _notifDetails(
+        channelId: 'friend_activity',
+        channelName: 'Friend Activity',
+        importance: Importance.defaultImportance,
+      ),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
