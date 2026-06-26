@@ -60,6 +60,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Update display name
       if (newName != user.displayName) {
+        if (newName.isEmpty) {
+          throw FirebaseAuthException(code: 'invalid-username', message: 'Username is required.');
+        }
+
+        final isTaken = await _isUsernameTaken(newName);
+        if (isTaken) {
+          throw FirebaseAuthException(code: 'username-taken', message: 'This username is already taken. Please choose another.');
+        }
+
         await user.updateDisplayName(newName);
         // Ensure Firestore is updated so leaderboard knows
         await FirebaseFirestore.instance
@@ -135,6 +144,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) setState(() => _isLoadingPassword = false);
     }
+  }
+
+  Future<bool> _isUsernameTaken(String username) async {
+    final usersRef = FirebaseFirestore.instance.collection('users');
+    
+    // Check displayName
+    var snap = await usersRef.where('displayName', isEqualTo: username).limit(1).get();
+    if (snap.docs.isNotEmpty) return true;
+
+    // Check legacy username
+    snap = await usersRef.where('username', isEqualTo: username).limit(1).get();
+    return snap.docs.isNotEmpty;
   }
 
   @override
