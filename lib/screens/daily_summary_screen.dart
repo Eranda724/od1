@@ -24,6 +24,7 @@ class ExerciseDaySummary {
 
 class DailySummaryScreen extends StatelessWidget {
   final List<ExerciseDaySummary> completedExercises;
+  final int overallStreak;  // NEW: consecutive days any exercise was done
 
   /// Swap for your real app store / dynamic link once you have one.
   static const String appLink = 'https://potatocouch.app/download';
@@ -31,6 +32,7 @@ class DailySummaryScreen extends StatelessWidget {
   const DailySummaryScreen({
     super.key,
     required this.completedExercises,
+    this.overallStreak = 0,
   });
 
   int get _totalRepsToday =>
@@ -91,7 +93,53 @@ class DailySummaryScreen extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Hero total ────────────────────────────────────────────────
+            // ── Overall streak hero badge ────────────────────────────────
+            if (overallStreak > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: PCColors.brownDark,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: PCColors.brown, width: 1.5),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('🏆', style: TextStyle(fontSize: 24)),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'OVERALL STREAK',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: PCColors.yellow,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            '$overallStreak Days',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+            const SizedBox(height: 16),
+
+            // ── Hero total reps ────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(

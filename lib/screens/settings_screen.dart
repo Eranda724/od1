@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_settings.dart';
+import '../services/notification_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -75,6 +76,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   },
                 ),
               ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── NOTIFICATIONS SECTION ──
+          _sectionHeader('Notifications'),
+          const SizedBox(height: 8),
+          _card(
+            child: SwitchListTile(
+              secondary: const Icon(Icons.notifications_rounded),
+              title: const Text('Daily Reminders'),
+              subtitle: const Text('Morning & evening workout nudges'),
+              value: _settings.notificationsEnabled,
+              activeColor: const Color(0xFFFFC72C),
+              onChanged: (v) async {
+                await _settings.setNotificationsEnabled(v);
+                if (v) {
+                  await NotificationService.instance.refreshSchedule();
+                } else {
+                  await NotificationService.instance.cancelAll();
+                }
+                setState(() {});
+              },
             ),
           ),
 

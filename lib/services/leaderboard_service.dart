@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 /// Represents one leaderboard entry.
 class LeaderboardEntry {
@@ -68,7 +67,6 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
 
 class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
-  static final _auth = FirebaseAuth.instance;
 
   // ── Avatars based on score rank ──────────────────────────────────────────────
   static String _avatarFor(int rank) {
@@ -103,9 +101,8 @@ class LeaderboardService {
         final monthly = (scores['monthly'] as num?)?.toInt() ?? 0;
         final score = _scoreForPeriod(scores, period);
         if (score == 0 && rank > 3) continue; // hide zero scorers below podium
-        final name = (data['displayName'] as String?)?.trim().isNotEmpty == true
-            ? data['displayName'] as String
-            : (data['email'] as String?)?.split('@').first ?? 'User';
+        // Name resolution priority: displayName → username → email prefix → 'User'
+        final name = _resolveName(data);
         entries.add(LeaderboardEntry(
           uid: doc.id,
           displayName: name,
@@ -132,56 +129,65 @@ class LeaderboardService {
     }
   }
 
+  /// Resolves the best available display name for a user document.
+  /// Priority: displayName → username → email prefix → 'User'
+  static String _resolveName(Map<String, dynamic> data) {
+    final displayName = (data['displayName'] as String?)?.trim();
+    if (displayName != null && displayName.isNotEmpty) return displayName;
+
+    final username = (data['username'] as String?)?.trim();
+    if (username != null && username.isNotEmpty) return username;
+
+    final email = data['email'] as String?;
+    if (email != null && email.contains('@')) return email.split('@').first;
+
+    return 'User';
+  }
+
   // ── Score update helpers (call these when an exercise is completed) ──────────
 
-  /// Adds [points] to the current user's daily, weekly, and monthly scores.
-  /// Call this from ExerciseScreen after a workout is completed.
-  static Future<void> addScore(int points) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+  /// Pure function to calculate new scores based on previous scores and points added.
+  static Map<String, dynamic> calculateNewScores({
+    required Map<String, dynamic> existing,
+    required int points,
+    required DateTime now,
+  }) {
+    final lastUpdated = (existing['lastUpdated'] as Timestamp?)?.toDate();
+    final newScores = Map<String, dynamic>.from(existing);
 
-    final now = DateTime.now();
-    final userRef = _db.collection('users').doc(uid);
+    newScores['daily'] = _resetIfStale(
+          existing['daily'],
+          lastUpdated,
+          _isSameDay,
+          now,
+        ) +
+        points;
+    newScores['weekly'] = _resetIfStale(
+          existing['weekly'],
+          lastUpdated,
+          _isSameWeek,
+          now,
+        ) +
+        points;
+    newScores['monthly'] = _resetIfStale(
+          existing['monthly'],
+          lastUpdated,
+          _isSameMonth,
+          now,
+        ) +
+        points;
+    newScores['lastUpdated'] = Timestamp.fromDate(now);
 
-    await _db.runTransaction((tx) async {
-      final snap = await tx.get(userRef);
-      final data = snap.data() ?? {};
-      final existing = Map<String, dynamic>.from(
-          (data['scores'] as Map<String, dynamic>?) ?? {});
-
-      // Reset stale periods
-      final lastUpdated = (existing['lastUpdated'] as Timestamp?)?.toDate();
-      existing['daily'] = _resetIfStale(
-            existing['daily'],
-            lastUpdated,
-            _isSameDay,
-          ) +
-          points;
-      existing['weekly'] = _resetIfStale(
-            existing['weekly'],
-            lastUpdated,
-            _isSameWeek,
-          ) +
-          points;
-      existing['monthly'] = _resetIfStale(
-            existing['monthly'],
-            lastUpdated,
-            _isSameMonth,
-          ) +
-          points;
-      existing['lastUpdated'] = Timestamp.fromDate(now);
-
-      tx.set(userRef, {'scores': existing}, SetOptions(merge: true));
-    });
+    return newScores;
   }
 
   static int _resetIfStale(
     dynamic current,
     DateTime? lastUpdated,
     bool Function(DateTime, DateTime) isSamePeriod,
+    DateTime now,
   ) {
     if (current == null || lastUpdated == null) return 0;
-    final now = DateTime.now();
     return isSamePeriod(lastUpdated, now) ? (current as num).toInt() : 0;
   }
 

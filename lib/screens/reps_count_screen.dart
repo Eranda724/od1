@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/streak_service.dart';
+import '../services/notification_service.dart';
 import '../app_settings.dart';
-import 'congradulation_screen.dart';
+import 'celebration_screen.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -66,20 +67,10 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
     });
   }
 
-  String _todayKey() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-  }
+  // Removed unused key functions since they moved to service
 
-  String _yesterdayKey() {
-    final y = DateTime.now().subtract(const Duration(days: 1));
-    return '${y.year}-${y.month.toString().padLeft(2, '0')}-${y.day.toString().padLeft(2, '0')}';
-  }
-
-  /// Reads + updates the exercise doc in one transaction:
-  /// users/{uid}/exercises/{exerciseId}
-  /// fields: lifetimeTotal (int), currentStreak (int),
-  ///         lastCompletedDate (String "yyyy-MM-dd"), todayReps (int)
+  /// Calls StreakService to update user + exercise stats, then navigates
+  /// to the Congratulation screen.
   Future<void> _submit() async {
     if (_reps <= 0) {
       setState(() => _error = 'Enter at least 1 ${widget.unit}.');
@@ -97,63 +88,18 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       _error = null;
     });
 
-    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
-
-    final today = _todayKey();
-    final yesterday = _yesterdayKey();
-
     try {
-      final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
-        final snap = await tx.get(userRef);
-        final data = snap.data() ?? {};
+      final result = await StreakService.logExercise(
+        uid: user.uid,
+        exerciseId: widget.exerciseId,
+        exerciseName: widget.exerciseName,
+        reps: _reps,
+      );
 
-        final exercisesMap = (data['exercises'] as Map<String, dynamic>?) ?? {};
-        final exerciseData = (exercisesMap[widget.exerciseId] as Map<String, dynamic>?) ?? {};
+      if (!mounted) return;
 
-        final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
-        final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
-        final lastDate = exerciseData['lastCompletedDate'] as String?;
-        final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
-
-        int newStreak;
-        int newTodayReps;
-
-        if (lastDate == today) {
-          // Already logged today — streak doesn't change, but today's
-          // reps accumulate (in case they do a second session same day).
-          newStreak = prevStreak;
-          newTodayReps = prevTodayReps + _reps;
-        } else if (lastDate == yesterday) {
-          // Logged yesterday — streak continues.
-          newStreak = prevStreak + 1;
-          newTodayReps = _reps;
-        } else {
-          // First time, or streak was broken.
-          newStreak = 1;
-          newTodayReps = _reps;
-        }
-
-        final newLifetime = prevLifetime + _reps;
-
-        tx.set(userRef, {
-          'exercises': {
-            widget.exerciseId: {
-              'lifetimeTotal': newLifetime,
-              'currentStreak': newStreak,
-              'lastCompletedDate': today,
-              'todayReps': newTodayReps,
-              'exerciseName': widget.exerciseName,
-              'updatedAt': FieldValue.serverTimestamp(),
-            }
-          }
-        }, SetOptions(merge: true));
-
-        return {
-          'lifetimeTotal': newLifetime,
-          'currentStreak': newStreak,
-          'todayReps': newTodayReps,
-        };
-      });
+      // Cancel the evening streak-saver notification — user worked out today!
+      await NotificationService.instance.cancelTodayEveningReminder();
 
       if (!mounted) return;
 
@@ -161,11 +107,12 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => CongratulationScreen(
+          builder: (_) => CelebrationScreen(
             exerciseName: widget.exerciseName,
             dayStreak: result['currentStreak']!,
             todayReps: result['todayReps']!,
             lifetimeTotal: result['lifetimeTotal']!,
+            overallStreak: result['overallStreak']!,
             unit: widget.unit,
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,

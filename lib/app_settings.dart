@@ -9,15 +9,18 @@ class AppSettings extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   String _languageCode = 'en';
   bool _isGridView = false;
+  bool _notificationsEnabled = true;
 
   ThemeMode get themeMode => _themeMode;
   String get languageCode => _languageCode;
   bool get isGridView => _isGridView;
+  bool get notificationsEnabled => _notificationsEnabled;
   Locale get locale => Locale(_languageCode);
 
   static const _keyTheme = 'themeMode';
   static const _keyLang = 'languageCode';
   static const _keyGrid = 'isGridView';
+  static const _keyNotifications = 'notificationsEnabled';
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,6 +28,7 @@ class AppSettings extends ChangeNotifier {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     _languageCode = prefs.getString(_keyLang) ?? 'en';
     _isGridView = prefs.getBool(_keyGrid) ?? false;
+    _notificationsEnabled = prefs.getBool(_keyNotifications) ?? true;
     notifyListeners();
   }
 
@@ -46,6 +50,13 @@ class AppSettings extends ChangeNotifier {
     _isGridView = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyGrid, value);
+    notifyListeners();
+  }
+
+  Future<void> setNotificationsEnabled(bool value) async {
+    _notificationsEnabled = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyNotifications, value);
     notifyListeners();
   }
 

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'onboarding_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main.dart';
+import '../app_settings.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,8 +29,44 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      final input = _emailController.text.trim();
+      if (input.isEmpty) {
+        throw FirebaseAuthException(code: 'invalid-email', message: 'Please enter an email or username.');
+      }
+
+      String emailToUse = input;
+
+      // If the input doesn't look like an email, try resolving it as a username
+      if (!input.contains('@')) {
+        final usersRef = FirebaseFirestore.instance.collection('users');
+        
+        // Check new displayName field
+        var snap = await usersRef.where('displayName', isEqualTo: input).limit(1).get();
+        if (snap.docs.isNotEmpty) {
+          emailToUse = snap.docs.first.data()['email'] ?? '';
+        } else {
+          // Check old username field for legacy users
+          snap = await usersRef.where('username', isEqualTo: input).limit(1).get();
+          if (snap.docs.isNotEmpty) {
+            emailToUse = snap.docs.first.data()['email'] ?? '';
+          } else {
+            throw FirebaseAuthException(
+              code: 'user-not-found',
+              message: 'No account found with this username.',
+            );
+          }
+        }
+
+        if (emailToUse.isEmpty) {
+          throw FirebaseAuthException(
+            code: 'user-not-found',
+            message: 'Account found, but email is missing. Please contact support.',
+          );
+        }
+      }
+
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
+        email: emailToUse,
         password: _passwordController.text.trim(),
       );
 
@@ -54,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PCColors.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -70,79 +109,76 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height -
-                MediaQuery.of(context).padding.top -
-                kToolbarHeight,
-          ),
-          child: IntrinsicHeight(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-            Image.asset('assets/images/login.png', height: 260),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(child: Image.asset('assets/images/login.png', height: 260)),
             const SizedBox(height: 16),
-            Stack(
-              children: [
-                Text(
-                  'Potato',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.2,
-                    foreground: Paint()
-                      ..style = ui.PaintingStyle.stroke
-                      ..strokeWidth = 5
-                      ..strokeJoin = ui.StrokeJoin.round
-                      ..color = Colors.black,
+            Center(
+              child: Stack(
+                children: [
+                  Text(
+                    'Potato',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.2,
+                      foreground: Paint()
+                        ..style = ui.PaintingStyle.stroke
+                        ..strokeWidth = 5
+                        ..strokeJoin = ui.StrokeJoin.round
+                        ..color = Colors.black,
+                    ),
                   ),
-                ),
-                const Text(
-                  'Potato',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFFFFC72C),
-                    letterSpacing: 0.2,
+                  const Text(
+                    'Potato',
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFFFFC72C),
+                      letterSpacing: 0.2,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            Stack(
-              children: [
-                Text(
-                  '60 Second Routine',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.9,
-                    foreground: Paint()
-                      ..style = ui.PaintingStyle.stroke
-                      ..strokeWidth = 3
-                      ..strokeJoin = ui.StrokeJoin.round
-                      ..color = Colors.black,
+            Center(
+              child: Stack(
+                children: [
+                  Text(
+                    '60 Second Routine',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.9,
+                      foreground: Paint()
+                        ..style = ui.PaintingStyle.stroke
+                        ..strokeWidth = 3
+                        ..strokeJoin = ui.StrokeJoin.round
+                        ..color = Colors.black,
+                    ),
                   ),
-                ),
-                const Text(
-                  '60 Second Routine',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.9,
+                  const Text(
+                    '60 Second Routine',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 0.9,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             const SizedBox(height: 32),
             TextField(
               controller: _emailController,
               decoration: const InputDecoration(
-                labelText: 'Email',
+                labelText: 'Email or Username',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: TextInputType.text,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -163,7 +199,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               obscureText: _obscurePassword,
             ),
-            const SizedBox(height: 0.2),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
@@ -185,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             const SizedBox(height: 10),
             _isLoading
-                ? const CircularProgressIndicator()
+                ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
@@ -202,11 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text("Don't have an account? Register"),
             ),
-            ],
-            ),
-          ),
+          ],
         ),
       ),
     );
   }
-}
+}

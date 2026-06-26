@@ -54,25 +54,34 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<DocumentSnapshot>(
+    return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(widget.user?.uid)
+          .collection('exercises')
           .snapshots(),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
+      builder: (context, userExercisesSnap) {
+        if (userExercisesSnap.hasError) {
+          return Center(child: Text('Error: ${userExercisesSnap.error}'));
+        }
+        if (!userExercisesSnap.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        final data = userSnapshot.data?.data() as Map<String, dynamic>?;
-
-        final exercises = Map<String, dynamic>.from(data?['exercises'] ?? {});
+        final exercises = <String, Map<String, dynamic>>{};
+        for (final doc in userExercisesSnap.data!.docs) {
+          exercises[doc.id] = doc.data() as Map<String, dynamic>;
+        }
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('exercises')
               .snapshots(),
           builder: (context, exerciseSnapshot) {
+            if (exerciseSnapshot.hasError) {
+              return Center(child: Text('Error loading exercises: ${exerciseSnapshot.error}'));
+            }
+            
             final exerciseDefs = <String, ExerciseItem>{};
             if (exerciseSnapshot.hasData) {
               for (final doc in exerciseSnapshot.data!.docs) {

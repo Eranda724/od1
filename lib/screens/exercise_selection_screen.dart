@@ -28,22 +28,26 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final Map<String, dynamic> exerciseData = {};
+    final batch = FirebaseFirestore.instance.batch();
+    final userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+    batch.set(userRef, {
+      'email': user.email,
+      'selectedExercises': _selected.toList(),
+      'freezesAvailable': 0,
+      'freezeLastRefillDate': null,
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
     for (final id in _selected) {
-      exerciseData[id] = {
+      batch.set(userRef.collection('exercises').doc(id), {
         'currentStreak': 0,
         'lifetimeTotal': 0,
         'lastCompletedDate': null,
-      };
+      }, SetOptions(merge: true));
     }
 
-    await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      'email': user.email,
-      'isAdmin': false,
-      'selectedExercises': _selected.toList(),
-      'exercises': exerciseData,
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await batch.commit();
 
     if (mounted) {
       Navigator.pushReplacement(
@@ -60,6 +64,9 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
