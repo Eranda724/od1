@@ -15,6 +15,7 @@ class SocialScreen extends StatefulWidget {
 
 class _SocialScreenState extends State<SocialScreen> {
   final _searchController = TextEditingController();
+  TextEditingController? _autoCompleteController;
   bool _isSearching = false;
   String? _searchError;
 
@@ -25,7 +26,7 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Future<void> _sendFriendRequest() async {
-    final query = _searchController.text.trim();
+    final query = (_autoCompleteController?.text ?? _searchController.text).trim();
     if (query.isEmpty) return;
 
     setState(() {
@@ -48,6 +49,7 @@ class _SocialScreenState extends State<SocialScreen> {
           const SnackBar(content: Text('Friend request sent!'), backgroundColor: Colors.green),
         );
         _searchController.clear();
+        _autoCompleteController?.clear();
       }
     } catch (e) {
       if (mounted) {
@@ -80,16 +82,92 @@ class _SocialScreenState extends State<SocialScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter exact username...',
-                      errorText: _searchError,
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
+                  child: Autocomplete<Map<String, dynamic>>(
+                    optionsBuilder: (TextEditingValue textEditingValue) async {
+                      final queryStr = textEditingValue.text.trim();
+                      if (queryStr.isEmpty) {
+                        return const Iterable<Map<String, dynamic>>.empty();
+                      }
+                      try {
+                        String queryLower = queryStr.toLowerCase();
+                        String queryCapitalized = '${queryStr[0].toUpperCase()}${queryStr.substring(1).toLowerCase()}';
+                        
+                        final snap1 = await FirebaseFirestore.instance
+                            .collection('users')
+                            .where('displayName', isGreaterThanOrEqualTo: queryLower)
+                            .where('displayName', isLessThanOrEqualTo: queryLower + '\uf8ff')
+                            .limit(4)
+                            .get();
+                            
+                        final snap2 = await FirebaseFirestore.instance
+                            .collection('users')
+                            .where('displayName', isGreaterThanOrEqualTo: queryCapitalized)
+                            .where('displayName', isLessThanOrEqualTo: queryCapitalized + '\uf8ff')
+                            .limit(4)
+                            .get();
+                            
+                        final currentUid = FirebaseAuth.instance.currentUser?.uid;
+                        
+                        final allDocs = [...snap1.docs, ...snap2.docs];
+                        final Map<String, Map<String, dynamic>> uniqueUsers = {};
+                        
+                        for (var d in allDocs) {
+                          if (d.id == currentUid) continue; // Exclude current user
+                          final data = d.data();
+                          data['uid'] = d.id;
+                          final name = data['displayName'] as String?;
+                          if (name != null && name.isNotEmpty) {
+                            uniqueUsers[d.id] = data;
+                          }
+                        }
+                        
+                        return uniqueUsers.values.take(4);
+                      } catch (e) {
+                        return const Iterable<Map<String, dynamic>>.empty();
+                      }
+                    },
+                    displayStringForOption: (option) => option['displayName'] as String,
+                    onSelected: (Map<String, dynamic> selection) {
+                      _autoCompleteController?.text = selection['displayName'] as String;
+                      
+                      final friend = FriendInfo(
+                        uid: selection['uid'] as String,
+                        displayName: selection['displayName'] as String,
+                        pairId: '',
+                        sharedStreak: 0,
+                        overallStreak: (selection['overallStreak'] as num?)?.toInt() ?? 0,
+                        friendDoneToday: false,
+                      );
+                      
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => FriendProfileScreen(
+                            friend: friend,
+                            isFriend: false,
+                          ),
+                        ),
+                      );
+                    },
+                    fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+                      _autoCompleteController = textEditingController;
+                      return TextField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        onSubmitted: (String value) {
+                          onFieldSubmitted();
+                          _sendFriendRequest();
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search username...',
+                          errorText: _searchError,
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(12)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),

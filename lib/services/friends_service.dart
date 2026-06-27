@@ -16,7 +16,7 @@ class FriendsService {
     return '${y.year}-${y.month.toString().padLeft(2, '0')}-${y.day.toString().padLeft(2, '0')}';
   }
 
-  static String _getPairId(String uid1, String uid2) {
+  static String getPairId(String uid1, String uid2) {
     final uids = [uid1, uid2]..sort();
     return '${uids[0]}_${uids[1]}';
   }
@@ -45,7 +45,7 @@ class FriendsService {
       throw Exception("You can't add yourself as a friend.");
     }
 
-    final pairId = _getPairId(fromUid, toUid);
+    final pairId = getPairId(fromUid, toUid);
 
     // 2. Check if already friends
     final pairDoc = await FirebaseFirestore.instance.collection('friendPairs').doc(pairId).get();
@@ -77,7 +77,7 @@ class FriendsService {
 
   // ── Accept Friend Request ──
   Future<void> acceptRequest(String docId, String fromUid, String toUid) async {
-    final pairId = _getPairId(fromUid, toUid);
+    final pairId = getPairId(fromUid, toUid);
 
     final batch = FirebaseFirestore.instance.batch();
 
@@ -104,6 +104,26 @@ class FriendsService {
         .collection('friendRequests')
         .doc(docId)
         .update({'status': 'rejected'});
+  }
+
+  // ── Remove Friend Request ──
+  Future<void> removeFriendRequest(String fromUid, String toUid) async {
+    final reqsQuery = await FirebaseFirestore.instance
+        .collection('friendRequests')
+        .where('fromUid', isEqualTo: fromUid)
+        .where('toUid', isEqualTo: toUid)
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    for (final doc in reqsQuery.docs) {
+      await doc.reference.delete();
+    }
+  }
+
+  // ── Remove Friend ──
+  Future<void> removeFriend(String uid1, String uid2) async {
+    final pairId = getPairId(uid1, uid2);
+    await FirebaseFirestore.instance.collection('friendPairs').doc(pairId).delete();
   }
 
   // ── Get Friends List ──
