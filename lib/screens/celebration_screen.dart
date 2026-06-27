@@ -43,7 +43,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     'assets/images/po1.png',
     'assets/images/po2.png',
     'assets/images/po3.png',
-    'assets/images/basket.png',
+    'assets/images/bascket.png',
     'assets/images/bicy.png',
     'assets/images/dance.png',
     'assets/images/foot.png',
@@ -51,7 +51,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     'assets/images/plank.png',
     'assets/images/put.png',
     'assets/images/tennis.png',
-    'assets/images/weifht.png',
+    'assets/images/weight.png',
   ];
 
   // ── Fun messages ──────────────────────────────────────────────────────────
