@@ -34,8 +34,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/sounds/celebrate.mp3
-    - assets/sounds/congradulation.mp3
+    - assets/sounds/
     - assets/images/
 
 flutter_launcher_icons:
