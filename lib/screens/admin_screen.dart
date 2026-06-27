@@ -3,17 +3,38 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import '../admin/admin_exercise_screen.dart';
+import '../admin/admin_users_view.dart';
 
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin'),
-        leading: BackButton(onPressed: () => Navigator.pop(context)),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Admin'),
+          leading: BackButton(onPressed: () => Navigator.pop(context)),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Exercises'),
+              Tab(text: 'Users'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _buildExercisesTab(context),
+            const AdminUsersView(),
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildExercisesTab(BuildContext context) {
+    return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
