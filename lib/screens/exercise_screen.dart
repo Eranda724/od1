@@ -6,6 +6,7 @@ import '../models/exercise_icons.dart';
 export '../models/exercise_item.dart' show ExerciseMedia;
 import 'exercise_start_screen.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 
 class ExerciseScreen extends StatefulWidget {
   final User? user;
@@ -122,6 +123,32 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} Days');
 
               void startExercise() {
+                List<SessionItem> queue = [];
+                int startingIndex = 1;
+                int totalTodos = todoExercises.length;
+                
+                if (!isDone) {
+                  final index = todoExercises.indexOf(id);
+                  if (index != -1) {
+                    startingIndex = index + 1;
+                    for (int i = index + 1; i < todoExercises.length; i++) {
+                      final nextId = todoExercises[i];
+                      final nEx = Map<String, dynamic>.from(exercises[nextId] ?? {});
+                      final nDef = exerciseDefs[nextId];
+                      queue.add(SessionItem(
+                        exerciseId: nextId,
+                        exerciseName: nDef?.name ?? _fallbackName(nextId),
+                        description: (nDef?.description?.isNotEmpty == true) ? nDef!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                        streak: nEx['currentStreak'] ?? 0,
+                        lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
+                        defaultReps: nDef?.defaultReps ?? 0,
+                        defaultTimer: nDef?.defaultTimer ?? 0,
+                        unit: nDef?.unit ?? 'reps',
+                      ));
+                    }
+                  }
+                }
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -134,6 +161,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       defaultReps: def?.defaultReps ?? 0,
                       defaultTimer: def?.defaultTimer ?? 0,
                       unit: unit,
+                      sessionQueue: queue,
+                      exerciseIndex: isDone ? 1 : startingIndex,
+                      totalExercises: isDone ? 1 : totalTodos,
                     ),
                   ),
                 );

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../services/streak_service.dart';
 import '../services/notification_service.dart';
 import '../services/friends_service.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 import 'celebration_screen.dart';
+import 'exercise_start_screen.dart';
+import 'daily_summary_screen.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -19,6 +24,7 @@ class RepEntryScreen extends StatefulWidget {
   /// Optional — pass these through if you're tracking a multi-exercise session.
   final int? exerciseIndex;
   final int? totalExercises;
+  final List<SessionItem>? sessionQueue;
 
   /// Called once the Firestore update succeeds and Congratulation screen
   /// is about to be shown — gives the caller a hook to advance its own
@@ -33,6 +39,7 @@ class RepEntryScreen extends StatefulWidget {
     this.defaultReps = 10,
     this.exerciseIndex,
     this.totalExercises,
+    this.sessionQueue,
     this.onSaved,
   });
 
@@ -46,21 +53,32 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   String? _error;
 
   final TextEditingController _controller = TextEditingController();
+  late final AudioPlayer _player;
 
   @override
   void initState() {
     super.initState();
     _reps = widget.defaultReps;
     _controller.text = _reps.toString();
+    _player = AudioPlayer();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _player.dispose();
     super.dispose();
   }
 
+  Future<void> _playClick() async {
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/click.mp3'));
+    } catch (_) {}
+  }
+
   void _changeReps(int delta) {
+    _playClick();
     final next = (_reps + delta).clamp(0, 9999);
     setState(() {
       _reps = next;
@@ -69,6 +87,70 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   }
 
   // Removed unused key functions since they moved to service
+
+  Future<void> _goToNextOrSummary(BuildContext navContext) async {
+    final queue = widget.sessionQueue;
+    if (queue != null && queue.isNotEmpty) {
+      final next = queue.first;
+      final tail = queue.skip(1).toList();
+      Navigator.of(navContext).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ExerciseStartScreen(
+            exerciseId: next.exerciseId,
+            exerciseName: next.exerciseName,
+            description: next.description,
+            streak: next.streak,
+            lifetimeTotal: next.lifetimeTotal,
+            defaultReps: next.defaultReps,
+            defaultTimer: next.defaultTimer,
+            unit: next.unit,
+            sessionQueue: tail,
+            exerciseIndex: (widget.exerciseIndex ?? 1) + 1,
+            totalExercises: widget.totalExercises,
+          ),
+        ),
+      );
+    } else {
+      // Proceed to summary
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final overallStreak = userDoc.data()?['overallStreak'] ?? 0;
+        
+        final exSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').get();
+        final now = DateTime.now();
+        final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        
+        List<ExerciseDaySummary> summaryList = [];
+        for (var doc in exSnap.docs) {
+          final data = doc.data();
+          if (data['lastCompletedDate'] == todayKey) {
+             summaryList.add(ExerciseDaySummary(
+                exerciseName: data['exerciseName'] ?? doc.id,
+                unit: widget.unit, // Assuming similar units or using the last one
+                todayReps: data['todayReps'] ?? 0,
+                currentStreak: data['currentStreak'] ?? 0,
+                lifetimeTotal: data['lifetimeTotal'] ?? 0,
+             ));
+          }
+        }
+        
+        Navigator.of(navContext).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => DailySummaryScreen(
+               completedExercises: summaryList,
+               overallStreak: overallStreak,
+            ),
+          ),
+        );
+      } catch (e) {
+        // Fallback
+        Navigator.of(navContext).popUntil((route) => route.isFirst);
+      }
+    }
+  }
 
   /// Calls StreakService to update user + exercise stats, then navigates
   /// to the Congratulation screen.
@@ -126,7 +208,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,
             onContinue: (navContext) {
-              Navigator.of(navContext).popUntil((route) => route.isFirst);
+              _goToNextOrSummary(navContext);
             },
           ),
         ),

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 import 'session_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -85,6 +86,10 @@ class ExerciseStartScreen extends StatefulWidget {
   final int defaultReps;
   final int defaultTimer;
   final String unit;
+  
+  final List<SessionItem>? sessionQueue;
+  final int? exerciseIndex;
+  final int? totalExercises;
 
   const ExerciseStartScreen({
     super.key,
@@ -96,6 +101,9 @@ class ExerciseStartScreen extends StatefulWidget {
     this.defaultReps = 10,
     this.defaultTimer = 30,
     this.unit = 'reps',
+    this.sessionQueue,
+    this.exerciseIndex,
+    this.totalExercises,
   });
 
   @override
@@ -193,6 +201,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             streak: widget.streak,
             lifetimeTotal: widget.lifetimeTotal,
             defaultReps: widget.defaultReps,
+            sessionQueue: widget.sessionQueue,
+            exerciseIndex: widget.exerciseIndex,
+            totalExercises: widget.totalExercises,
           ),
         ),
       );

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 import 'reps_count_screen.dart';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
@@ -16,6 +17,9 @@ class ActiveSessionScreen extends StatefulWidget {
   final int streak;
   final int lifetimeTotal;
   final int defaultReps;
+  final List<SessionItem>? sessionQueue;
+  final int? exerciseIndex;
+  final int? totalExercises;
 
   const ActiveSessionScreen({
     super.key,
@@ -27,6 +31,9 @@ class ActiveSessionScreen extends StatefulWidget {
     required this.streak,
     required this.lifetimeTotal,
     required this.defaultReps,
+    this.sessionQueue,
+    this.exerciseIndex,
+    this.totalExercises,
   });
 
   @override
@@ -123,6 +130,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
           exerciseName: widget.exerciseName,
           unit: widget.unit,
           defaultReps: todayAmount,
+          sessionQueue: widget.sessionQueue,
+          exerciseIndex: widget.exerciseIndex,
+          totalExercises: widget.totalExercises,
         ),
       ),
     );
