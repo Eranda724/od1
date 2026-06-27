@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
 import 'session_screen.dart';
 
@@ -107,6 +108,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   int _readyTimeSeconds = 3;
   final GlobalKey _timerKey = GlobalKey();
 
+  late final AudioPlayer _player;
+
   // ── Countdown ───────────────────────────────────────────────────────────────
   bool _isCountingDown = false;
   int _currentCount = 3;
@@ -117,6 +120,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   @override
   void initState() {
     super.initState();
+    _player = AudioPlayer();
     _loadSavedPrefs();
 
     final images = [
@@ -125,7 +129,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       'assets/images/po3.png',
       'assets/images/login.png',
       'assets/images/register.png',
-      'assets/images/basket.png',
+      'assets/images/bascket.png',
       'assets/images/bicy.png',
       'assets/images/dance.png',
       'assets/images/foot.png',
@@ -133,7 +137,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       'assets/images/plank.png',
       'assets/images/put.png',
       'assets/images/tennis.png',
-      'assets/images/weifht.png',
+      'assets/images/weight.png',
     ];
     _randomImage = images[Random().nextInt(images.length)];
   }
@@ -164,12 +168,18 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   @override
   void dispose() {
     _countdownTimer?.cancel();
+    _player.dispose();
     super.dispose();
   }
 
   // ── Countdown ──────────────────────────────────────────────────────────────
-  void _startCountdown() {
+  void _startCountdown() async {
     if (_isCountingDown) return;
+
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/stop.mp3'));
+    } catch (_) {}
 
     void navigate() {
       Navigator.of(context).pushReplacement(
@@ -177,7 +187,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           builder: (_) => ActiveSessionScreen(
             exerciseId: widget.exerciseId,
             exerciseName: widget.exerciseName,
-            backgroundImageUrl: null,
+            backgroundImageUrl: _randomImage,
             unit: widget.unit,
             challengeSeconds: widget.defaultTimer,
             streak: widget.streak,
@@ -203,7 +213,20 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         });
         if (_currentCount <= 0) {
           timer.cancel();
-          navigate();
+          try {
+            _player.stop().then((_) {
+              _player.play(AssetSource('sounds/pope.mp3'));
+            });
+          } catch (_) {}
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) navigate();
+          });
+        } else {
+          try {
+            _player.stop().then((_) {
+              _player.play(AssetSource('sounds/pops.mp3'));
+            });
+          } catch (_) {}
         }
       });
     } else {

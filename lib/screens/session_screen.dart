@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
 import 'reps_count_screen.dart';
 
@@ -36,6 +37,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   // ── Countdown/Stopwatch Timer ────────────────────────────────────────────
   Timer? _tickTimer;
   late int _seconds;
+  late final AudioPlayer _player;
 
   // ── Rotating tips ────────────────────────────────────────────────────────
   // Swap this list for your real "during-session" message bank later —
@@ -55,7 +57,22 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   @override
   void initState() {
     super.initState();
+    _player = AudioPlayer();
     _startSession();
+  }
+
+  Future<void> _playTick() async {
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/tick.mp3'));
+    } catch (_) {}
+  }
+
+  Future<void> _playStop() async {
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/stop.mp3'));
+    } catch (_) {}
   }
 
   void _startSession() {
@@ -66,11 +83,13 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       if (widget.challengeSeconds > 0) {
         if (_seconds > 0) {
           setState(() => _seconds--);
+          _playTick();
         } else {
           _stopSession();
         }
       } else {
         setState(() => _seconds++);
+        _playTick();
       }
     });
 
@@ -80,9 +99,12 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     });
   }
 
-  void _stopSession() {
+  void _stopSession() async {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
+    
+    await _playStop();
+    await Future.delayed(const Duration(milliseconds: 200));
 
     final secondsCompleted = widget.challengeSeconds > 0 
         ? widget.challengeSeconds - _seconds 
@@ -91,6 +113,8 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     final todayAmount = widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time' 
         ? secondsCompleted 
         : widget.defaultReps;
+
+    if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -108,6 +132,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
+    _player.dispose();
     super.dispose();
   }
 
@@ -126,7 +151,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         children: [
           // ── Background image ──────────────────────────────────────────
           if (widget.backgroundImageUrl != null)
-            Image.network(
+            Image.asset(
               widget.backgroundImageUrl!,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) => Container(color: PCColors.brownDark),
