@@ -23,6 +23,8 @@ dependencies:
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.0
   flutter_timezone: ^5.1.0
+  google_mobile_ads: ^9.0.0
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +37,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/sounds/
     - assets/images/
 

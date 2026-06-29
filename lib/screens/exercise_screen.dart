@@ -344,42 +344,50 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
                 final isEmpty = todoExercises.isEmpty && doneExercises.isEmpty;
 
-                return Stack(
+                return Column(
                   children: [
-                    ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                      children: [
-                        if (isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 48.0),
-                            child: Center(
-                              child: Text(
-                                'No exercises selected.',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                            children: [
+                              if (isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 48.0),
+                                  child: Center(
+                                    child: Text(
+                                      'No exercises selected.',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              buildSection('To Do', todoExercises, false, Colors.black),
+                              buildSection('Completed Today', doneExercises, true, Colors.green),
+                            ],
+                          ),
+                          if (exerciseDefs.isNotEmpty)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: IconButton(
+                                tooltip: 'Manage Exercises',
+                                icon: const Icon(Icons.edit_rounded),
+                                onPressed: () => _showManageSheet(
+                                  context,
+                                  // Pass current effective list — all if never configured
+                                  neverConfigured
+                                      ? exerciseDefs.keys.toList()
+                                      : (selectedExercises ?? []),
+                                  exerciseDefs,
+                                ),
                               ),
                             ),
-                          ),
-                        buildSection('To Do', todoExercises, false, Colors.black),
-                        buildSection('Completed Today', doneExercises, true, Colors.green),
-                      ],
-                    ),
-                    if (exerciseDefs.isNotEmpty)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: IconButton(
-                          tooltip: 'Manage Exercises',
-                          icon: const Icon(Icons.edit_rounded),
-                          onPressed: () => _showManageSheet(
-                            context,
-                            // Pass current effective list — all if never configured
-                            neverConfigured
-                                ? exerciseDefs.keys.toList()
-                                : (selectedExercises ?? []),
-                            exerciseDefs,
-                          ),
-                        ),
+                        ],
                       ),
+                    ),
+                    //>>>>>>for ad
+                    const SizedBox(height: 50), // Reserved space for future banner ad
                   ],
                 );
               },
