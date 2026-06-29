@@ -4,7 +4,6 @@ import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import '../admin/admin_exercise_screen.dart';
 import '../admin/admin_users_view.dart';
-import '../services/notification_service.dart';
 
 // Firestore path that stores admin-configurable notification times.
 // Document shape: { morningHour: int, morningMinute: int, eveningHour: int, eveningMinute: int }
