@@ -387,7 +387,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       ),
                     ),
                     //>>>>>>for ad
-                    const SizedBox(height: 50), // Reserved space for future banner ad
+                    StreamBuilder(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        final isPremium = snapshot.data?.data()?['isPremium'] == true;
+                        if (isPremium) return const SizedBox(); // No space if premium
+                        return const SizedBox(height: 50); // Reserved space for future banner ad
+                      },
+                    ),
                   ],
                 );
               },

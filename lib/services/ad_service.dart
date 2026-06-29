@@ -3,22 +3,49 @@ import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 class AdService {
   AdService._();
   static final AdService instance = AdService._();
 
   BannerAd? _bannerAd;
   bool _isBannerAdLoaded = false;
+  bool _isPremiumCache = false;
 
-  BannerAd? get bannerAd => _isBannerAdLoaded ? _bannerAd : null;
+  BannerAd? get bannerAd => _isBannerAdLoaded && !_isPremiumCache ? _bannerAd : null;
+  bool get isPremium => _isPremiumCache;
 
   /// Initializes the MobileAds SDK
   Future<void> initialize() async {
     await MobileAds.instance.initialize();
   }
 
+  /// Checks if the current user is premium (ad-free)
+  Future<bool> _isUserPremium() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+    
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        return doc.data()?['isPremium'] == true;
+      }
+    } catch (e) {
+      debugPrint('Error checking premium status: $e');
+    }
+    return false;
+  }
+
   /// Loads a standard banner ad to be displayed on the dashboard.
-  void loadBannerAd({VoidCallback? onLoaded}) {
+  Future<void> loadBannerAd({VoidCallback? onLoaded}) async {
+    _isPremiumCache = await _isUserPremium();
+    if (_isPremiumCache) {
+      debugPrint('User is premium. Ad loading aborted.');
+      if (onLoaded != null) onLoaded();
+      return;
+    }
     _bannerAd = BannerAd(
       adUnitId: _bannerAdUnitId,
       size: AdSize.banner,

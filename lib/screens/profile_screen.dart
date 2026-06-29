@@ -180,7 +180,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: PCColors.yellow,
                 child: Icon(Icons.person, size: 48, color: Colors.black),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
+              Center(
+                child: StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser?.uid)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    final isPremium = snapshot.data?.data()?['isPremium'] == true;
+                    if (!isPremium) return const SizedBox();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFC72C).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFC72C)),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.star_rounded, color: Color(0xFFFFC72C), size: 16),
+                          SizedBox(width: 4),
+                          Text('Premium Member', style: TextStyle(color: Color(0xFFFFC72C), fontWeight: FontWeight.bold, fontSize: 12)),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
               
               // ── Profile Information ──
               const Text('Profile Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

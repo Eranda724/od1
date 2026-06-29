@@ -108,6 +108,16 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                             ],
                           ),
                         ),
+                        const Divider(height: 1),
+                        SwitchListTile(
+                          title: const Text('Premium Status', style: TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: const Text('Grants ad-free experience (Lifetime)'),
+                          value: data['isPremium'] == true,
+                          activeColor: const Color(0xFFFFC72C),
+                          onChanged: (bool value) async {
+                            await doc.reference.update({'isPremium': value});
+                          },
+                        ),
                       ],
                     ),
                   );
