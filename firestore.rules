@@ -12,6 +12,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // App config (e.g. notifications) — all users can read, only admins write
+    match /app_config/{docId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
     // Admins collection itself — no one can write to it from the client
     match /admins/{adminId} {
       allow read: if request.auth != null;

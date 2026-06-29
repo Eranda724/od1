@@ -22,6 +22,7 @@ dependencies:
   audioplayers: ^6.1.0
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.0
+  flutter_timezone: ^5.1.0
 
 dev_dependencies:
   flutter_test:
@@ -52,5 +53,3 @@ flutter_native_splash:
     color: "#FFC93C"
     branding: "assets/icon/splash_logo.png"
     branding_bottom_padding: 200
-
-share_plus: latest_version
