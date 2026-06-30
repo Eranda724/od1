@@ -12,9 +12,14 @@ class AdService {
 
   BannerAd? _bannerAd;
   bool _isBannerAdLoaded = false;
+  
+  BannerAd? _sessionAd;
+  bool _isSessionAdLoaded = false;
+  
   bool _isPremiumCache = false;
 
   BannerAd? get bannerAd => _isBannerAdLoaded && !_isPremiumCache ? _bannerAd : null;
+  BannerAd? get sessionAd => _isSessionAdLoaded && !_isPremiumCache ? _sessionAd : null;
   bool get isPremium => _isPremiumCache;
 
   /// Initializes the MobileAds SDK
@@ -71,6 +76,41 @@ class AdService {
     _bannerAd?.dispose();
     _bannerAd = null;
     _isBannerAdLoaded = false;
+  }
+
+  /// Loads a medium rectangle ad (or adaptive) for the active session screen.
+  Future<void> loadSessionAd({AdSize size = AdSize.mediumRectangle, VoidCallback? onLoaded}) async {
+    _isPremiumCache = await _isUserPremium();
+    if (_isPremiumCache) {
+      debugPrint('User is premium. Session ad loading aborted.');
+      if (onLoaded != null) onLoaded();
+      return;
+    }
+    _sessionAd = BannerAd(
+      adUnitId: _bannerAdUnitId, // Reuse banner ID or create a specific one if client provides it
+      size: size,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (ad) {
+          debugPrint('SessionAd loaded.');
+          _isSessionAdLoaded = true;
+          if (onLoaded != null) onLoaded();
+        },
+        onAdFailedToLoad: (ad, error) {
+          debugPrint('SessionAd failed to load: $error');
+          ad.dispose();
+          _sessionAd = null;
+          _isSessionAdLoaded = false;
+        },
+      ),
+    )..load();
+  }
+
+  /// Disposes the session ad.
+  void disposeSessionAd() {
+    _sessionAd?.dispose();
+    _sessionAd = null;
+    _isSessionAdLoaded = false;
   }
 
   /// Returns the configured ad unit ID for banners.
