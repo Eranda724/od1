@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
@@ -9,6 +10,7 @@ import 'streak_screen.dart';
 import 'leaderboard_screen.dart';
 import 'social_screen.dart';
 import 'admin_screen.dart';
+import 'premium_upgrade_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isAdmin;
@@ -122,15 +124,21 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildMenuButton(User? user) {
-    final isDark = _settings.themeMode == ThemeMode.dark;
-    String dispName = user?.displayName ?? '';
-    if (dispName.trim().isEmpty) {
-      dispName = 'Profile';
-    }
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.menu_rounded),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      offset: const Offset(0, 48),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(user?.uid).snapshots(),
+      builder: (context, snapshot) {
+        final isPremium = snapshot.data?.data() != null && 
+                          (snapshot.data!.data() as Map<String, dynamic>)['isPremium'] == true;
+                          
+        final isDark = _settings.themeMode == ThemeMode.dark;
+        String dispName = user?.displayName ?? '';
+        if (dispName.trim().isEmpty) {
+          dispName = 'Profile';
+        }
+        return PopupMenuButton<String>(
+          icon: const Icon(Icons.menu_rounded),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          offset: const Offset(0, 48),
       onSelected: (value) async {
         switch (value) {
           case 'profile':
@@ -151,6 +159,12 @@ class _HomeScreenState extends State<HomeScreen>
           case 'theme_dark':
             await _settings.setThemeMode(ThemeMode.dark);
             break;
+          case 'remove_ads':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
+            );
+            break;
           case 'logout':
             _logout();
             break;
@@ -162,26 +176,24 @@ class _HomeScreenState extends State<HomeScreen>
           child: Row(children: [
             const Icon(Icons.person_outline_rounded, size: 20),
             const SizedBox(width: 10),
-            Text(
-              dispName,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ]),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          enabled: false,
-          height: 36,
-          child: Row(children: [
-            const Icon(Icons.language_rounded, size: 18, color: Colors.grey),
-            const SizedBox(width: 10),
-            Text(
-              AppSettings.supportedLanguages[_settings.languageCode] ??
-                  '🇬🇧  English',
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  dispName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                if (isPremium)
+                  const Text(
+                    'Premium User',
+                    style: TextStyle(
+                      color: PCColors.yellow,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+              ],
             ),
           ]),
         ),
@@ -206,6 +218,17 @@ class _HomeScreenState extends State<HomeScreen>
             Text('Settings'),
           ]),
         ),
+        if (!isPremium) ...[
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'remove_ads',
+            child: Row(children: [
+              Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
+              SizedBox(width: 10),
+              Text('Remove Ads', style: TextStyle(fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        ],
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'logout',
@@ -218,6 +241,8 @@ class _HomeScreenState extends State<HomeScreen>
           ]),
         ),
       ],
+    );
+      },
     );
   }
 }
