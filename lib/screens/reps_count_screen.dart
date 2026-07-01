@@ -76,8 +76,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
   Future<void> _playClick() async {
     try {
-      await _player.stop();
-      await _player.play(AssetSource('sounds/click.mp3'));
+      await HapticFeedback.lightImpact();
     } catch (_) {}
   }
 
