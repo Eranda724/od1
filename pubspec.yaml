@@ -26,6 +26,9 @@ dependencies:
   google_mobile_ads: ^9.0.0
   flutter_dotenv: ^6.0.1
   in_app_purchase: ^3.3.0
+  image_picker: ^1.2.3
+  firebase_storage: ^12.4.10
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

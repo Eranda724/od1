@@ -1,5 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 
@@ -25,6 +29,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
   bool _isDetailsCustom = false;
   String _selectedIcon = 'default';
 
+  File? _selectedImage;
+  String? _existingImageUrl;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +50,8 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     if ((e?.defaultReps ?? 0) > 0 || (e?.defaultTimer ?? 0) > 0 || (e?.defaultDays ?? 0) > 0) {
       _isDetailsCustom = true;
     }
+
+    _existingImageUrl = (e?.mediaItems.isNotEmpty == true) ? e!.mediaItems.first.url : null;
   }
 
   @override
@@ -70,6 +80,20 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     setState(() => _isLoading = true);
 
     try {
+      List<ExerciseMedia> media = widget.existing?.mediaItems.toList() ?? [];
+
+      // If a new image was selected from gallery, upload it
+      if (_selectedImage != null) {
+        final ref = FirebaseStorage.instance.ref('exercises/$id/thumbnail.jpg');
+        await ref.putFile(_selectedImage!);
+        final url = await ref.getDownloadURL();
+        media = [ExerciseMedia(url: url, isVideo: false)];
+      } 
+      // If image was removed
+      else if (_existingImageUrl == null) {
+        media = [];
+      }
+
       final item = ExerciseItem(
         id: id,
         name: name,
@@ -79,7 +103,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         defaultReps: _isDetailsCustom ? (int.tryParse(_repsController.text.trim()) ?? 0) : 0,
         defaultTimer: _isDetailsCustom ? (int.tryParse(_timerController.text.trim()) ?? 0) : 0,
         defaultDays: _isDetailsCustom ? (int.tryParse(_daysController.text.trim()) ?? 0) : 0,
-        mediaItems: [],
+        mediaItems: media,
       );
 
       await FirebaseFirestore.instance
@@ -90,8 +114,16 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
+        String msg = e.toString();
+        if (msg.contains('404') || msg.contains('-13010') || msg.contains('object-not-found')) {
+          msg = 'Storage not enough or not enabled. Please click "Get Started" in Firebase Storage console.';
+        } else if (msg.contains('unauthorized') || msg.contains('permission-denied')) {
+          msg = 'Permission denied. Please configure Firebase Storage security rules.';
+        } else {
+          msg = 'Failed to save: $msg';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving: $e')),
+          SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
         );
       }
     } finally {
@@ -174,6 +206,71 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                         setState(() => _selectedIcon = val);
                       }
                     },
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Text('Custom Image (Overrides Icon)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                if (_selectedImage != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.file(_selectedImage!, width: 64, height: 64, fit: BoxFit.cover),
+                  )
+                else if (_existingImageUrl != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CachedNetworkImage(
+                      imageUrl: _existingImageUrl!,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  Container(
+                    width: 64, height: 64,
+                    decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.upload),
+                        label: const Text('Upload Image'),
+                        onPressed: () async {
+                          final img = await _picker.pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 800,
+                            maxHeight: 800,
+                            imageQuality: 75,
+                          );
+                          if (img != null) {
+                            setState(() {
+                              _selectedImage = File(img.path);
+                              _existingImageUrl = null;
+                            });
+                          }
+                        },
+                      ),
+                      if (_selectedImage != null || _existingImageUrl != null)
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedImage = null;
+                              _existingImageUrl = null;
+                            });
+                          },
+                          child: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -289,3 +386,4 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     );
   }
 }
+

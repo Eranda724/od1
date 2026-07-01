@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ExerciseIconItem {
   final String id;
@@ -43,6 +44,31 @@ Widget buildExerciseIconWidget(String value, {double size = 28, Color? iconColor
     return Text(value, style: TextStyle(fontSize: size));
   }
   return Icon(getExerciseIcon(value), size: size, color: iconColor ?? Colors.amber.shade900);
+}
+
+/// Comprehensive widget — renders uploaded image if available, else falls back to icon.
+Widget buildExerciseVisual(dynamic exercise, {double size = 28, Color? iconColor}) {
+  if (exercise.mediaItems.isNotEmpty) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: CachedNetworkImage(
+        imageUrl: exercise.mediaItems.first.url,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => SizedBox(
+          width: size,
+          height: size,
+          child: const Padding(
+            padding: EdgeInsets.all(4.0),
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+        errorWidget: (context, url, error) => buildExerciseIconWidget(exercise.icon, size: size, iconColor: iconColor),
+      ),
+    );
+  }
+  return buildExerciseIconWidget(exercise.icon, size: size, iconColor: iconColor);
 }
 
 const List<String> exerciseEmojis = [

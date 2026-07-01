@@ -7,6 +7,8 @@ import 'reps_count_screen.dart';
 import '../services/ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'premium_upgrade_screen.dart';
+import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -16,6 +18,7 @@ class ActiveSessionScreen extends StatefulWidget {
   final String exerciseName;
   final String? backgroundImageUrl;
   final String unit; // e.g. "reps", "seconds"
+  final ExerciseItem? exerciseDef;
   final int challengeSeconds;
   final int streak;
   final int lifetimeTotal;
@@ -30,6 +33,7 @@ class ActiveSessionScreen extends StatefulWidget {
     required this.exerciseName,
     this.backgroundImageUrl,
     this.unit = 'reps',
+    this.exerciseDef,
     required this.challengeSeconds,
     required this.streak,
     required this.lifetimeTotal,
@@ -190,6 +194,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
           exerciseId: widget.exerciseId,
           exerciseName: widget.exerciseName,
           unit: widget.unit,
+          exerciseDef: widget.exerciseDef,
           defaultReps: todayAmount,
           sessionQueue: widget.sessionQueue,
           exerciseIndex: widget.exerciseIndex,
@@ -260,6 +265,12 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                     ),
                   ),
                 ),
+                
+                if (widget.exerciseDef != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: buildExerciseVisual(widget.exerciseDef!, size: 64, iconColor: Colors.white),
+                  ),
 
                 const Spacer(),
 

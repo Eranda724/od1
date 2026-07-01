@@ -136,10 +136,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final lifetime = exerciseData['lifetimeTotal'] ?? 0;
-                  final def = exerciseDefs[id];
-                  final displayName = def?.name ?? _fallbackName(id);
-                  final icon = def?.icon ?? '??';
-                  final unit = def?.unit ?? 'reps';
+                  final def = exerciseDefs[id]!;
+                  final displayName = def.name;
+                  final icon = def.icon;
+                  final unit = def.unit;
 
                   final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
                   final goals = <String>[];
@@ -169,6 +169,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             defaultReps: nDef?.defaultReps ?? 0,
                             defaultTimer: nDef?.defaultTimer ?? 0,
                             unit: nDef?.unit ?? 'reps',
+                            exerciseDef: nDef,
                           ));
                         }
                       }
@@ -186,6 +187,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           defaultReps: def?.defaultReps ?? 0,
                           defaultTimer: def?.defaultTimer ?? 0,
                           unit: unit,
+                          exerciseDef: def,
                           sessionQueue: queue,
                           exerciseIndex: isDone ? 1 : startingIndex,
                           totalExercises: isDone ? 1 : totalTodos,
@@ -221,7 +223,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 if (isDone) const Icon(Icons.check_circle, color: Colors.green, size: 20),
                               ],
                             ),
-                            Expanded(child: Center(child: buildExerciseIconWidget(icon, size: 48))),
+                            Expanded(child: Center(child: buildExerciseVisual(def, size: 48))),
                             if (hasGoals)
                               Text('?? ${goals.join(' � ')}', style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
                             if (streak > 0 || lifetime > 0)
@@ -272,7 +274,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   color: const Color(0xFFFFC72C).withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: Center(child: buildExerciseIconWidget(icon, size: 28)),
+                                child: Center(child: buildExerciseVisual(def, size: 28)),
                               ),
                               const SizedBox(width: 16),
                               Expanded(

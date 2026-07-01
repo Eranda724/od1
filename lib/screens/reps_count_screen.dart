@@ -11,6 +11,8 @@ import '../models/session_item.dart';
 import 'celebration_screen.dart';
 import 'exercise_start_screen.dart';
 import 'daily_summary_screen.dart';
+import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -19,6 +21,7 @@ class RepEntryScreen extends StatefulWidget {
   final String exerciseId;
   final String exerciseName;
   final String unit; // e.g. "reps"
+  final ExerciseItem? exerciseDef;
   final int defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
 
   /// Optional — pass these through if you're tracking a multi-exercise session.
@@ -36,6 +39,7 @@ class RepEntryScreen extends StatefulWidget {
     required this.exerciseId,
     required this.exerciseName,
     this.unit = 'reps',
+    this.exerciseDef,
     this.defaultReps = 10,
     this.exerciseIndex,
     this.totalExercises,
@@ -104,6 +108,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             defaultReps: next.defaultReps,
             defaultTimer: next.defaultTimer,
             unit: next.unit,
+            exerciseDef: next.exerciseDef,
             sessionQueue: tail,
             exerciseIndex: (widget.exerciseIndex ?? 1) + 1,
             totalExercises: widget.totalExercises,
@@ -250,6 +255,11 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                   letterSpacing: 1,
                 ),
               ),
+              if (widget.exerciseDef != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: buildExerciseVisual(widget.exerciseDef!, size: 48),
+                ),
               const SizedBox(height: 8),
               const Text(
                 'How many did you complete?',

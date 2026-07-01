@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
+import '../models/exercise_item.dart';
 import 'session_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ class ExerciseStartScreen extends StatefulWidget {
   final int defaultReps;
   final int defaultTimer;
   final String unit;
+  final ExerciseItem? exerciseDef;
   
   final List<SessionItem>? sessionQueue;
   final int? exerciseIndex;
@@ -101,6 +103,7 @@ class ExerciseStartScreen extends StatefulWidget {
     this.defaultReps = 10,
     this.defaultTimer = 30,
     this.unit = 'reps',
+    this.exerciseDef,
     this.sessionQueue,
     this.exerciseIndex,
     this.totalExercises,
@@ -197,6 +200,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             exerciseName: widget.exerciseName,
             backgroundImageUrl: _randomImage,
             unit: widget.unit,
+            exerciseDef: widget.exerciseDef,
             challengeSeconds: widget.defaultTimer,
             streak: widget.streak,
             lifetimeTotal: widget.lifetimeTotal,

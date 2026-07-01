@@ -1,3 +1,5 @@
+import 'exercise_item.dart';
+
 class SessionItem {
   final String exerciseId;
   final String exerciseName;
@@ -7,6 +9,7 @@ class SessionItem {
   final int defaultReps;
   final int defaultTimer;
   final String unit;
+  final ExerciseItem? exerciseDef;
 
   SessionItem({
     required this.exerciseId,
@@ -17,5 +20,6 @@ class SessionItem {
     required this.defaultReps,
     required this.defaultTimer,
     required this.unit,
+    this.exerciseDef,
   });
 }

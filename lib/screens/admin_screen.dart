@@ -85,7 +85,7 @@ class AdminScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: buildExerciseIconWidget(exercise.icon, size: 26),
+                        child: buildExerciseVisual(exercise, size: 26),
                       ),
                     ),
                     title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
