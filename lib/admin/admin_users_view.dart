@@ -94,7 +94,29 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
                         ),
                       ),
-                      title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: data['isPremium'] == true ? const Color(0xFFFFC72C) : Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              data['isPremium'] == true ? 'PREMIUM' : 'FREE',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: data['isPremium'] == true ? Colors.black : Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                       subtitle: Text(email),
                       children: [
                         Padding(
