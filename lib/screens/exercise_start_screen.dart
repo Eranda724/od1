@@ -583,15 +583,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.menu_rounded,
-              color: PCColors.brownDark,
-            ),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
