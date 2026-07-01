@@ -9,6 +9,9 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'premium_upgrade_screen.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:math';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -72,12 +75,34 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   int _adSkipCountdown = 5;
   Timer? _adSkipTimer;
   bool _canSkip = false;
+  Future<DocumentSnapshot>? _adBreakConfigFuture;
   bool _isAdLoadingStarted = false;
+  late final String _randomSessionImage;
 
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer();
+    
+    // Prefetch Ad Break config if we aren't premium
+    if (!AdService.instance.isPremium) {
+      _adBreakConfigFuture = FirebaseFirestore.instance.collection('app_config').doc('ad_break').get();
+    }
+    
+    final images = [
+      'assets/images/screen1.png',
+      'assets/images/screen2.png',
+      'assets/images/screen3.png',
+      'assets/images/screen4.png',
+      'assets/images/screen5.png',
+      'assets/images/screen6.png',
+      'assets/images/screen7.png',
+      'assets/images/screen8.png',
+      'assets/images/screen9.png',
+      'assets/images/screen10.png',
+    ];
+    _randomSessionImage = images[Random().nextInt(images.length)];
+    
     _startSession();
   }
   
@@ -228,14 +253,10 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         fit: StackFit.expand,
         children: [
           // ── Background image ──────────────────────────────────────────
-          if (widget.backgroundImageUrl != null)
-            Image.asset(
-              widget.backgroundImageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(color: PCColors.brownDark),
-            )
-          else
-            Container(
+          Image.asset(
+            _randomSessionImage,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -244,6 +265,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 ),
               ),
             ),
+          ),
 
           // ── Dark scrim for text legibility ────────────────────────────
           Container(color: Colors.black.withValues(alpha: 0.45)),
@@ -397,91 +419,120 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
           
           // ── Ad Overlay ────────────────────────────────────────────────
           if (_showAdOverlay)
-            Container(
-              color: PCColors.brownDark,
-              child: SafeArea(
-                child: Column(
+            FutureBuilder<DocumentSnapshot>(
+              future: _adBreakConfigFuture,
+              builder: (context, snap) {
+                final data = snap.data?.data() as Map<String, dynamic>? ?? {};
+                final message = data['message'] as String? ?? 'Ad Break';
+                final imageUrl = data['imageUrl'] as String?;
+
+                return Stack(
                   children: [
-                    // Header with Remove Ads button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    if (imageUrl != null)
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Container(color: PCColors.brownDark),
+                    
+                    if (imageUrl != null)
+                      Container(color: Colors.black.withOpacity(0.5)),
+
+                    SafeArea(
+                      child: Column(
                         children: [
-                          const Text(
-                            'Ad Break',
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                          // Header with Remove Ads button
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 8.0, right: 8.0),
+                                    child: Text(
+                                      message,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  icon: const Icon(Icons.star, color: PCColors.yellow, size: 16),
+                                  label: const Text(
+                                    'REMOVE ADS',
+                                    style: TextStyle(
+                                      color: PCColors.yellow,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
+                                    ).then((_) {
+                                      if (mounted && AdService.instance.isPremium) {
+                                        _canSkip = true;
+                                        _skipAd();
+                                      }
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.star, color: PCColors.yellow, size: 16),
-                            label: const Text(
-                              'REMOVE ADS',
-                              style: TextStyle(
-                                color: PCColors.yellow,
-                                fontWeight: FontWeight.bold,
+
+                          // Ad Space
+                          Expanded(
+                            child: Center(
+                              child: AdService.instance.sessionAd != null
+                                  ? SizedBox(
+                                      width: AdService.instance.sessionAd!.size.width.toDouble(),
+                                      height: AdService.instance.sessionAd!.size.height.toDouble(),
+                                      child: AdWidget(ad: AdService.instance.sessionAd!),
+                                    )
+                                  : const CircularProgressIndicator(color: PCColors.yellow),
+                            ),
+                          ),
+
+                          // Skip Button
+                          Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: _canSkip ? _skipAd : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: _canSkip ? Colors.white : Colors.white24,
+                                  foregroundColor: _canSkip ? Colors.black : Colors.white54,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: Text(
+                                  _canSkip ? 'SKIP' : 'SKIP IN $_adSkipCountdown...',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
                               ),
                             ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
-                              ).then((_) {
-                                if (mounted && AdService.instance.isPremium) {
-                                  _canSkip = true;
-                                  _skipAd();
-                                }
-                              });
-                            },
                           ),
                         ],
                       ),
                     ),
-
-                    // Ad Space
-                    Expanded(
-                      child: Center(
-                        child: AdService.instance.sessionAd != null
-                            ? SizedBox(
-                                width: AdService.instance.sessionAd!.size.width.toDouble(),
-                                height: AdService.instance.sessionAd!.size.height.toDouble(),
-                                child: AdWidget(ad: AdService.instance.sessionAd!),
-                              )
-                            : const CircularProgressIndicator(color: PCColors.yellow),
-                      ),
-                    ),
-
-                    // Skip Button
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _canSkip ? _skipAd : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _canSkip ? Colors.white : Colors.white24,
-                            foregroundColor: _canSkip ? Colors.black : Colors.white54,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            _canSkip ? 'SKIP' : 'SKIP IN $_adSkipCountdown...',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
-                ),
-              ),
+                );
+              },
             ),
         ],
       ),
