@@ -29,17 +29,13 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _settings.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _settings.removeListener(_onSettingsChanged);
     super.dispose();
   }
-
-  void _onSettingsChanged() => setState(() {});
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();

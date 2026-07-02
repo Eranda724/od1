@@ -22,17 +22,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
-    _settings.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
-    _settings.removeListener(_onSettingsChanged);
     super.dispose();
-  }
-
-  void _onSettingsChanged() {
-    if (mounted) setState(() {});
   }
 
   String _fallbackName(String id) {
@@ -293,11 +287,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ],
                                 ),
                               ),
-                              if (isDone)
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 8.0),
-                                  child: Icon(Icons.check_circle, color: Colors.green, size: 28),
-                                ),
                               ElevatedButton(
                                 onPressed: startExercise,
                                 style: ElevatedButton.styleFrom(
@@ -306,6 +295,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ),
                                 child: Text(isDone ? 'Again' : 'Start'),
                               ),
+                              if (isDone)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                ),
                             ],
                           ),
                         ),
@@ -346,8 +340,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
                 final isEmpty = todoExercises.isEmpty && doneExercises.isEmpty;
 
-                return Column(
-                  children: [
+                return AnimatedBuilder(
+                  animation: _settings.gridViewNotifier,
+                  builder: (context, _) {
+                    return Column(
+                      children: [
                     Expanded(
                       child: Stack(
                         children: [
@@ -368,21 +365,35 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               buildSection('Completed Today', doneExercises, true, Colors.green),
                             ],
                           ),
-                          if (exerciseDefs.isNotEmpty)
-                            Positioned(
+                          Positioned(
                               top: 8,
                               right: 8,
-                              child: IconButton(
-                                tooltip: 'Manage Exercises',
-                                icon: const Icon(Icons.edit_rounded),
-                                onPressed: () => _showManageSheet(
-                                  context,
-                                  // Pass current effective list — all if never configured
-                                  neverConfigured
-                                      ? exerciseDefs.keys.toList()
-                                      : (selectedExercises ?? []),
-                                  exerciseDefs,
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Toggle between list and grid view
+                                  IconButton(
+                                    tooltip: _settings.isGridView ? 'Switch to List View' : 'Switch to Grid View',
+                                    icon: Icon(
+                                      _settings.isGridView
+                                          ? Icons.view_list_rounded
+                                          : Icons.grid_view_rounded,
+                                    ),
+                                    onPressed: () => _settings.setGridView(!_settings.isGridView),
+                                  ),
+                                  if (exerciseDefs.isNotEmpty)
+                                    IconButton(
+                                      tooltip: 'Manage Exercises',
+                                      icon: const Icon(Icons.edit_rounded),
+                                      onPressed: () => _showManageSheet(
+                                        context,
+                                        neverConfigured
+                                            ? exerciseDefs.keys.toList()
+                                            : (selectedExercises ?? []),
+                                        exerciseDefs,
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                         ],
@@ -401,6 +412,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       },
                     ),
                   ],
+                    );
+                  },
                 );
               },
             );
