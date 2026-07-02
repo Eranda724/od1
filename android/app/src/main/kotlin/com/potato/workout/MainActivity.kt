@@ -1,4 +1,4 @@
-package com.example.od1
+package com.potato.workout
 
 import io.flutter.embedding.android.FlutterActivity
 
