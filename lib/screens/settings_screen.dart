@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import '../services/notification_service.dart';
+import '../services/iap_service.dart';
+import 'premium_upgrade_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -141,8 +145,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
               }).toList(),
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // ── PREMIUM SECTION ──
+          _sectionHeader('Premium'),
+          const SizedBox(height: 8),
+          _buildPremiumSection(),
         ],
       ),
+    );
+  }
+
+  Widget _buildPremiumSection() {
+    return ListenableBuilder(
+      listenable: IapService.instance,
+      builder: (context, _) {
+        final iap = IapService.instance;
+
+        // Check firestore for premium status
+        return StreamBuilder(
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(FirebaseAuth.instance.currentUser?.uid)
+              .snapshots(),
+          builder: (context, snapshot) {
+            final isPremium = snapshot.data?.data()?['isPremium'] == true;
+
+            if (isPremium) {
+              return _card(
+                child: const ListTile(
+                  leading: Icon(Icons.star_rounded, color: Color(0xFFFFC72C)),
+                  title: Text('⭐ Premium Member', style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('Ads are permanently removed.'),
+                ),
+              );
+            }
+
+            return _card(
+              child: ListTile(
+                leading: const Icon(Icons.block_rounded, color: Colors.red),
+                title: const Text('Remove Ads / Upgrade'),
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

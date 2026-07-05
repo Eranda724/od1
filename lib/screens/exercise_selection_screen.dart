@@ -16,13 +16,6 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
   bool _isSaving = false;
 
   Future<void> _saveAndContinue(List<ExerciseItem> exercises) async {
-    if (_selected.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one exercise')),
-      );
-      return;
-    }
-
     setState(() => _isSaving = true);
 
     final user = FirebaseAuth.instance.currentUser;
@@ -33,7 +26,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
 
     batch.set(userRef, {
       'email': user.email,
-      'selectedExercises': _selected.toList(),
+      // Do NOT write selectedExercises — null means "all selected" (default).
       'freezesAvailable': 0,
       'freezeLastRefillDate': null,
       'createdAt': FieldValue.serverTimestamp(),
@@ -74,6 +67,13 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
           final exercises = snapshot.data!.docs
               .map((doc) => ExerciseItem.fromMap(doc.id, doc.data() as Map<String, dynamic>))
               .toList();
+
+          // Pre-tick all exercises so the user starts with everything selected.
+          if (_selected.isEmpty) {
+            for (final e in exercises) {
+              _selected.add(e.id);
+            }
+          }
 
           if (exercises.isEmpty) {
             return const Center(

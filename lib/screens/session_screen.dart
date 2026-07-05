@@ -1,7 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 import 'reps_count_screen.dart';
+import '../services/ad_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'premium_upgrade_screen.dart';
+import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
+import 'dart:math';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -11,10 +19,14 @@ class ActiveSessionScreen extends StatefulWidget {
   final String exerciseName;
   final String? backgroundImageUrl;
   final String unit; // e.g. "reps", "seconds"
+  final ExerciseItem? exerciseDef;
   final int challengeSeconds;
   final int streak;
   final int lifetimeTotal;
   final int defaultReps;
+  final List<SessionItem>? sessionQueue;
+  final int? exerciseIndex;
+  final int? totalExercises;
 
   const ActiveSessionScreen({
     super.key,
@@ -22,10 +34,14 @@ class ActiveSessionScreen extends StatefulWidget {
     required this.exerciseName,
     this.backgroundImageUrl,
     this.unit = 'reps',
+    this.exerciseDef,
     required this.challengeSeconds,
     required this.streak,
     required this.lifetimeTotal,
     required this.defaultReps,
+    this.sessionQueue,
+    this.exerciseIndex,
+    this.totalExercises,
   });
 
   @override
@@ -36,6 +52,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   // ── Countdown/Stopwatch Timer ────────────────────────────────────────────
   Timer? _tickTimer;
   late int _seconds;
+  late final AudioPlayer _player;
 
   // ── Rotating tips ────────────────────────────────────────────────────────
   // Swap this list for your real "during-session" message bank later —
@@ -51,26 +68,117 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   ];
   int _tipIndex = 0;
   Timer? _tipTimer;
+  
+  bool _showAdOverlay = false;
+  int _adSkipCountdown = 5;
+  Timer? _adSkipTimer;
+  bool _canSkip = false;
+  bool _isAdLoadingStarted = false;
+  late final String _randomSessionImage;
 
   @override
   void initState() {
     super.initState();
+    _player = AudioPlayer();
+    
+    final images = [
+      'assets/images/screen1.png',
+      'assets/images/screen2.png',
+      'assets/images/screen3.png',
+      'assets/images/screen4.png',
+      'assets/images/screen5.png',
+      'assets/images/screen6.png',
+      'assets/images/screen7.png',
+      'assets/images/screen8.png',
+      'assets/images/screen9.png',
+      'assets/images/screen10.png',
+    ];
+    _randomSessionImage = images[Random().nextInt(images.length)];
+    
     _startSession();
+  }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isAdLoadingStarted) {
+      _isAdLoadingStarted = true;
+      _loadAd();
+    }
+  }
+
+  Future<void> _loadAd() async {
+    final size = MediaQuery.of(context).size;
+    final maxWidth = size.width.truncate();
+    final maxHeight = (size.height - 200).truncate().clamp(50, size.height.truncate());
+
+    AdSize adSize = AdSize.getInlineAdaptiveBannerAdSize(maxWidth, maxHeight);
+
+    AdService.instance.loadSessionAd(size: adSize, onLoaded: () {
+      if (mounted) setState(() {});
+    });
+  }
+
+  void _startAdCountdown() {
+    _adSkipTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_adSkipCountdown > 1) {
+          _adSkipCountdown--;
+        } else {
+          _canSkip = true;
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  void _skipAd() {
+    if (!_canSkip) return;
+    setState(() {
+      _showAdOverlay = false;
+    });
+    AdService.instance.disposeSessionAd();
+  }
+
+  Future<void> _playTick() async {
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/tick.mp3'));
+    } catch (_) {}
+  }
+
+  Future<void> _playStop() async {
+    try {
+      await _player.stop();
+      await _player.play(AssetSource('sounds/stop.mp3'));
+    } catch (_) {}
   }
 
   void _startSession() {
     _seconds = widget.challengeSeconds;
+    int elapsed = 0;
 
     // Update displayed time every second.
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      elapsed++;
+      if (elapsed == 5 && !AdService.instance.isPremium) {
+        setState(() {
+          _showAdOverlay = true;
+        });
+        _startAdCountdown();
+      }
+
       if (widget.challengeSeconds > 0) {
         if (_seconds > 0) {
           setState(() => _seconds--);
+          if (!_showAdOverlay) _playTick();
         } else {
           _stopSession();
         }
       } else {
         setState(() => _seconds++);
+        if (!_showAdOverlay) _playTick();
       }
     });
 
@@ -80,9 +188,12 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     });
   }
 
-  void _stopSession() {
+  void _stopSession() async {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
+    
+    await _playStop();
+    await Future.delayed(const Duration(milliseconds: 200));
 
     final secondsCompleted = widget.challengeSeconds > 0 
         ? widget.challengeSeconds - _seconds 
@@ -92,13 +203,19 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         ? secondsCompleted 
         : widget.defaultReps;
 
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => RepEntryScreen(
           exerciseId: widget.exerciseId,
           exerciseName: widget.exerciseName,
           unit: widget.unit,
+          exerciseDef: widget.exerciseDef,
           defaultReps: todayAmount,
+          sessionQueue: widget.sessionQueue,
+          exerciseIndex: widget.exerciseIndex,
+          totalExercises: widget.totalExercises,
         ),
       ),
     );
@@ -108,6 +225,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   void dispose() {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
+    _adSkipTimer?.cancel();
+    _player.dispose();
+    AdService.instance.disposeSessionAd();
     super.dispose();
   }
 
@@ -125,14 +245,10 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         fit: StackFit.expand,
         children: [
           // ── Background image ──────────────────────────────────────────
-          if (widget.backgroundImageUrl != null)
-            Image.network(
-              widget.backgroundImageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(color: PCColors.brownDark),
-            )
-          else
-            Container(
+          Image.asset(
+            _randomSessionImage,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -141,6 +257,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 ),
               ),
             ),
+          ),
 
           // ── Dark scrim for text legibility ────────────────────────────
           Container(color: Colors.black.withValues(alpha: 0.45)),
@@ -162,6 +279,12 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                     ),
                   ),
                 ),
+                
+                if (widget.exerciseDef != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 16),
+                    child: buildExerciseVisual(widget.exerciseDef!, size: 64, iconColor: Colors.white),
+                  ),
 
                 const Spacer(),
 
@@ -285,6 +408,96 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
               ],
             ),
           ),
+          
+          // ── Ad Overlay ────────────────────────────────────────────────
+          if (_showAdOverlay)
+            Container(
+              color: PCColors.brownDark,
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    // Header with Remove Ads button
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Ad Break',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.star, color: PCColors.yellow, size: 16),
+                            label: const Text(
+                              'REMOVE ADS',
+                              style: TextStyle(
+                                color: PCColors.yellow,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
+                              ).then((_) {
+                                if (mounted && AdService.instance.isPremium) {
+                                  _canSkip = true;
+                                  _skipAd();
+                                }
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+
+
+                    // Ad Space
+                    Expanded(
+                      child: Center(
+                        child: AdService.instance.sessionAd != null
+                            ? SizedBox(
+                                width: AdService.instance.sessionAd!.size.width.toDouble(),
+                                height: AdService.instance.sessionAd!.size.height.toDouble(),
+                                child: AdWidget(ad: AdService.instance.sessionAd!),
+                              )
+                            : const CircularProgressIndicator(color: PCColors.yellow),
+                      ),
+                    ),
+
+                    // Skip Button
+                    Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: _canSkip ? _skipAd : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _canSkip ? Colors.white : Colors.white24,
+                            foregroundColor: _canSkip ? Colors.black : Colors.white54,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Text(
+                            _canSkip ? 'SKIP' : 'SKIP IN $_adSkipCountdown...',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

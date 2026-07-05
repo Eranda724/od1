@@ -70,6 +70,14 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
+      // Ensure the email is saved in Firestore (fixes older accounts missing the email field)
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && user.email != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'email': user.email,
+        }, SetOptions(merge: true));
+      }
+
       if (mounted) {
         Navigator.pushReplacement(
           context,

@@ -8,12 +8,13 @@ class AppSettings extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.light;
   String _languageCode = 'en';
-  bool _isGridView = false;
   bool _notificationsEnabled = true;
+
+  final ValueNotifier<bool> gridViewNotifier = ValueNotifier<bool>(false);
 
   ThemeMode get themeMode => _themeMode;
   String get languageCode => _languageCode;
-  bool get isGridView => _isGridView;
+  bool get isGridView => gridViewNotifier.value;
   bool get notificationsEnabled => _notificationsEnabled;
   Locale get locale => Locale(_languageCode);
 
@@ -27,7 +28,7 @@ class AppSettings extends ChangeNotifier {
     final isDark = prefs.getBool(_keyTheme) ?? false;
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     _languageCode = prefs.getString(_keyLang) ?? 'en';
-    _isGridView = prefs.getBool(_keyGrid) ?? false;
+    gridViewNotifier.value = prefs.getBool(_keyGrid) ?? false; // default: list view
     _notificationsEnabled = prefs.getBool(_keyNotifications) ?? true;
     notifyListeners();
   }
@@ -47,10 +48,10 @@ class AppSettings extends ChangeNotifier {
   }
 
   Future<void> setGridView(bool value) async {
-    _isGridView = value;
+    gridViewNotifier.value = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyGrid, value);
-    notifyListeners();
+    // Don't call notifyListeners() here to prevent full app rebuilds (MyApp listens to this)
   }
 
   Future<void> setNotificationsEnabled(bool value) async {

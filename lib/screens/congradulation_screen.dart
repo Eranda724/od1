@@ -247,7 +247,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Back to Exercises',
+                        isLast ? 'Finish & Summary' : 'Next Exercise',
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(width: 6),

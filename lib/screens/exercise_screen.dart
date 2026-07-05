@@ -6,6 +6,7 @@ import '../models/exercise_icons.dart';
 export '../models/exercise_item.dart' show ExerciseMedia;
 import 'exercise_start_screen.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 
 class ExerciseScreen extends StatefulWidget {
   final User? user;
@@ -21,29 +22,19 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
-    _settings.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
-    _settings.removeListener(_onSettingsChanged);
     super.dispose();
-  }
-
-  void _onSettingsChanged() {
-    if (mounted) setState(() {});
   }
 
   String _fallbackName(String id) {
     switch (id) {
-      case 'pushups':
-        return 'Push-Up';
-      case 'squats':
-        return 'Squat';
-      case 'situps':
-        return 'Sit-Up';
-      default:
-        return id;
+      case 'pushups': return 'Push-Up';
+      case 'squats': return 'Squat';
+      case 'situps': return 'Sit-Up';
+      default: return id;
     }
   }
 
@@ -52,270 +43,552 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
   }
 
+  void _showManageSheet(
+    BuildContext context,
+    List<String> selectedExercises,
+    Map<String, ExerciseItem> exerciseDefs,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _ManageExercisesSheet(
+        uid: widget.user!.uid,
+        currentSelected: List<String>.from(selectedExercises),
+        exerciseDefs: exerciseDefs,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.user?.uid)
-          .collection('exercises')
-          .snapshots(),
-      builder: (context, userExercisesSnap) {
-        if (userExercisesSnap.hasError) {
-          return Center(child: Text('Error: ${userExercisesSnap.error}'));
-        }
-        if (!userExercisesSnap.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    final uid = widget.user?.uid;
+    if (uid == null) return const Center(child: Text('Please sign in.'));
 
-        final exercises = <String, Map<String, dynamic>>{};
-        for (final doc in userExercisesSnap.data!.docs) {
-          exercises[doc.id] = doc.data() as Map<String, dynamic>;
-        }
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      builder: (context, userDocSnap) {
+        final userData = userDocSnap.data?.data() as Map<String, dynamic>? ?? {};
+        // null means the field was never set (new user) — treat as "all selected".
+        // An explicit empty list [] means the user deliberately deselected everything.
+        final rawSelected = userData['selectedExercises'];
+        final bool neverConfigured = rawSelected == null;
+        final selectedExercises = neverConfigured ? null : List<String>.from(rawSelected);
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
-              .collection('exercises')
-              .snapshots(),
-          builder: (context, exerciseSnapshot) {
-            if (exerciseSnapshot.hasError) {
-              return Center(child: Text('Error loading exercises: ${exerciseSnapshot.error}'));
+              .collection('users').doc(uid).collection('exercises').snapshots(),
+          builder: (context, userExercisesSnap) {
+            if (userExercisesSnap.hasError) {
+              return Center(child: Text('Error: ${userExercisesSnap.error}'));
             }
-            
-            final exerciseDefs = <String, ExerciseItem>{};
-            if (exerciseSnapshot.hasData) {
-              for (final doc in exerciseSnapshot.data!.docs) {
-                exerciseDefs[doc.id] = ExerciseItem.fromMap(
-                    doc.id, doc.data() as Map<String, dynamic>);
+            final exercises = <String, Map<String, dynamic>>{};
+            if (userExercisesSnap.hasData) {
+              for (final doc in userExercisesSnap.data!.docs) {
+                exercises[doc.id] = doc.data() as Map<String, dynamic>;
               }
             }
 
-            final today = _todayKey();
-            final todoExercises = <String>[];
-            final doneExercises = <String>[];
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
+              builder: (context, exerciseSnapshot) {
+                if (exerciseSnapshot.hasError) {
+                  return Center(child: Text('Error loading exercises: ${exerciseSnapshot.error}'));
+                }
 
-            // Show all exercises available in the database
-            for (final id in exerciseDefs.keys) {
-              final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
-              final lastCompleted = exerciseData['lastCompletedDate'] as String?;
-              if (lastCompleted == today) {
-                doneExercises.add(id);
-              } else {
-                todoExercises.add(id);
-              }
-            }
+                final exerciseDefs = <String, ExerciseItem>{};
+                if (exerciseSnapshot.hasData) {
+                  for (final doc in exerciseSnapshot.data!.docs) {
+                    exerciseDefs[doc.id] = ExerciseItem.fromMap(
+                        doc.id, doc.data() as Map<String, dynamic>);
+                  }
+                }
 
-            Widget buildCard(String id, bool isDone) {
-              final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
-              final streak = exerciseData['currentStreak'] ?? 0;
-              final lifetime = exerciseData['lifetimeTotal'] ?? 0;
+                final today = _todayKey();
+                final todoExercises = <String>[];
+                final doneExercises = <String>[];
 
-              final def = exerciseDefs[id];
-              final displayName = def?.name ?? _fallbackName(id);
-              final icon = def?.icon ?? '💪';
-              final unit = def?.unit ?? 'reps';
+                // If never configured, show all global exercises (new-user default).
+                final idsToShow = neverConfigured
+                    ? exerciseDefs.keys.toList()
+                    : (selectedExercises ?? []);
 
-              final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
-              final goals = <String>[];
-              if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} Reps');
-              if ((def?.defaultTimer ?? 0) > 0) goals.add('${def!.defaultTimer}s');
-              if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} Days');
+                for (final id in idsToShow) {
+                  if (!exerciseDefs.containsKey(id)) continue;
+                  final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
+                  final lastCompleted = exerciseData['lastCompletedDate'] as String?;
+                  if (lastCompleted == today) {
+                    doneExercises.add(id);
+                  } else {
+                    todoExercises.add(id);
+                  }
+                }
 
-              void startExercise() {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ExerciseStartScreen(
-                      exerciseId: id,
-                      exerciseName: displayName,
-                      description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
-                      streak: streak,
-                      lifetimeTotal: lifetime,
-                      defaultReps: def?.defaultReps ?? 0,
-                      defaultTimer: def?.defaultTimer ?? 0,
-                      unit: unit,
-                    ),
-                  ),
-                );
-              }
+                Widget buildCard(String id, bool isDone) {
+                  final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
+                  final streak = exerciseData['currentStreak'] ?? 0;
+                  final lifetime = exerciseData['lifetimeTotal'] ?? 0;
+                  final def = exerciseDefs[id]!;
+                  final displayName = def.name;
+                  final icon = def.icon;
+                  final unit = def.unit;
 
-              Widget gridCard() {
-                return Card(
-                  margin: EdgeInsets.zero,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
-                  ),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
+                  final goals = <String>[];
+                  if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} Reps');
+                  if ((def?.defaultTimer ?? 0) > 0) goals.add('${def!.defaultTimer}s');
+                  if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} Days');
+
+                  void startExercise() {
+                    List<SessionItem> queue = [];
+                    int startingIndex = 1;
+                    int totalTodos = todoExercises.length;
+
+                    if (!isDone) {
+                      final index = todoExercises.indexOf(id);
+                      if (index != -1) {
+                        startingIndex = index + 1;
+                        for (int i = index + 1; i < todoExercises.length; i++) {
+                          final nextId = todoExercises[i];
+                          final nEx = Map<String, dynamic>.from(exercises[nextId] ?? {});
+                          final nDef = exerciseDefs[nextId];
+                          queue.add(SessionItem(
+                            exerciseId: nextId,
+                            exerciseName: nDef?.name ?? _fallbackName(nextId),
+                            description: (nDef?.description?.isNotEmpty == true) ? nDef!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                            streak: nEx['currentStreak'] ?? 0,
+                            lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
+                            defaultReps: nDef?.defaultReps ?? 0,
+                            defaultTimer: nDef?.defaultTimer ?? 0,
+                            unit: nDef?.unit ?? 'reps',
+                            exerciseDef: nDef,
+                          ));
+                        }
+                      }
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ExerciseStartScreen(
+                          exerciseId: id,
+                          exerciseName: displayName,
+                          description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                          streak: streak,
+                          lifetimeTotal: lifetime,
+                          defaultReps: def?.defaultReps ?? 0,
+                          defaultTimer: def?.defaultTimer ?? 0,
+                          unit: unit,
+                          exerciseDef: def,
+                          sessionQueue: queue,
+                          exerciseIndex: isDone ? 1 : startingIndex,
+                          totalExercises: isDone ? 1 : totalTodos,
+                        ),
+                      ),
+                    );
+                  }
+
+                  Widget gridCard() {
+                    return Card(
+                      margin: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                      ),
+                      elevation: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
                           children: [
-                            Expanded(
-                              child: Text(
-                                displayName,
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                            if (isDone)
-                              const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                          ],
-                        ),
-                        Expanded(
-                          child: Center(
-                            child: buildExerciseIconWidget(icon, size: 48),
-                          ),
-                        ),
-                        if (hasGoals)
-                          Text('🎯 ${goals.join(' • ')}', style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
-                        if (streak > 0 || lifetime > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 11)),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: startExercise,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                              minimumSize: const Size(0, 36),
-                            ),
-                            child: Text(isDone ? 'Do Again' : 'Start', style: const TextStyle(fontSize: 13)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-
-              Widget listCard() {
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
-                  ),
-                  elevation: 2,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: startExercise,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFC72C).withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Center(
-                              child: buildExerciseIconWidget(icon, size: 28),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
+                            Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  displayName,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                Expanded(
+                                  child: Text(
+                                    displayName,
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                                if (hasGoals) ...[
-                                  const SizedBox(height: 4),
-                                  Text('🎯 ${goals.join(' • ')}', style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
-                                ],
-                                if (streak > 0 || lifetime > 0) ...[
-                                  const SizedBox(height: 4),
-                                  Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
-                                ],
+                                if (isDone) const Icon(Icons.check_circle, color: Colors.green, size: 20),
                               ],
                             ),
-                          ),
-                          if (isDone)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 8.0),
-                              child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                            Expanded(child: Center(child: buildExerciseVisual(def, size: 48))),
+                            if (hasGoals)
+                              Text('?? ${goals.join(' � ')}', style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                            if (streak > 0 || lifetime > 0)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 11))],
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: startExercise,
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                                  minimumSize: const Size(0, 36),
+                                ),
+                                child: Text(isDone ? 'Do Again' : 'Start', style: const TextStyle(fontSize: 13)),
+                              ),
                             ),
-                          ElevatedButton(
-                            onPressed: startExercise,
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            ),
-                            child: Text(isDone ? 'Again' : 'Start'),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  Widget listCard() {
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                      ),
+                      elevation: 2,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: startExercise,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 54,
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFC72C).withOpacity(0.3),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Center(child: buildExerciseVisual(def, size: 28)),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                    if (hasGoals) ...[
+                                      const SizedBox(height: 4),
+                                      Text('?? ${goals.join(' � ')}', style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                                    ],
+                                    if (streak > 0 || lifetime > 0) ...[
+                                      const SizedBox(height: 4),
+                                      Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              ElevatedButton(
+                                onPressed: startExercise,
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                ),
+                                child: Text(isDone ? 'Again' : 'Start'),
+                              ),
+                              if (isDone)
+                                const Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                ),
+                            ],
                           ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return _settings.isGridView ? gridCard() : listCard();
+                }
+
+                Widget buildSection(String title, List<String> ids, bool isDone, Color titleColor) {
+                  if (ids.isEmpty) return const SizedBox();
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16.0, bottom: 12.0),
+                        child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: titleColor)),
+                      ),
+                      if (_settings.isGridView)
+                        GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.85,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: ids.length,
+                          itemBuilder: (context, index) => buildCard(ids[index], isDone),
+                        )
+                      else
+                        Column(children: ids.map((id) => buildCard(id, isDone)).toList()),
+                    ],
+                  );
+                }
+
+                final isEmpty = todoExercises.isEmpty && doneExercises.isEmpty;
+
+                return AnimatedBuilder(
+                  animation: _settings.gridViewNotifier,
+                  builder: (context, _) {
+                    return Column(
+                      children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                            children: [
+                              if (isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 48.0),
+                                  child: Center(
+                                    child: Text(
+                                      'No exercises selected.',
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              buildSection('To Do', todoExercises, false, Colors.black),
+                              buildSection('Completed Today', doneExercises, true, Colors.green),
+                            ],
+                          ),
+                          Positioned(
+                              top: 8,
+                              right: 8,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Toggle between list and grid view
+                                  IconButton(
+                                    tooltip: _settings.isGridView ? 'Switch to List View' : 'Switch to Grid View',
+                                    icon: Icon(
+                                      _settings.isGridView
+                                          ? Icons.view_list_rounded
+                                          : Icons.grid_view_rounded,
+                                    ),
+                                    onPressed: () => _settings.setGridView(!_settings.isGridView),
+                                  ),
+                                  if (exerciseDefs.isNotEmpty)
+                                    IconButton(
+                                      tooltip: 'Manage Exercises',
+                                      icon: const Icon(Icons.edit_rounded),
+                                      onPressed: () => _showManageSheet(
+                                        context,
+                                        neverConfigured
+                                            ? exerciseDefs.keys.toList()
+                                            : (selectedExercises ?? []),
+                                        exerciseDefs,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              }
-
-              return _settings.isGridView ? gridCard() : listCard();
-            }
-
-            Widget buildSection(String title, List<String> ids, bool isDone, Color titleColor) {
-              if (ids.isEmpty) return const SizedBox();
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16.0, bottom: 12.0),
-                    child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: titleColor)),
-                  ),
-                  if (_settings.isGridView)
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.85,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
-                      itemCount: ids.length,
-                      itemBuilder: (context, index) => buildCard(ids[index], isDone),
-                    )
-                  else
-                    Column(
-                      children: ids.map((id) => buildCard(id, isDone)).toList(),
+                    //>>>>>>for ad
+                    StreamBuilder(
+                      stream: FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(FirebaseAuth.instance.currentUser?.uid)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        final isPremium = snapshot.data?.data()?['isPremium'] == true;
+                        if (isPremium) return const SizedBox(); // No space if premium
+                        return const SizedBox(height: 50); // Reserved space for future banner ad
+                      },
                     ),
-                ],
-              );
-            }
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (todoExercises.isEmpty && doneExercises.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 32.0),
-                    child: Center(child: Text('No exercises available. Admin needs to add some!')),
-                  ),
-                buildSection('To Do', todoExercises, false, Colors.black),
-                buildSection('Completed Today', doneExercises, true, Colors.green),
-              ],
+                  ],
+                    );
+                  },
+                );
+              },
             );
           },
         );
       },
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Bottom sheet for managing selected exercises
+// -----------------------------------------------------------------------------
+class _ManageExercisesSheet extends StatefulWidget {
+  final String uid;
+  final List<String> currentSelected;
+  final Map<String, ExerciseItem> exerciseDefs;
+
+  const _ManageExercisesSheet({
+    required this.uid,
+    required this.currentSelected,
+    required this.exerciseDefs,
+  });
+
+  @override
+  State<_ManageExercisesSheet> createState() => _ManageExercisesSheetState();
+}
+
+class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
+  late Set<String> _selected;
+  bool _isSaving = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = Set<String>.from(widget.currentSelected);
+  }
+
+  void _toggleSelectAll() {
+    setState(() {
+      if (_selected.length == widget.exerciseDefs.length) {
+        _selected.clear();
+      } else {
+        _selected = Set<String>.from(widget.exerciseDefs.keys);
+      }
+      if (_selected.isNotEmpty) {
+        _errorMessage = null;
+      }
+    });
+  }
+
+  Future<void> _save() async {
+    if (_selected.isEmpty) {
+      setState(() => _errorMessage = 'Please select at least one exercise.');
+      return;
+    }
+    setState(() {
+      _isSaving = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final userRef = FirebaseFirestore.instance.collection('users').doc(widget.uid);
+      final batch = FirebaseFirestore.instance.batch();
+
+      batch.update(userRef, {'selectedExercises': _selected.toList()});
+
+      for (final id in _selected) {
+        batch.set(
+          userRef.collection('exercises').doc(id),
+          {'currentStreak': 0, 'lifetimeTotal': 0, 'lastCompletedDate': null},
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not save: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final allIds = widget.exerciseDefs.keys.toList();
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text('Manage Exercises', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 4),
+            const Text('Choose which exercises appear on your dashboard.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: _toggleSelectAll,
+                  icon: Icon(
+                    _selected.length == widget.exerciseDefs.length ? Icons.remove_circle_outline : Icons.check_circle_outline,
+                    color: const Color(0xFFFFC72C),
+                  ),
+                  label: Text(
+                    _selected.length == widget.exerciseDefs.length ? 'Deselect All' : 'Select All',
+                    style: const TextStyle(color: Color(0xFF444444)),
+                  ),
+                ),
+              ],
+            ),
+            if (_errorMessage != null) ...[  
+              const SizedBox(height: 6),
+              Text(
+                _errorMessage!,
+                style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600),
+              ),
+            ],
+            const SizedBox(height: 12),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: allIds.length,
+                itemBuilder: (context, index) {
+                  final id = allIds[index];
+                  final def = widget.exerciseDefs[id]!;
+                  final isSelected = _selected.contains(id);
+                  return CheckboxListTile(
+                    value: isSelected,
+                    title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    onChanged: (checked) {
+                      setState(() {
+                        if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
+                        if (_selected.isNotEmpty) _errorMessage = null;
+                      });
+                    },
+                    activeColor: const Color(0xFFFFC72C),
+                    checkColor: Colors.black,
+                    contentPadding: EdgeInsets.zero,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _save,
+                child: _isSaving
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Save', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

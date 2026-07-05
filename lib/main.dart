@@ -9,10 +9,14 @@ import 'screens/home_screen.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
 import 'admin/admin_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
+import 'services/iap_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -21,6 +25,11 @@ void main() async {
   // Initialize notifications and schedule daily reminders
   await NotificationService.instance.init();
   await NotificationService.instance.refreshSchedule();
+  // Initialize Google Mobile Ads
+  await AdService.instance.initialize();
+  // Initialize In-App Purchases listener
+  IapService.instance.initialize();
+  
   runApp(const MyApp());
 }
 

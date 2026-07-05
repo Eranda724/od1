@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import 'login_screen.dart';
 import 'settings_screen.dart';
+import 'profile_screen.dart';
 import 'exercise_screen.dart';
 import 'streak_screen.dart';
 import 'leaderboard_screen.dart';
+import 'social_screen.dart';
 import 'admin_screen.dart';
+import 'premium_upgrade_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isAdmin;
@@ -25,17 +29,13 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    _settings.addListener(_onSettingsChanged);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _settings.removeListener(_onSettingsChanged);
     super.dispose();
   }
-
-  void _onSettingsChanged() => setState(() {});
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
@@ -49,9 +49,12 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.userChanges(),
+      builder: (context, snapshot) {
+        final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
 
-    return Scaffold(
+        return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
@@ -108,22 +111,37 @@ class _HomeScreenState extends State<HomeScreen>
           ExerciseScreen(user: user),
           const StreakScreen(),
           LeaderboardScreen(currentUid: user?.uid),
-          const _SocialPlaceholder(),
+          const SocialScreen(),
         ],
       ),
+    );
+      },
     );
   }
 
   Widget _buildMenuButton(User? user) {
-    final isDark = _settings.themeMode == ThemeMode.dark;
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.menu_rounded),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      offset: const Offset(0, 48),
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('users').doc(user?.uid).snapshots(),
+      builder: (context, snapshot) {
+        final isPremium = snapshot.data?.data() != null && 
+                          (snapshot.data!.data() as Map<String, dynamic>)['isPremium'] == true;
+                          
+        final isDark = _settings.themeMode == ThemeMode.dark;
+        String dispName = user?.displayName ?? '';
+        if (dispName.trim().isEmpty) {
+          dispName = 'Profile';
+        }
+        return PopupMenuButton<String>(
+          icon: const Icon(Icons.menu_rounded),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          offset: const Offset(0, 48),
       onSelected: (value) async {
         switch (value) {
           case 'profile':
-            _showProfileDialog(user);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
             break;
           case 'settings':
             Navigator.push(
@@ -137,6 +155,12 @@ class _HomeScreenState extends State<HomeScreen>
           case 'theme_dark':
             await _settings.setThemeMode(ThemeMode.dark);
             break;
+          case 'remove_ads':
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
+            );
+            break;
           case 'logout':
             _logout();
             break;
@@ -148,26 +172,24 @@ class _HomeScreenState extends State<HomeScreen>
           child: Row(children: [
             const Icon(Icons.person_outline_rounded, size: 20),
             const SizedBox(width: 10),
-            Text(
-              user?.email?.split('@').first ?? 'Profile',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ]),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          enabled: false,
-          height: 36,
-          child: Row(children: [
-            const Icon(Icons.language_rounded, size: 18, color: Colors.grey),
-            const SizedBox(width: 10),
-            Text(
-              AppSettings.supportedLanguages[_settings.languageCode] ??
-                  '🇬🇧  English',
-              style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w500),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  dispName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                if (isPremium)
+                  const Text(
+                    'Premium User',
+                    style: TextStyle(
+                      color: PCColors.yellow,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+              ],
             ),
           ]),
         ),
@@ -192,6 +214,17 @@ class _HomeScreenState extends State<HomeScreen>
             Text('Settings'),
           ]),
         ),
+        if (!isPremium) ...[
+          const PopupMenuDivider(),
+          const PopupMenuItem<String>(
+            value: 'remove_ads',
+            child: Row(children: [
+              Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
+              SizedBox(width: 10),
+              Text('Remove Ads', style: TextStyle(fontWeight: FontWeight.w600)),
+            ]),
+          ),
+        ],
         const PopupMenuDivider(),
         const PopupMenuItem<String>(
           value: 'logout',
@@ -205,74 +238,7 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ],
     );
-  }
-
-  void _showProfileDialog(User? user) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Profile'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircleAvatar(
-              radius: 32,
-              child: Icon(Icons.person, size: 36),
-            ),
-            const SizedBox(height: 12),
-            Text(user?.email ?? 'Unknown',
-                style: const TextStyle(fontSize: 15)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Social tab — placeholder until Friends feature is implemented
-// ─────────────────────────────────────────────────────────────────────────────
-class _SocialPlaceholder extends StatelessWidget {
-  const _SocialPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('👥', style: TextStyle(fontSize: 64)),
-            const SizedBox(height: 16),
-            const Text(
-              'Social',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF4A3219),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Friends & challenges\ncoming soon!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: const Color(0xFF6D4C2C).withValues(alpha: 0.7),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
+      },
     );
   }
 }
