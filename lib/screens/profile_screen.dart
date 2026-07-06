@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
+import '../services/account_deletion_service.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,9 +25,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isLoadingProfile = false;
   bool _isLoadingPassword = false;
+  bool _isLoadingDelete = false;
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
+  bool _obscureDeletePassword = true;
 
   @override
   void initState() {
@@ -156,6 +160,124 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Check legacy username
     snap = await usersRef.where('username', isEqualTo: username).limit(1).get();
     return snap.docs.isNotEmpty;
+  }
+
+  Future<void> _deleteAccount() async {
+    // ── Step 1: Warning dialog ────────────────────────────────────────────────
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+        title: const Text(
+          'Delete Account?',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'This will permanently delete your account, all your workout data, streaks, and friend connections.\n\nThis action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Yes, Delete My Account'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    // ── Step 2: Password confirmation (email/password users only) ─────────────────
+    String? password;
+    if (AccountDeletionService.isEmailPasswordUser) {
+      final passwordController = TextEditingController();
+      password = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
+            title: const Text('Confirm Your Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Enter your password to confirm account deletion.',
+                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: _obscureDeletePassword,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureDeletePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility),
+                      onPressed: () => setDialogState(
+                          () => _obscureDeletePassword = !_obscureDeletePassword),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, null),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, passwordController.text),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete Forever'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      passwordController.dispose();
+      if (password == null || password.isEmpty || !mounted) return;
+    }
+
+    // ── Step 3: Delete account ────────────────────────────────────────────────
+    setState(() => _isLoadingDelete = true);
+    try {
+      await AccountDeletionService.deleteAccount(password: password);
+      if (!mounted) return;
+      // Navigate to login and clear the entire navigation stack
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.message ?? 'Failed to delete account. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoadingDelete = false);
+    }
   }
 
   @override
@@ -353,6 +475,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               const SizedBox(height: 48),
+
+              // ── Danger Zone ──
+              const Divider(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    'DANGER ZONE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: Colors.red.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _isLoadingDelete
+                  ? const Center(child: CircularProgressIndicator(color: Colors.red))
+                  : OutlinedButton.icon(
+                      onPressed: _deleteAccount,
+                      icon: const Icon(Icons.delete_forever_rounded),
+                      label: const Text('Delete Account'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                    ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
