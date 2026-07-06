@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
+import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'onboarding_screen.dart';
@@ -7,6 +8,7 @@ import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main.dart';
 import '../app_settings.dart';
+import '../services/social_auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   String? _errorMessage;
   bool _isLoading = false;
+  bool _isLoadingSocial = false;
   bool _obscurePassword = true;
 
   Future<void> _login() async {
@@ -94,6 +97,52 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _isLoadingSocial = true;
+      _errorMessage = null;
+    });
+    try {
+      final credential = await SocialAuthService.signInWithGoogle();
+      if (credential == null) return; // user cancelled
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const StartRouter()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message ?? 'Google sign-in failed.');
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Google sign-in failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingSocial = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _isLoadingSocial = true;
+      _errorMessage = null;
+    });
+    try {
+      final credential = await SocialAuthService.signInWithApple();
+      if (credential == null) return; // user cancelled
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const StartRouter()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) setState(() => _errorMessage = e.message ?? 'Apple sign-in failed.');
+    } catch (e) {
+      if (mounted) setState(() => _errorMessage = 'Apple sign-in failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingSocial = false);
     }
   }
 
@@ -245,6 +294,76 @@ class _LoginScreenState extends State<LoginScreen> {
               },
               child: const Text("Don't have an account? Register"),
             ),
+
+            // ── Social Sign-In ──
+            if (_isLoadingSocial)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'OR',
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Google Sign-In
+              OutlinedButton.icon(
+                onPressed: _signInWithGoogle,
+                icon: Image.network(
+                  'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                  height: 20,
+                  width: 20,
+                  errorBuilder: (context, error, stackTrace) =>
+                      const Icon(Icons.login, size: 20),
+                ),
+                label: const Text('Continue with Google'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 50),
+                  foregroundColor: Colors.black87,
+                  side: BorderSide(color: Colors.grey.shade300),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+              // Apple Sign-In — iOS only
+              if (Platform.isIOS) ...[
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: _signInWithApple,
+                  icon: const Icon(Icons.apple, size: 22, color: Colors.white),
+                  label: const Text(
+                    'Continue with Apple',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: Colors.black,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+            ],
           ],
         ),
       ),
