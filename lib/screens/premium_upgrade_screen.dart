@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/iap_service.dart';
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class PremiumUpgradeScreen extends StatefulWidget {
   const PremiumUpgradeScreen({super.key});
@@ -33,8 +34,8 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
         if (isPremium) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Purchase Successful! You are now Premium.'),
+              SnackBar(
+                content: Text('purchase_successful'.tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -56,7 +57,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Upgrade to Premium'),
+        title: Text('upgrade_to_premium'.tr()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
@@ -80,8 +81,8 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
                     color: Color(0xFFFFC72C),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
-                    'Potato Couch Premium',
+                  Text(
+                    'potato_couch_premium'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -89,8 +90,8 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Unlock the ultimate ad-free experience.',
+                  Text(
+                    'unlock_ad_free'.tr(),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -99,11 +100,11 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
                   ),
                   const SizedBox(height: 48),
                   
-                  _buildBenefitRow(Icons.block_rounded, 'Permanently remove all ads'),
+                  _buildBenefitRow(Icons.block_rounded, 'permanently_remove_ads'.tr()),
                   const SizedBox(height: 16),
-                  _buildBenefitRow(Icons.favorite_rounded, 'Support ongoing app development'),
+                  _buildBenefitRow(Icons.favorite_rounded, 'support_development'.tr()),
                   const SizedBox(height: 16),
-                  _buildBenefitRow(Icons.offline_bolt_rounded, 'Faster, uninterrupted workouts'),
+                  _buildBenefitRow(Icons.offline_bolt_rounded, 'faster_workouts'.tr()),
                   
                   const Spacer(),
 
@@ -127,17 +128,17 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
                               : null,
                           child: Text(
                             iap.removeAdsProduct != null 
-                                ? 'Upgrade for ${iap.removeAdsProduct!.price}'
-                                : 'Loading price...',
+                                ? 'upgrade_for_price'.tr(args: [iap.removeAdsProduct!.price])
+                                : 'loading_price'.tr(),
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                         ),
                         const SizedBox(height: 16),
                         TextButton(
                           onPressed: () => iap.restorePurchases(),
-                          child: const Text(
-                            'Restore Purchases',
-                            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+                          child: Text(
+                            'restore_purchases'.tr(),
+                            style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],

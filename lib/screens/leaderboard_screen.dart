@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/leaderboard_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   final String? currentUid;
@@ -122,7 +123,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
             const SizedBox(height: 12),
             Text(
-              'Could not load leaderboard',
+              'could_not_load_leaderboard'.tr(),
               style: TextStyle(
                 color: Theme.of(context)
                     .colorScheme
@@ -185,11 +186,11 @@ class _PodiumSection extends StatelessWidget {
   String get _subtitle {
     switch (period) {
       case LeaderboardPeriod.daily:
-        return "Today's top performers";
+        return 'todays_performers'.tr();
       case LeaderboardPeriod.weekly:
-        return "This week's top performers";
+        return 'weeks_performers'.tr();
       case LeaderboardPeriod.monthly:
-        return "This month's legends";
+        return 'months_legends'.tr();
     }
   }
 
@@ -203,7 +204,7 @@ class _PodiumSection extends StatelessWidget {
         children: [
           // Title
           Text(
-            '$_emoji ${period.label} Leaderboard',
+            '$_emoji ${'period_leaderboard'.tr(args: [period.label])}',
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
@@ -233,7 +234,7 @@ class _PodiumSection extends StatelessWidget {
               height: 140,
               child: Center(
                 child: Text(
-                  '🏆 Be the first to top the podium!',
+                  'be_first_podium'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: Theme.of(context)
@@ -324,7 +325,7 @@ class _PodiumBar extends StatelessWidget {
         ),
         // Score label
         Text(
-          '$score pts',
+          'pts_count'.tr(args: [score.toString()]),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
@@ -383,11 +384,11 @@ class _LeaderboardRow extends StatelessWidget {
     final score = entry.scoreFor(period);
     switch (period) {
       case LeaderboardPeriod.daily:
-        return '$score pts today';
+        return 'pts_today'.tr(args: [score.toString()]);
       case LeaderboardPeriod.weekly:
-        return '$score pts this week';
+        return 'pts_this_week'.tr(args: [score.toString()]);
       case LeaderboardPeriod.monthly:
-        return '$score pts this month';
+        return 'pts_this_month'.tr(args: [score.toString()]);
     }
   }
 
@@ -443,8 +444,8 @@ class _LeaderboardRow extends StatelessWidget {
                   color: const Color(0xFFFFC72C),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'You',
+                child: Text(
+                  'you'.tr(),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -490,7 +491,7 @@ class _EmptyState extends StatelessWidget {
             const Text('🏋️', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
             Text(
-              'No scores yet!',
+              'no_scores_yet'.tr(),
               style: Theme.of(context)
                   .textTheme
                   .titleLarge
@@ -498,7 +499,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Complete exercises to appear\non the ${period.label.toLowerCase()} leaderboard.',
+              'complete_exercises_appear_leaderboard'.tr(args: [period.label.toLowerCase()]),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context)

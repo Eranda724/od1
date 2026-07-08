@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import 'admin_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
@@ -46,7 +47,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
           child: TextField(
             controller: _searchController,
             decoration: InputDecoration(
-              labelText: 'Search by Email or Username',
+              labelText: 'search_by_email_username'.tr(),
               prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -68,7 +69,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
             stream: FirebaseFirestore.instance.collection('users').snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
+                return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
               }
               if (!snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
@@ -86,7 +87,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
               }).toList();
 
               if (filteredUsers.isEmpty) {
-                return const Center(child: Text('No users found.'));
+                return Center(child: Text('no_users_found'.tr()));
               }
 
               return ListView.builder(
@@ -95,8 +96,8 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                   final doc = filteredUsers[index];
                   final data = doc.data() as Map<String, dynamic>;
                   
-                  final displayName = data['displayName'] ?? data['username'] ?? 'No Name';
-                  final email = data['email'] ?? 'No Email';
+                  final displayName = data['displayName'] ?? data['username'] ?? 'no_name'.tr();
+                  final email = data['email'] ?? 'no_email'.tr();
                   final overallStreak = data['overallStreak'] ?? 0;
                   final freezes = data['freezesAvailable'] ?? 0;
                   
@@ -125,7 +126,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              data['isPremium'] == true ? 'PREMIUM' : 'FREE',
+                              data['isPremium'] == true ? 'premium_badge'.tr() : 'free_badge'.tr(),
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -142,8 +143,8 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.blue, width: 1),
                               ),
-                              child: const Text(
-                                'ADMIN',
+                              child: Text(
+                                'admin_badge'.tr(),
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
@@ -161,17 +162,17 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _StatItem(icon: Icons.local_fire_department_rounded, label: 'Streak', value: '$overallStreak'),
-                              _StatItem(icon: Icons.ac_unit_rounded, label: 'Freezes', value: '$freezes'),
-                              _StatItem(icon: Icons.calendar_today_rounded, label: 'Last Date', value: data['overallLastDate'] ?? 'Never'),
+                              _StatItem(icon: Icons.local_fire_department_rounded, label: 'streak_title'.tr(), value: '$overallStreak'),
+                              _StatItem(icon: Icons.ac_unit_rounded, label: 'freezes_label'.tr(), value: '$freezes'),
+                              _StatItem(icon: Icons.calendar_today_rounded, label: 'last_date_label'.tr(), value: data['overallLastDate'] ?? 'never_label'.tr()),
                             ],
                           ),
                         ),
                         const Divider(height: 1),
                         if (_isSuperAdmin)
                           SwitchListTile(
-                            title: const Text('Premium Status', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: const Text('Grants ad-free experience (Lifetime)'),
+                            title: Text('premium_status'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('grants_ad_free'.tr()),
                             value: data['isPremium'] == true,
                             activeThumbColor: const Color(0xFFFFC72C),
                             activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),
@@ -181,8 +182,8 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           ),
                         if (_isSuperAdmin && data['adminRole'] != 'super')
                           SwitchListTile(
-                            title: const Text('Admin Access', style: TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: const Text('Grants sub-admin privileges'),
+                            title: Text('admin_access'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('grants_sub_admin'.tr()),
                             value: data['isAdmin'] == true,
                             activeThumbColor: const Color(0xFFFFC72C),
                             activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),

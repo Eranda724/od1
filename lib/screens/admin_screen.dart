@@ -4,6 +4,7 @@ import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import '../admin/admin_exercise_screen.dart';
 import '../admin/admin_users_view.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // Firestore path that stores admin-configurable notification times.
 // Document shape: { morningHour: int, morningMinute: int, eveningHour: int, eveningMinute: int }
@@ -18,13 +19,13 @@ class AdminScreen extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Admin'),
+          title: Text('admin_panel'.tr()),
           leading: BackButton(onPressed: () => Navigator.pop(context)),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Exercises'),
-              Tab(text: 'Users'),
-              Tab(text: 'Settings'),
+              Tab(text: 'exercises_tab'.tr()),
+              Tab(text: 'users_tab'.tr()),
+              Tab(text: 'settings'.tr()),
             ],
           ),
         ),
@@ -52,7 +53,7 @@ class AdminScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -63,7 +64,7 @@ class AdminScreen extends StatelessWidget {
               .toList();
 
           if (exercises.isEmpty) {
-            return const Center(child: Text('No exercises yet. Tap + to add one.'));
+            return Center(child: Text('no_exercises_yet'.tr()));
           }
 
           return ListView.builder(
@@ -92,9 +93,9 @@ class AdminScreen extends StatelessWidget {
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
-                        'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : "Any"}\n'
-                        'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : "Any"}\n'
-                        'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : "Any"}',
+                        'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : 'any_label'.tr()}\n'
+                        'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : 'any_label'.tr()}\n'
+                        'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : 'any_label'.tr()}',
                         style: TextStyle(color: Colors.grey.shade700, height: 1.4),
                       ),
                     ),
@@ -117,13 +118,13 @@ class AdminScreen extends StatelessWidget {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (c) => AlertDialog(
-                                title: const Text('Delete Exercise?'),
-                                content: Text('Are you sure you want to delete "${exercise.name}"?'),
+                                title: Text('delete_exercise_title'.tr()),
+                                content: Text('delete_exercise_desc'.tr(args: [exercise.name])),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
+                                  TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
                                   TextButton(
                                     onPressed: () => Navigator.pop(c, true), 
-                                    child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                    child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red)),
                                   ),
                                 ],
                               ),
@@ -180,7 +181,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
     final picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay(hour: currentHour, minute: currentMinute),
-      helpText: 'Set $label time',
+      helpText: 'set_time_label'.tr(args: [label]),
     );
     if (picked == null || !mounted) return;
 
@@ -191,7 +192,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
         SetOptions(merge: true),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -219,9 +220,9 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            const Text(
-              'Notification Times',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            Text(
+              'notification_times_title'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 16),
 
@@ -232,8 +233,8 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 leading: const Text('🌅', style: TextStyle(fontSize: 28)),
-                title: const Text('Morning Reminder',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                title: Text('morning_reminder_label'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text(_fmt(morningHour, morningMinute),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
                 trailing: _isSaving
@@ -241,11 +242,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                     : TextButton(
                         onPressed: () => _pickTime(
                           context,
-                          'Morning Reminder',
+                          'morning_reminder_label'.tr(),
                           morningHour, morningMinute,
                           'morningHour', 'morningMinute',
                         ),
-                        child: const Text('Change'),
+                        child: Text('change_btn'.tr()),
                       ),
               ),
             ),
@@ -258,8 +259,8 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 leading: const Text('🌙', style: TextStyle(fontSize: 28)),
-                title: const Text('Evening Streak-Saver',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                title: Text('evening_streak_saver_label'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Text(_fmt(eveningHour, eveningMinute),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
                 trailing: _isSaving
@@ -267,11 +268,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                     : TextButton(
                         onPressed: () => _pickTime(
                           context,
-                          'Evening Streak-Saver',
+                          'evening_streak_saver_label'.tr(),
                           eveningHour, eveningMinute,
                           'eveningHour', 'eveningMinute',
                         ),
-                        child: const Text('Change'),
+                        child: Text('change_btn'.tr()),
                       ),
               ),
             ),

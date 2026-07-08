@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
   final ExerciseItem? existing;
@@ -117,11 +118,11 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
       if (mounted) {
         String msg = e.toString();
         if (msg.contains('404') || msg.contains('-13010') || msg.contains('object-not-found')) {
-          msg = 'Storage not enough or not enabled. Please click "Get Started" in Firebase Storage console.';
+          msg = 'storage_error_message'.tr();
         } else if (msg.contains('unauthorized') || msg.contains('permission-denied')) {
-          msg = 'Permission denied. Please configure Firebase Storage security rules.';
+          msg = 'permission_error_message'.tr();
         } else {
-          msg = 'Failed to save: $msg';
+          msg = 'failed_to_save'.tr(args: [msg]);
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
@@ -138,7 +139,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Exercise' : 'Add Exercise'),
+        title: Text(isEdit ? 'edit_exercise_title'.tr() : 'add_exercise_title'.tr()),
         backgroundColor: context.appBarColor,
       ),
       body: Form(
@@ -147,18 +148,18 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Basic Info
-            const Text('Basic Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text('basic_info_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(labelText: 'Exercise Name (e.g. Push-Ups)', border: OutlineInputBorder()),
-              validator: (v) => v!.trim().isEmpty ? 'Required' : null,
+              decoration: InputDecoration(labelText: 'exercise_name_label'.tr(), border: const OutlineInputBorder()),
+              validator: (v) => v!.trim().isEmpty ? 'required_error'.tr() : null,
             ),
             const SizedBox(height: 16),
             Row(
               children: [
-                const Expanded(
-                  child: Text('Exercise Icon', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                Expanded(
+                  child: Text('exercise_icon_label'.tr(), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
                 ),
                 SizedBox(
                   width: 180,
@@ -172,10 +173,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                     ),
                     items: [
                       // ── Material Icons section ──────────────────────────────
-                      const DropdownMenuItem<String>(
+                      DropdownMenuItem<String>(
                         enabled: false,
                         value: '__header_icons__',
-                        child: Text('Material Icons', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                        child: Text('material_icons_label'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
                       ),
                       ...exerciseIcons.map((item) {
                         return DropdownMenuItem<String>(
@@ -190,10 +191,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                         );
                       }),
                       // ── Emoji section ───────────────────────────────────────
-                      const DropdownMenuItem<String>(
+                      DropdownMenuItem<String>(
                         enabled: false,
                         value: '__header_emojis__',
-                        child: Text('Emojis', style: TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
+                        child: Text('emojis_label'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
                       ),
                       ...exerciseEmojis.map((emoji) {
                         return DropdownMenuItem<String>(
@@ -213,7 +214,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
             ),
             
             const SizedBox(height: 16),
-            const Text('Custom Image (Overrides Icon)', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            Text('custom_image_label'.tr(), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -248,7 +249,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                     children: [
                       ElevatedButton.icon(
                         icon: const Icon(Icons.upload),
-                        label: const Text('Upload Image'),
+                        label: Text('upload_image_btn'.tr()),
                         onPressed: () async {
                           final img = await _picker.pickImage(
                             source: ImageSource.gallery,
@@ -272,7 +273,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                               _existingImageUrl = null;
                             });
                           },
-                          child: const Text('Remove Image', style: TextStyle(color: Colors.red)),
+                          child: Text('remove_image_btn'.tr(), style: const TextStyle(color: Colors.red)),
                         ),
                     ],
                   ),
@@ -286,7 +287,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Details', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('details_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 ElevatedButton(
                   onPressed: () {
                     setState(() {
@@ -300,29 +301,29 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                     foregroundColor: context.textPrimary,
                     elevation: 0,
                   ),
-                  child: Text(_isDetailsCustom ? 'Save' : 'Edit', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(_isDetailsCustom ? 'save_btn'.tr() : 'edit_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            _buildDetailCounter('Reps', _repsController),
+            _buildDetailCounter('reps_label'.tr(), _repsController),
             const SizedBox(height: 16),
-            _buildDetailCounter('Timer(seconds)', _timerController),
+            _buildDetailCounter('timer_seconds_label'.tr(), _timerController),
             const SizedBox(height: 16),
-            _buildDetailCounter('Days', _daysController),
+            _buildDetailCounter('days_label'.tr(), _daysController),
             const SizedBox(height: 24),
             Theme(
               data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
-                title: const Text('Description (Optional)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                title: Text('desc_optional_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 initiallyExpanded: _descController.text.isNotEmpty,
                 tilePadding: EdgeInsets.zero,
                 children: [
                   TextFormField(
                     controller: _descController,
-                    decoration: const InputDecoration(
-                      labelText: 'Exercise Description',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: 'exercise_desc_label'.tr(),
+                      border: const OutlineInputBorder(),
                     ),
                     maxLines: 3,
                   ),
@@ -341,7 +342,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                 ),
                 child: _isLoading 
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : const Text('Save Exercise', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                  : Text('save_exercise_btn'.tr(), style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 40),

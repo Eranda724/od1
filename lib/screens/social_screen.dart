@@ -5,6 +5,7 @@ import '../app_settings.dart';
 import '../models/friend_info.dart';
 import '../services/friends_service.dart';
 import 'friend_profile_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -36,7 +37,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Not signed in");
+      if (user == null) throw Exception('not_signed_in'.tr());
 
       await FriendsService.instance.sendFriendRequest(
         fromUid: user.uid,
@@ -46,7 +47,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Friend request sent!'), backgroundColor: Colors.green),
+          SnackBar(content: Text('friend_request_sent'.tr()), backgroundColor: Colors.green),
         );
         _searchController.clear();
         _autoCompleteController?.clear();
@@ -65,7 +66,7 @@ class _SocialScreenState extends State<SocialScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return const Center(child: Text('Not logged in'));
+    if (uid == null) return Center(child: Text('not_signed_in'.tr()));
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -75,8 +76,8 @@ class _SocialScreenState extends State<SocialScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── 1. Search & Add ──
-            const Text('ADD A FRIEND',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+            Text('add_a_friend'.tr(),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +160,7 @@ class _SocialScreenState extends State<SocialScreen> {
                           _sendFriendRequest();
                         },
                         decoration: InputDecoration(
-                          hintText: 'Search username...',
+                          hintText: 'search_username_hint'.tr(),
                           errorText: _searchError,
                           border: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -182,7 +183,7 @@ class _SocialScreenState extends State<SocialScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Find'),
+                        child: Text('find'.tr()),
                       ),
               ],
             ),
@@ -202,8 +203,8 @@ class _SocialScreenState extends State<SocialScreen> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text('FRIEND REQUESTS',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+                    Text('friend_requests'.tr(),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
                     const SizedBox(height: 12),
                     ...docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -214,8 +215,8 @@ class _SocialScreenState extends State<SocialScreen> {
                             backgroundColor: PCColors.yellow.withValues(alpha: 0.3),
                             child: Icon(Icons.person, color: context.textPrimary),
                           ),
-                          title: Text(data['fromName'] ?? 'Someone', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Wants to be friends'),
+                          title: Text(data['fromName'] ?? 'someone'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('wants_to_be_friends'.tr()),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -239,8 +240,8 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
 
             // ── 3. Friends List ──
-            const Text('YOUR FRIENDS',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+            Text('your_friends'.tr(),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             StreamBuilder<List<FriendInfo>>(
               stream: FriendsService.instance.getFriendsList(uid),
@@ -254,10 +255,10 @@ class _SocialScreenState extends State<SocialScreen> {
 
                 final friends = snapshot.data ?? [];
                 if (friends.isEmpty) {
-                  return const Center(
+                  return Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Text('You have no friends yet.\nAdd someone above!', textAlign: TextAlign.center, style: TextStyle(color: Colors.grey)),
+                      padding: const EdgeInsets.all(32.0),
+                      child: Text('no_friends_yet'.tr(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
                     ),
                   );
                 }
@@ -296,7 +297,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                 children: [
                                   Text(f.displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 4),
-                                  Text('Personal Streak: ${f.overallStreak} 🔥', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                                  Text('personal_streak'.tr(args: [f.overallStreak.toString()]), style: const TextStyle(fontSize: 13, color: Colors.grey)),
                                 ],
                               ),
                             ),

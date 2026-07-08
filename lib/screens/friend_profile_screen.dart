@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/friend_info.dart';
 import '../services/friends_service.dart';
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -88,7 +89,7 @@ class FriendProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                userData['email'] as String? ?? 'No email visible',
+                                userData['email'] as String? ?? 'no_email_visible'.tr(),
                                 style: const TextStyle(fontSize: 14, color: Colors.grey),
                               ),
                             ],
@@ -115,7 +116,7 @@ class FriendProfileScreen extends StatelessWidget {
                               ),
                               child: Column(
                                 children: [
-                                  Text('SHARED STREAK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
+                                  Text('shared_streak_header'.tr().toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -156,9 +157,9 @@ class FriendProfileScreen extends StatelessWidget {
                             children: [
                               const Text('🏆', style: TextStyle(fontSize: 20)),
                               const SizedBox(width: 8),
-                              const Text(
-                                'OVERALL STREAK',
-                                style: TextStyle(
+                              Text(
+                                'overall_streak'.tr().toUpperCase(),
+                                style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                   color: PCColors.yellow,
@@ -190,11 +191,11 @@ class FriendProfileScreen extends StatelessWidget {
                                 style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
                               ),
                               const SizedBox(width: 8),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
-                                  'consecutive\ndays',
-                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70, height: 1.4),
+                                  'consecutive_days'.tr(),
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70, height: 1.4),
                                 ),
                               ),
                             ],
@@ -206,7 +207,7 @@ class FriendProfileScreen extends StatelessWidget {
                               final isActive = activeDays.contains(day);
                               final isToday = day == today;
                               return _DayDot(
-                                label: _shortDay(day),
+                                label: _shortDay(context, day),
                                 active: isActive,
                                 isToday: isToday,
                               );
@@ -228,10 +229,9 @@ class FriendProfileScreen extends StatelessWidget {
     );
   }
 
-  String _shortDay(String key) {
+  String _shortDay(BuildContext context, String key) {
     final d = DateTime.parse(key);
-    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return names[d.weekday - 1];
+    return DateFormat.E(context.locale.languageCode).format(d);
   }
 }
 
@@ -303,7 +303,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     side: const BorderSide(color: PCColors.brown, width: 2),
                   ),
-                  child: const Text('Back', style: TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
+                  child: Text('back'.tr(), style: const TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 16),
@@ -313,11 +313,11 @@ class _FriendshipActionButtons extends StatelessWidget {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (c) => AlertDialog(
-                        title: const Text('Remove Friend'),
-                        content: const Text('Are you sure you want to remove this friend?'),
+                        title: Text('remove_friend_title'.tr()),
+                        content: Text('remove_friend_confirm_msg'.tr()),
                         actions: [
-                          TextButton(onPressed: () => Navigator.pop(c, false), child: const Text('Cancel')),
-                          TextButton(onPressed: () => Navigator.pop(c, true), child: const Text('Remove', style: TextStyle(color: Colors.red))),
+                          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel'.tr())),
+                          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('remove'.tr(), style: const TextStyle(color: Colors.red))),
                         ],
                       ),
                     );
@@ -333,7 +333,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Remove Friend', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('remove_friend_title'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -362,7 +362,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       side: const BorderSide(color: PCColors.brown, width: 2),
                     ),
-                    child: const Text('Back', style: TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
+                    child: Text('back'.tr(), style: const TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -374,7 +374,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                           await FriendsService.instance.removeFriendRequest(currentUid, friend.uid);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Request removed'), backgroundColor: Colors.grey),
+                              SnackBar(content: Text('request_removed'.tr()), backgroundColor: Colors.grey),
                             );
                           }
                         } else {
@@ -387,7 +387,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Friend request sent!'), backgroundColor: Colors.green),
+                                SnackBar(content: Text('friend_request_sent'.tr()), backgroundColor: Colors.green),
                               );
                             }
                           }
@@ -395,7 +395,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                            SnackBar(content: Text('error_msg'.tr(args: [e.toString()])), backgroundColor: Colors.red),
                           );
                         }
                       }
@@ -407,7 +407,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(hasSentRequest ? 'Remove Request' : 'Send Request', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: Text(hasSentRequest ? 'remove_request'.tr() : 'send_request'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],

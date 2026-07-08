@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart'; // add share_plus to pubspec.yaml if not already present
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// One exercise's results for "today", used to populate the summary list.
 /// Build a list of [ExerciseDaySummary] as the user completes each exercise
@@ -38,22 +39,16 @@ class DailySummaryScreen extends StatelessWidget {
   int get _totalRepsToday =>
       completedExercises.fold(0, (sum, e) => sum + e.todayReps);
 
-  String get _todayLabel {
-    final now = DateTime.now();
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+  String _todayLabel(BuildContext context) {
+    return DateFormat.yMMMd(context.locale.languageCode).format(DateTime.now());
   }
 
-  void _shareSummary() {
+  void _shareSummary(BuildContext context) {
     final lines = completedExercises
-        .map((e) => '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (${e.currentStreak}-day streak)')
+        .map((e) => '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (' + 'day_streak_count'.tr(args: [e.currentStreak.toString()]) + ')')
         .join('\n');
 
-    final text =
-        "Today's Potato Couch session 🥔\n\n$lines\n\nTotal: $_totalRepsToday reps done today.\n\nJoin me: $appLink";
+    final text = 'share_summary_text'.tr(args: [lines, _totalRepsToday.toString(), appLink]);
 
     // ignore: deprecated_member_use
     Share.share(text);
@@ -68,7 +63,7 @@ class DailySummaryScreen extends StatelessWidget {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          "TODAY'S SUMMARY",
+          'todays_summary_title'.tr(),
           style: TextStyle(
             color: context.textPrimary,
             fontWeight: FontWeight.w900,
@@ -83,7 +78,7 @@ class DailySummaryScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 8),
             Text(
-              _todayLabel,
+              _todayLabel(context),
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -113,8 +108,8 @@ class DailySummaryScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'OVERALL STREAK',
+                          Text(
+                            'overall_streak_label'.tr(),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
@@ -123,7 +118,7 @@ class DailySummaryScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '$overallStreak Days',
+                            'days_count'.tr(args: [overallStreak.toString()]),
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
@@ -169,8 +164,8 @@ class DailySummaryScreen extends StatelessWidget {
                         color: PCColors.brownDark,
                       ),
                     ),
-                    const Text(
-                      'TOTAL DONE TODAY',
+                    Text(
+                      'total_done_today_label'.tr(),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
@@ -190,7 +185,7 @@ class DailySummaryScreen extends StatelessWidget {
               child: completedExercises.isEmpty
                   ? Center(
                       child: Text(
-                        'No exercises completed today.',
+                        'no_exercises_completed'.tr(),
                         style: TextStyle(color: PCColors.brown.withValues(alpha: 0.7)),
                       ),
                     )
@@ -211,9 +206,9 @@ class DailySummaryScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton.icon(
-                      onPressed: _shareSummary,
+                      onPressed: () => _shareSummary(context),
                       icon: const Icon(Icons.ios_share_rounded, size: 20),
-                      label: const Text('Share', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                      label: Text('share_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: PCColors.green,
                         foregroundColor: Colors.white,
@@ -230,7 +225,7 @@ class DailySummaryScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
                     child: Text(
-                      'Done',
+                      'done_btn'.tr(),
                       style: TextStyle(
                         color: PCColors.brown,
                         fontWeight: FontWeight.w700,
@@ -282,7 +277,7 @@ class _ExerciseSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '🔥 ${item.currentStreak}-Day Streak',
+                  '🔥 ' + 'day_streak_count'.tr(args: [item.currentStreak.toString()]),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -294,10 +289,10 @@ class _ExerciseSummaryCard extends StatelessWidget {
           ),
 
           // Today's reps
-          _MiniStat(label: 'TODAY', value: '${item.todayReps}'),
+          _MiniStat(label: 'today_label'.tr(), value: '${item.todayReps}'),
           const SizedBox(width: 16),
           // Lifetime total
-          _MiniStat(label: 'LIFETIME', value: '${item.lifetimeTotal}', highlight: true),
+          _MiniStat(label: 'lifetime_label'.tr(), value: '${item.lifetimeTotal}', highlight: true),
         ],
       ),
     );

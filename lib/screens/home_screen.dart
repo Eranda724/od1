@@ -99,11 +99,11 @@ class _HomeScreenState extends State<HomeScreen>
             fontSize: 11,
           ),
           indicatorWeight: 3,
-          tabs: const [
-            Tab(icon: Icon(Icons.fitness_center_rounded), text: 'Exercise'),
-            Tab(icon: Icon(Icons.local_fire_department_rounded), text: 'Streaks'),
-            Tab(icon: Icon(Icons.leaderboard_rounded), text: 'Rankings'),
-            Tab(icon: Icon(Icons.people_rounded), text: 'Social'),
+          tabs: [
+            Tab(icon: const Icon(Icons.fitness_center_rounded), text: 'exercise_tab'.tr()),
+            Tab(icon: const Icon(Icons.local_fire_department_rounded), text: 'streaks_tab'.tr()),
+            Tab(icon: const Icon(Icons.leaderboard_rounded), text: 'rankings_tab'.tr()),
+            Tab(icon: const Icon(Icons.people_rounded), text: 'social_tab'.tr()),
           ],
         ),
       ),
@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen>
         final isDark = _settings.themeMode == ThemeMode.dark;
         String dispName = user?.displayName ?? '';
         if (dispName.trim().isEmpty) {
-          dispName = 'Profile';
+          dispName = 'profile_menu'.tr();
         }
         return PopupMenuButton<String>(
           icon: const Icon(Icons.menu_rounded),
@@ -183,9 +183,9 @@ class _HomeScreenState extends State<HomeScreen>
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
                 if (isPremium)
-                  const Text(
-                    'Premium User',
-                    style: TextStyle(
+                  Text(
+                    'premium_user_badge'.tr(),
+                    style: const TextStyle(
                       color: PCColors.yellow,
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen>
               size: 20,
             ),
             const SizedBox(width: 10),
-            Text(isDark ? 'Light Mode' : 'Dark Mode'),
+            Text(isDark ? 'light_mode'.tr() : 'dark_mode'.tr()),
           ]),
         ),
         const PopupMenuDivider(),
@@ -218,12 +218,12 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         if (!isPremium) ...[
           const PopupMenuDivider(),
-          const PopupMenuItem<String>(
+          PopupMenuItem<String>(
             value: 'remove_ads',
             child: Row(children: [
-              Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
-              SizedBox(width: 10),
-              Text('Remove Ads', style: TextStyle(fontWeight: FontWeight.w600)),
+              const Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
+              const SizedBox(width: 10),
+              Text('remove_ads_menu'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
             ]),
           ),
         ],

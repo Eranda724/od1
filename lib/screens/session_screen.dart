@@ -10,6 +10,7 @@ import 'premium_upgrade_screen.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import 'dart:math';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -57,14 +58,14 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   // ── Rotating tips ────────────────────────────────────────────────────────
   // Swap this list for your real "during-session" message bank later —
   // same rotation mechanism, just a different content source.
-  static const List<String> _tips = [
-    "🥔 Your couch will still be there when you're done.",
-    "💪 60 seconds. Less than a TikTok scroll.",
-    "🔥 Future you is already proud of this one.",
-    "😅 No one's watching. Except your streak.",
-    "🥔 Small reps, big habit.",
-    "💪 You showed up. That's the hard part.",
-    "🔥 Consistency beats intensity. Keep going.",
+  static const List<String> _tipKeys = [
+    "couch_tip_1",
+    "couch_tip_2",
+    "couch_tip_3",
+    "couch_tip_4",
+    "couch_tip_5",
+    "couch_tip_6",
+    "couch_tip_7",
   ];
   int _tipIndex = 0;
   Timer? _tipTimer;
@@ -184,7 +185,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
     // Rotate tips every 5 seconds.
     _tipTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      setState(() => _tipIndex = (_tipIndex + 1) % _tips.length);
+      setState(() => _tipIndex = (_tipIndex + 1) % _tipKeys.length);
     });
   }
 
@@ -299,7 +300,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.challengeSeconds > 0 ? 'TIME REMAINING' : 'TIME ELAPSED',
+                  widget.challengeSeconds > 0 ? 'time_remaining'.tr() : 'time_elapsed'.tr(),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
@@ -332,7 +333,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           children: [
                             const Icon(Icons.lightbulb_outline_rounded, color: PCColors.yellow, size: 22),
                             const SizedBox(width: 8),
-                            Text('QUICK TIP', style: TextStyle(
+                            Text('quick_tip'.tr(), style: TextStyle(
                               color: PCColors.yellow.withValues(alpha: 0.9), 
                               fontWeight: FontWeight.w800, 
                               letterSpacing: 1.5,
@@ -345,7 +346,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           duration: const Duration(milliseconds: 500),
                           transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
                           child: Text(
-                            _tips[_tipIndex],
+                            _tipKeys[_tipIndex].tr(),
                             key: ValueKey(_tipIndex),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
@@ -393,8 +394,8 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: const Text(
-                        'STOP',
+                      child: Text(
+                        'stop_btn'.tr(),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 22,
@@ -422,8 +423,8 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Ad Break',
+                          Text(
+                            'ad_break'.tr(),
                             style: TextStyle(
                               color: Colors.white54,
                               fontWeight: FontWeight.bold,
@@ -432,9 +433,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           ),
                           TextButton.icon(
                             icon: const Icon(Icons.star, color: PCColors.yellow, size: 16),
-                            label: const Text(
-                              'REMOVE ADS',
-                              style: TextStyle(
+                            label: Text(
+                              'remove_ads_btn'.tr(),
+                              style: const TextStyle(
                                 color: PCColors.yellow,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -484,7 +485,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                             ),
                           ),
                           child: Text(
-                            _canSkip ? 'SKIP' : 'SKIP IN $_adSkipCountdown...',
+                            _canSkip ? 'skip_btn'.tr() : 'skip_in_countdown'.tr(args: [_adSkipCountdown.toString()]),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w900,

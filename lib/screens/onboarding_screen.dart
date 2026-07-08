@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'login_screen.dart';
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -19,18 +20,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'image': 'assets/images/po2.png',
-      'title': 'Build Daily Habits 🔥',
-      'subtitle': 'Just 60 seconds a day keeps your streak alive.',
+      'titleKey': 'onboarding_title_1',
+      'subtitleKey': 'onboarding_subtitle_1',
     },
     {
       'image': 'assets/images/po1.png',
-      'title': 'Track Your Progress 💪',
-      'subtitle': 'Every rep counts. Watch your lifetime totals grow.',
+      'titleKey': 'onboarding_title_2',
+      'subtitleKey': 'onboarding_subtitle_2',
     },
     {
       'image': 'assets/images/po3.png',
-      'title': 'Even a Couch Potato Can Do This 🥔',
-      'subtitle': 'Small steps every day. No gym needed.',
+      'titleKey': 'onboarding_title_3',
+      'subtitleKey': 'onboarding_subtitle_3',
     },
   ];
 
@@ -101,7 +102,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 48),
                     Text(
-                      page['title']!,
+                      page['titleKey']!.tr(),
                       style: const TextStyle(
                         color: PCColors.yellow,
                         fontSize: 28,
@@ -112,7 +113,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      page['subtitle']!,
+                      page['subtitleKey']!.tr(),
                       style: TextStyle(
                         color: context.textSecondary,
                         fontSize: 16,
@@ -164,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
               ),
-              child: const Text('Get Started'),
+              child: Text('get_started'.tr()),
             ),
           ),
 

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import '../models/exercise_icons.dart';
 import '../models/exercise_item.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class StreakScreen extends StatelessWidget {
   const StreakScreen({super.key});
@@ -27,14 +28,14 @@ class StreakScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
-      return const Center(child: Text('Not signed in'));
+      return Center(child: Text('not_signed_in'.tr()));
     }
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, userSnap) {
         if (userSnap.hasError) {
-          return Center(child: Text('Error: ${userSnap.error}'));
+          return Center(child: Text('error_loading'.tr(args: [userSnap.error.toString()])));
         }
         if (!userSnap.hasData) {
           return const Center(child: CircularProgressIndicator(color: PCColors.yellow));
@@ -52,7 +53,7 @@ class StreakScreen extends StatelessWidget {
           stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').snapshots(),
           builder: (context, userExSnap) {
             if (userExSnap.hasError) {
-              return Center(child: Text('Error: ${userExSnap.error}'));
+              return Center(child: Text('error_loading'.tr(args: [userExSnap.error.toString()])));
             }
             final exercisesMap = <String, dynamic>{};
             if (userExSnap.hasData) {
@@ -65,7 +66,7 @@ class StreakScreen extends StatelessWidget {
           stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
           builder: (context, exSnap) {
             if (exSnap.hasError) {
-              return Center(child: Text('Error: ${exSnap.error}'));
+              return Center(child: Text('error_loading'.tr(args: [exSnap.error.toString()])));
             }
             final defs = <String, ExerciseItem>{};
             if (exSnap.hasData) {
@@ -91,9 +92,9 @@ class StreakScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // ── Section title ────────────────────────────────────────────
-                const Text(
-                  'EXERCISE STREAKS',
-                  style: TextStyle(
+                Text(
+                  'streaks_tab'.tr().toUpperCase(),
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: PCColors.yellow,
@@ -104,10 +105,10 @@ class StreakScreen extends StatelessWidget {
 
                 // ── Per-exercise streak cards ─────────────────────────────────
                 if (defs.isEmpty)
-                  const Center(
+                  Center(
                     child: Padding(
-                      padding: EdgeInsets.only(top: 16),
-                      child: Text('No exercises yet.'),
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Text('no_exercises_available'.tr()),
                     ),
                   )
                 else
@@ -179,14 +180,14 @@ class _OverallStreakCard extends StatelessWidget {
   }
 
   String _timeUntilNextFreeze() {
-    if (freezesAvailable >= 2) return 'Freezes full';
-    if (freezeLastRefillDate == null) return 'Next freeze soon';
+    if (freezesAvailable >= 2) return 'freezes_full'.tr();
+    if (freezeLastRefillDate == null) return 'next_freeze_soon'.tr();
     final refillObj = DateTime.parse(freezeLastRefillDate!);
     final todayObj = DateTime.parse(today);
     final daysSince = todayObj.difference(refillObj).inDays;
     final daysLeft = 7 - daysSince;
-    if (daysLeft <= 0) return 'Next freeze today!';
-    return 'Next freeze in $daysLeft day${daysLeft > 1 ? 's' : ''}';
+    if (daysLeft <= 0) return 'next_freeze_today'.tr();
+    return daysLeft > 1 ? 'next_freeze_in_days'.tr(args: [daysLeft.toString()]) : 'next_freeze_in_day'.tr();
   }
 
   @override
@@ -216,9 +217,9 @@ class _OverallStreakCard extends StatelessWidget {
             children: [
               const Text('🏆', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              const Text(
-                'OVERALL STREAK',
-                style: TextStyle(
+              Text(
+                'overall_streak'.tr().toUpperCase(),
+                style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: PCColors.yellow,
@@ -251,9 +252,9 @@ class _OverallStreakCard extends StatelessWidget {
                     color: PCColors.green,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Text(
-                    '✓ Today',
-                    style: TextStyle(
+                  child: Text(
+                    '✓ ${'today_label'.tr()}',
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
@@ -279,11 +280,11 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'consecutive\ndays',
-                  style: TextStyle(
+                  'consecutive_days'.tr(),
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Colors.white70,
@@ -312,7 +313,7 @@ class _OverallStreakCard extends StatelessWidget {
               final isActive = activeDays.contains(day);
               final isToday = day == today;
               return _DayDot(
-                label: _shortDay(day),
+                label: _shortDay(context, day),
                 active: isActive,
                 isToday: isToday,
               );
@@ -323,10 +324,9 @@ class _OverallStreakCard extends StatelessWidget {
     );
   }
 
-  String _shortDay(String key) {
+  String _shortDay(BuildContext context, String key) {
     final d = DateTime.parse(key);
-    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return names[d.weekday - 1];
+    return DateFormat.E(context.locale.languageCode).format(d);
   }
 }
 
@@ -465,7 +465,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '$lifetime total ${def.unit}',
+                      'total_streak_lifetime'.tr(args: [lifetime.toString(), def.unit]),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
@@ -495,7 +495,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    streak == 1 ? 'day' : 'days',
+                    streak == 1 ? 'day_unit'.tr() : 'days_unit'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),

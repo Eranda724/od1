@@ -21,7 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text('settings'.tr()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -31,14 +31,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(20),
         children: [
           // ── APPEARANCE SECTION ──
-          _sectionHeader('Appearance'),
+          _sectionHeader('appearance'.tr()),
           const SizedBox(height: 8),
           _card(
             child: Column(
               children: [
                 SwitchListTile(
                   secondary: const Icon(Icons.grid_view_rounded),
-                  title: const Text('Exercise Grid View'),
+                  title: Text('exercise_grid_view'.tr()),
                   value: _settings.isGridView,
                   activeColor: const Color(0xFF4CAF7D), // PCColors.green
                   onChanged: (v) async {
@@ -49,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.light_mode_rounded),
-                  title: const Text('Light Mode'),
+                  title: Text('light_mode'.tr()),
                   trailing: Radio<ThemeMode>(
                     value: ThemeMode.light,
                     groupValue: _settings.themeMode,
@@ -66,7 +66,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.dark_mode_rounded),
-                  title: const Text('Dark Mode'),
+                  title: Text('dark_mode'.tr()),
                   trailing: Radio<ThemeMode>(
                     value: ThemeMode.dark,
                     groupValue: _settings.themeMode,
@@ -87,13 +87,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── NOTIFICATIONS SECTION ──
-          _sectionHeader('Notifications'),
+          _sectionHeader('notifications'.tr()),
           const SizedBox(height: 8),
           _card(
             child: SwitchListTile(
               secondary: const Icon(Icons.notifications_rounded),
-              title: const Text('Daily Reminders'),
-              subtitle: const Text('Morning & evening workout nudges'),
+              title: Text('daily_reminders'.tr()),
+              subtitle: Text('daily_reminders_sub'.tr()),
               value: _settings.notificationsEnabled,
               activeColor: const Color(0xFFFFC72C),
               onChanged: (v) async {
@@ -111,7 +111,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── LANGUAGE SECTION ──
-          _sectionHeader('Language'),
+          _sectionHeader('language_section'.tr()),
           const SizedBox(height: 8),
           _card(
             child: Column(
@@ -150,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ── PREMIUM SECTION ──
-          _sectionHeader('Premium'),
+          _sectionHeader('premium_section'.tr()),
           const SizedBox(height: 8),
           _buildPremiumSection(),
         ],
@@ -175,10 +175,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             if (isPremium) {
               return _card(
-                child: const ListTile(
-                  leading: Icon(Icons.star_rounded, color: Color(0xFFFFC72C)),
-                  title: Text('⭐ Premium Member', style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('Ads are permanently removed.'),
+                child: ListTile(
+                  leading: const Icon(Icons.star_rounded, color: Color(0xFFFFC72C)),
+                  title: Text('premium_member'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text('ads_removed_sub'.tr()),
                 ),
               );
             }
@@ -186,7 +186,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             return _card(
               child: ListTile(
                 leading: const Icon(Icons.block_rounded, color: Colors.red),
-                title: const Text('Remove Ads / Upgrade'),
+                title: Text('remove_ads_upgrade'.tr()),
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
                 onTap: () {
                   Navigator.push(
