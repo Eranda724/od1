@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
+import 'admin_service.dart';
 
 class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
@@ -12,6 +14,21 @@ class AdminUsersView extends StatefulWidget {
 class _AdminUsersViewState extends State<AdminUsersView> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isSuperAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkRole();
+  }
+
+  Future<void> _checkRole() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final role = await getAdminRole(uid);
+      if (mounted) setState(() => _isSuperAdmin = role == 'super');
+    }
+  }
 
   @override
   void dispose() {
@@ -116,6 +133,25 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                               ),
                             ),
                           ),
+                          if (data['isAdmin'] == true) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.blue, width: 1),
+                              ),
+                              child: const Text(
+                                'ADMIN',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                       subtitle: Text(email),
@@ -132,16 +168,32 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           ),
                         ),
                         const Divider(height: 1),
-                        SwitchListTile(
-                          title: const Text('Premium Status', style: TextStyle(fontWeight: FontWeight.bold)),
-                          subtitle: const Text('Grants ad-free experience (Lifetime)'),
-                          value: data['isPremium'] == true,
-                          activeThumbColor: const Color(0xFFFFC72C),
-                          activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),
-                          onChanged: (bool value) async {
-                            await doc.reference.update({'isPremium': value});
-                          },
-                        ),
+                        if (_isSuperAdmin)
+                          SwitchListTile(
+                            title: const Text('Premium Status', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: const Text('Grants ad-free experience (Lifetime)'),
+                            value: data['isPremium'] == true,
+                            activeThumbColor: const Color(0xFFFFC72C),
+                            activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),
+                            onChanged: (bool value) async {
+                              await doc.reference.update({'isPremium': value});
+                            },
+                          ),
+                        if (_isSuperAdmin && data['adminRole'] != 'super')
+                          SwitchListTile(
+                            title: const Text('Admin Access', style: TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: const Text('Grants sub-admin privileges'),
+                            value: data['isAdmin'] == true,
+                            activeThumbColor: const Color(0xFFFFC72C),
+                            activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),
+                            onChanged: (bool value) async {
+                              if (value) {
+                                await doc.reference.update({'isAdmin': true, 'adminRole': 'sub'});
+                              } else {
+                                await doc.reference.update({'isAdmin': false, 'adminRole': FieldValue.delete()});
+                              }
+                            },
+                          ),
                       ],
                     ),
                   );
