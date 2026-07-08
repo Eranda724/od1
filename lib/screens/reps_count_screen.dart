@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../services/streak_service.dart';
 import '../services/notification_service.dart';
+import '../services/friends_service.dart';
 import '../app_settings.dart';
+import '../models/session_item.dart';
 import 'celebration_screen.dart';
+import 'exercise_start_screen.dart';
+import 'daily_summary_screen.dart';
+import '../models/exercise_item.dart';
+import '../models/exercise_icons.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -13,11 +22,13 @@ class RepEntryScreen extends StatefulWidget {
   final String exerciseId;
   final String exerciseName;
   final String unit; // e.g. "reps"
+  final ExerciseItem? exerciseDef;
   final int defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
 
   /// Optional — pass these through if you're tracking a multi-exercise session.
   final int? exerciseIndex;
   final int? totalExercises;
+  final List<SessionItem>? sessionQueue;
 
   /// Called once the Firestore update succeeds and Congratulation screen
   /// is about to be shown — gives the caller a hook to advance its own
@@ -29,9 +40,11 @@ class RepEntryScreen extends StatefulWidget {
     required this.exerciseId,
     required this.exerciseName,
     this.unit = 'reps',
+    this.exerciseDef,
     this.defaultReps = 10,
     this.exerciseIndex,
     this.totalExercises,
+    this.sessionQueue,
     this.onSaved,
   });
 
@@ -45,21 +58,31 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   String? _error;
 
   final TextEditingController _controller = TextEditingController();
+  late final AudioPlayer _player;
 
   @override
   void initState() {
     super.initState();
     _reps = widget.defaultReps;
     _controller.text = _reps.toString();
+    _player = AudioPlayer();
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _player.dispose();
     super.dispose();
   }
 
+  Future<void> _playClick() async {
+    try {
+      await HapticFeedback.lightImpact();
+    } catch (_) {}
+  }
+
   void _changeReps(int delta) {
+    _playClick();
     final next = (_reps + delta).clamp(0, 9999);
     setState(() {
       _reps = next;
@@ -69,17 +92,84 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
   // Removed unused key functions since they moved to service
 
+  Future<void> _goToNextOrSummary(BuildContext navContext) async {
+    final queue = widget.sessionQueue;
+    if (queue != null && queue.isNotEmpty) {
+      final next = queue.first;
+      final tail = queue.skip(1).toList();
+      Navigator.of(navContext).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => ExerciseStartScreen(
+            exerciseId: next.exerciseId,
+            exerciseName: next.exerciseName,
+            description: next.description,
+            streak: next.streak,
+            lifetimeTotal: next.lifetimeTotal,
+            defaultReps: next.defaultReps,
+            defaultTimer: next.defaultTimer,
+            unit: next.unit,
+            exerciseDef: next.exerciseDef,
+            sessionQueue: tail,
+            exerciseIndex: (widget.exerciseIndex ?? 1) + 1,
+            totalExercises: widget.totalExercises,
+          ),
+        ),
+      );
+    } else {
+      // Proceed to summary
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      
+      try {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final overallStreak = userDoc.data()?['overallStreak'] ?? 0;
+        
+        final exSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').get();
+        final now = DateTime.now();
+        final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+        
+        List<ExerciseDaySummary> summaryList = [];
+        for (var doc in exSnap.docs) {
+          final data = doc.data();
+          if (data['lastCompletedDate'] == todayKey) {
+             summaryList.add(ExerciseDaySummary(
+                exerciseName: data['exerciseName'] ?? doc.id,
+                unit: widget.unit, // Assuming similar units or using the last one
+                todayReps: data['todayReps'] ?? 0,
+                currentStreak: data['currentStreak'] ?? 0,
+                lifetimeTotal: data['lifetimeTotal'] ?? 0,
+             ));
+          }
+        }
+        
+        if (!navContext.mounted) return;
+        Navigator.of(navContext).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => DailySummaryScreen(
+               completedExercises: summaryList,
+               overallStreak: overallStreak,
+            ),
+          ),
+        );
+      } catch (e) {
+        // Fallback
+        if (!navContext.mounted) return;
+        Navigator.of(navContext).popUntil((route) => route.isFirst);
+      }
+    }
+  }
+
   /// Calls StreakService to update user + exercise stats, then navigates
   /// to the Congratulation screen.
   Future<void> _submit() async {
     if (_reps <= 0) {
-      setState(() => _error = 'Enter at least 1 ${widget.unit}.');
+      setState(() => _error = 'enter_at_least_1'.tr(args: [widget.unit]));
       return;
     }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      setState(() => _error = 'You need to be signed in to save this.');
+      setState(() => _error = 'not_signed_in_save'.tr());
       return;
     }
 
@@ -101,6 +191,14 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       // Cancel the evening streak-saver notification — user worked out today!
       await NotificationService.instance.cancelTodayEveningReminder();
 
+      // Trigger Social/Friend updates
+      await FriendsService.instance.recordExerciseDone(user.uid);
+      await FriendsService.instance.maybeSendFriendActivityNotification(
+        currentUid: user.uid,
+        exerciseName: widget.exerciseName,
+        detail: 'completed_exercise_today'.tr(args: [widget.exerciseName]),
+      );
+
       if (!mounted) return;
 
       widget.onSaved?.call();
@@ -117,7 +215,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,
             onContinue: (navContext) {
-              Navigator.of(navContext).popUntil((route) => route.isFirst);
+              _goToNextOrSummary(navContext);
             },
           ),
         ),
@@ -126,7 +224,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _error = "Couldn't save — check your connection and try again.";
+        _error = 'error_saving'.tr();
       });
     }
   }
@@ -134,12 +232,12 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.cream,
+      backgroundColor: context.surface,
       appBar: AppBar(
-        backgroundColor: PCColors.cream,
+        backgroundColor: context.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: PCColors.brownDark),
+          icon: Icon(Icons.close_rounded, color: context.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -152,21 +250,26 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               Text(
                 widget.exerciseName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: PCColors.brown,
+                  color: context.textSecondary,
                   letterSpacing: 1,
                 ),
               ),
+              if (widget.exerciseDef != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: buildExerciseVisual(widget.exerciseDef!, size: 48),
+                ),
               const SizedBox(height: 8),
-              const Text(
-                'How many did you complete?',
+              Text(
+                'how_many_completed'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: PCColors.brownDark,
+                  color: context.textPrimary,
                 ),
               ),
 
@@ -188,18 +291,26 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.w900,
-                        color: PCColors.brownDark,
+                        color: context.textPrimary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.cardColor,
                         contentPadding: const EdgeInsets.symmetric(vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(color: PCColors.brown, width: 2),
+                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(color: PCColors.yellow, width: 2),
                         ),
                       ),
                       onChanged: (val) {
@@ -224,7 +335,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: PCColors.brown.withValues(alpha: 0.7),
+                  color: context.textSecondary,
                   letterSpacing: 1,
                 ),
               ),
@@ -263,8 +374,8 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                           height: 24,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text(
-                          'Submit',
+                      : Text(
+                          'submit_btn'.tr(),
                           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                         ),
                 ),
@@ -295,10 +406,10 @@ class _RoundIconButton extends StatelessWidget {
         height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: PCColors.brown, width: 1.5),
+          color: context.cardColor,
+          border: Border.all(color: context.borderColor, width: 1.5),
         ),
-        child: Icon(icon, color: PCColors.brownDark, size: 24),
+        child: Icon(icon, color: context.textPrimary, size: 24),
       ),
     );
   }

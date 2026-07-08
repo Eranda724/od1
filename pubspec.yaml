@@ -22,6 +22,16 @@ dependencies:
   audioplayers: ^6.1.0
   flutter_local_notifications: ^22.0.1
   timezone: ^0.11.0
+  flutter_timezone: ^5.1.0
+  google_mobile_ads: ^9.0.0
+  flutter_dotenv: ^6.0.1
+  in_app_purchase: ^3.3.0
+  image_picker: ^1.2.3
+  firebase_storage: ^12.4.10
+  cached_network_image: ^3.4.1
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+  easy_localization: ^3.0.8
 
 dev_dependencies:
   flutter_test:
@@ -34,13 +44,10 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/sounds/celebrate.mp3
-    - assets/sounds/congradulation.mp3
-    - assets/images/po1.png
-    - assets/images/po2.png
-    - assets/images/po3.png
-    - assets/images/login.png
-    - assets/images/register.png
+    - .env
+    - assets/sounds/
+    - assets/images/
+    - assets/translations/
 
 flutter_launcher_icons:
   android: true
@@ -55,5 +62,4 @@ flutter_native_splash:
   image: "assets/icon/splash_logo.png"
   android_12:
     color: "#FFC93C"
-    branding: "assets/icon/splash_logo.png"
-    branding_bottom_padding: 200
+    branding: "assets/icon/splash_logo_branding.png"

@@ -9,10 +9,16 @@ import 'screens/home_screen.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
 import 'admin/admin_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/notification_service.dart';
+import 'services/ad_service.dart';
+import 'services/iap_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -21,7 +27,19 @@ void main() async {
   // Initialize notifications and schedule daily reminders
   await NotificationService.instance.init();
   await NotificationService.instance.refreshSchedule();
-  runApp(const MyApp());
+  // Initialize Google Mobile Ads
+  await AdService.instance.initialize();
+  // Initialize In-App Purchases listener
+  IapService.instance.initialize();
+  
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('fr'), Locale('es')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -56,7 +74,9 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _settings.themeMode,
-      locale: _settings.locale,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       home: const StartRouter(),
     );
   }
@@ -92,10 +112,10 @@ class _StartRouterState extends State<StartRouter> {
             future: checkIsAdmin(user.uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  backgroundColor: Color(0xFFFAF1E4),
-                  body: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFFC93C)),
+                return Scaffold(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  body: const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFFC72C)),
                   ),
                 );
               }
@@ -120,11 +140,11 @@ class _StartRouterState extends State<StartRouter> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF4ECE1),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFFFC72C),
+          color: const Color(0xFFFFC72C),
         ),
       ),
     );

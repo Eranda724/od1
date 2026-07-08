@@ -52,6 +52,32 @@ class AppTheme {
           color: Colors.black87,
         ),
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.black12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Colors.black12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFFFC72C), width: 2),
+        ),
+        labelStyle: const TextStyle(color: Colors.black54),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: const Color(0xFFCC8800),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Colors.black12,
+        thickness: 1,
+      ),
     );
   }
 
@@ -105,6 +131,32 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: Colors.white70,
         ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF2A2A2A),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF3A3A3A)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFF3A3A3A)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: Color(0xFFFFC72C), width: 2),
+        ),
+        labelStyle: const TextStyle(color: Colors.white60),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: const Color(0xFFFFC72C),
+        ),
+      ),
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF3A3A3A),
+        thickness: 1,
       ),
     );
   }

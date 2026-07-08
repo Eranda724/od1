@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
-import '../app_settings.dart';
 import 'congradulation_screen.dart';
+import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Shown immediately after the Firestore save in RepEntryScreen.
 /// Plays a celebration sound, shows a random potato image, then
@@ -43,21 +44,30 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     'assets/images/po1.png',
     'assets/images/po2.png',
     'assets/images/po3.png',
+    'assets/images/bascket.png',
+    'assets/images/bicy.png',
+    'assets/images/dance.png',
+    'assets/images/foot.png',
+    'assets/images/jump.png',
+    'assets/images/plank.png',
+    'assets/images/put.png',
+    'assets/images/tennis.png',
+    'assets/images/weight.png',
   ];
 
   // ── Fun messages ──────────────────────────────────────────────────────────
-  static const _messages = [
-    '🔥 You crushed it!',
-    '🥔 Potato Power!',
-    '💪 Keep it up!',
-    '🎉 Amazing work!',
-    '⚡ On fire today!',
-    '🏆 That\'s the way!',
-    '🌟 Killing it!',
+  static const _messageKeys = [
+    'crushed_it',
+    'potato_power',
+    'keep_it_up',
+    'amazing_work',
+    'on_fire',
+    'thats_the_way',
+    'killing_it',
   ];
 
   late final String _image;
-  late final String _message;
+  late final String _messageKey;
   late final AudioPlayer _player;
   late final AnimationController _scaleCtrl;
   late final Animation<double> _scale;
@@ -70,7 +80,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
     final rng = Random();
     _image = _images[rng.nextInt(_images.length)];
-    _message = _messages[rng.nextInt(_messages.length)];
+    _messageKey = _messageKeys[rng.nextInt(_messageKeys.length)];
 
     // ── Scale-in animation ───────────────────────────────────────────────
     _scaleCtrl = AnimationController(
@@ -149,12 +159,12 @@ class _CelebrationScreenState extends State<CelebrationScreen>
           child: Column(
             children: [
               // ── Tap to skip hint ───────────────────────────────────────
-              const Padding(
-                padding: EdgeInsets.only(top: 16, right: 20),
+              Padding(
+                padding: const EdgeInsets.only(top: 16, right: 20),
                 child: Align(
                   alignment: Alignment.topRight,
                   child: Text(
-                    'Tap to skip →',
+                    'tap_to_skip'.tr(),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -180,7 +190,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
               // ── Fun message ────────────────────────────────────────────
               Text(
-                _message,
+                _messageKey.tr(),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 28,

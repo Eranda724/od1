@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'login_screen.dart';
+import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,18 +20,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'image': 'assets/images/po2.png',
-      'title': 'Build Daily Habits 🔥',
-      'subtitle': 'Just 60 seconds a day keeps your streak alive.',
+      'titleKey': 'onboarding_title_1',
+      'subtitleKey': 'onboarding_subtitle_1',
     },
     {
       'image': 'assets/images/po1.png',
-      'title': 'Track Your Progress 💪',
-      'subtitle': 'Every rep counts. Watch your lifetime totals grow.',
+      'titleKey': 'onboarding_title_2',
+      'subtitleKey': 'onboarding_subtitle_2',
     },
     {
       'image': 'assets/images/po3.png',
-      'title': 'Even a Couch Potato Can Do This 🥔',
-      'subtitle': 'Small steps every day. No gym needed.',
+      'titleKey': 'onboarding_title_3',
+      'subtitleKey': 'onboarding_subtitle_3',
     },
   ];
 
@@ -100,9 +102,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 48),
                     Text(
-                      page['title']!,
+                      page['titleKey']!.tr(),
                       style: const TextStyle(
-                        color: Color.fromARGB(255, 213, 94, 3),
+                        color: PCColors.yellow,
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.3,
@@ -111,9 +113,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      page['subtitle']!,
-                      style: const TextStyle(
-                        color: Color(0xFF444444),
+                      page['subtitleKey']!.tr(),
+                      style: TextStyle(
+                        color: context.textSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         height: 1.6,
@@ -143,9 +145,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: _currentPage == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _currentPage == index
-                        ? const Color(0xFFFFC72C)
-                        : Colors.black26,
+                  color: _currentPage == index
+                      ? const Color(0xFFFFC72C)
+                      : context.borderColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -163,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 54),
               ),
-              child: const Text('Get Started'),
+              child: Text('get_started'.tr()),
             ),
           ),
 
