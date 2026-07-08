@@ -73,7 +73,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ..style = ui.PaintingStyle.stroke
                       ..strokeWidth = 5
                       ..strokeJoin = ui.StrokeJoin.round
-                      ..color = Colors.black,
+                      ..color = Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
                   ),
                 ),
                 const Text(
@@ -99,7 +101,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ..style = ui.PaintingStyle.stroke
                       ..strokeWidth = 3
                       ..strokeJoin = ui.StrokeJoin.round
-                      ..color = Colors.black,
+                      ..color = Theme.of(context).brightness == Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
                   ),
                 ),
                 const Text(

@@ -283,7 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Profile'),
         leading: IconButton(
@@ -465,8 +465,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: _updatePassword,
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),
-                              backgroundColor: Colors.black87,
-                              foregroundColor: Colors.white,
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white12
+                                  : Colors.black87,
+                              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.white,
                               side: BorderSide.none,
                             ),
                             child: const Text('Change Password'),

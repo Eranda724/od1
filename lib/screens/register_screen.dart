@@ -147,7 +147,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -172,7 +172,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ..style = ui.PaintingStyle.stroke
                               ..strokeWidth = 5
                               ..strokeJoin = ui.StrokeJoin.round
-                              ..color = Colors.black,
+                              ..color = Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
                           ),
                         ),
                         const Text(
@@ -201,7 +203,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ..style = ui.PaintingStyle.stroke
                               ..strokeWidth = 3
                               ..strokeJoin = ui.StrokeJoin.round
-                              ..color = Colors.black,
+                              ..color = Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
                           ),
                         ),
                         const Text(

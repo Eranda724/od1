@@ -29,30 +29,30 @@ class _PCRadii {
 }
 
 class _PCTextStyles {
-  static const TextStyle screenTitle = TextStyle(
+  static TextStyle screenTitle(BuildContext context) => TextStyle(
     fontSize: 26,
     fontWeight: FontWeight.w900,
     letterSpacing: 1.5,
-    color: PCColors.brownDark,
+    color: Theme.of(context).colorScheme.onSurface,
   );
 
-  static const TextStyle sectionLabel = TextStyle(
+  static TextStyle sectionLabel(BuildContext context) => TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w800,
-    color: PCColors.brown,
+    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
     letterSpacing: 0.8,
   );
 
-  static const TextStyle heroNumber = TextStyle(
+  static TextStyle heroNumber(BuildContext context) => TextStyle(
     fontSize: 42,
     fontWeight: FontWeight.w900,
-    color: PCColors.brownDark,
+    color: Theme.of(context).colorScheme.onSurface,
   );
 
-  static const TextStyle statLabel = TextStyle(
+  static TextStyle statLabel(BuildContext context) => TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w800,
-    color: PCColors.brownDark,
+    color: Theme.of(context).colorScheme.onSurface,
   );
 
   static const TextStyle startButton = TextStyle(
@@ -68,10 +68,10 @@ class _PCTextStyles {
     color: Colors.white,
   );
 
-  static const TextStyle bodyText = TextStyle(
+  static TextStyle bodyText(BuildContext context) => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    color: PCColors.brownDark,
+    color: Theme.of(context).colorScheme.onSurface,
   );
 }
 
@@ -257,7 +257,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
     final result = await showMenu<int>(
       context: context,
-      color: PCColors.cream,
+      color: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: const BorderSide(color: PCColors.brown, width: 1.5),
@@ -303,16 +303,16 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: PCColors.cream,
+        backgroundColor: Theme.of(context).dialogBackgroundColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: PCColors.brown, width: 2),
         ),
-        title: const Text(
+        title: Text(
           'Ready Time',
           style: TextStyle(
             fontWeight: FontWeight.w900,
-            color: PCColors.brownDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         content: TextField(
@@ -321,20 +321,20 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w900,
-            color: PCColors.brownDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           decoration: InputDecoration(
             suffixText: 's',
-            suffixStyle: const TextStyle(
+            suffixStyle: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: PCColors.brown,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: Theme.of(context).cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: PCColors.brown, width: 2),
@@ -344,15 +344,15 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: PCColors.brown),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: PCColors.yellow,
-              foregroundColor: PCColors.brownDark,
+              foregroundColor: Colors.black,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -387,18 +387,18 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: PCColors.brown),
+            Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
             const SizedBox(width: _PCSpacing.xs),
             Text(
               label,
-              style: _PCTextStyles.sectionLabel.copyWith(fontSize: 16),
+              style: _PCTextStyles.sectionLabel(context).copyWith(fontSize: 16),
             ),
           ],
         ),
         const SizedBox(height: _PCSpacing.xs),
         Text(
           value,
-          style: _PCTextStyles.heroNumber.copyWith(fontSize: 42, color: PCColors.brownDark),
+          style: _PCTextStyles.heroNumber(context).copyWith(fontSize: 42, color: Theme.of(context).colorScheme.onSurface),
         ),
       ],
     );
@@ -429,7 +429,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         vertical: _PCSpacing.md,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(_PCRadii.md),
         border: Border.all(
           color: PCColors.brown.withValues(alpha: 0.25),
@@ -441,13 +441,13 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.hourglass_top_rounded,
                 size: 20,
-                color: PCColors.brown,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               const SizedBox(width: _PCSpacing.xs),
-              Text('READY TIME', style: _PCTextStyles.sectionLabel.copyWith(fontSize: 16)),
+              Text('READY TIME', style: _PCTextStyles.sectionLabel(context).copyWith(fontSize: 16)),
             ],
           ),
           Row(
@@ -458,7 +458,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: _wantsReadyTime ? PCColors.brownDark : PCColors.brown,
+                  color: _wantsReadyTime ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: _PCSpacing.sm),
@@ -487,14 +487,14 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       vertical: _PCSpacing.xs,
                     ),
                     decoration: BoxDecoration(
-                      color: PCColors.cream,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(_PCRadii.sm),
                       border: Border.all(color: PCColors.brown.withValues(alpha: 0.3)),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.arrow_drop_down_rounded,
                       size: 20,
-                      color: PCColors.brown,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -571,7 +571,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.cream,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: PCColors.yellow,
@@ -579,7 +579,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: PCColors.brownDark,
+            color: Colors.black,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -601,7 +601,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     // Exercise name
                     Text(
                       widget.exerciseName.toUpperCase(),
-                      style: _PCTextStyles.screenTitle,
+                      style: _PCTextStyles.screenTitle(context),
                       textAlign: TextAlign.center,
                     ),
                     if (widget.description != null &&
@@ -609,8 +609,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       const SizedBox(height: _PCSpacing.sm),
                       Text(
                         widget.description!,
-                        style: _PCTextStyles.bodyText.copyWith(
-                          color: PCColors.brown,
+                        style: _PCTextStyles.bodyText(context).copyWith(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 2,
@@ -739,7 +739,7 @@ class _TimerOption extends StatelessWidget {
         Icon(
           icon ?? Icons.timer_rounded,
           size: 20,
-          color: selected ? PCColors.yellowDark : PCColors.brown,
+          color: selected ? PCColors.yellowDark : Theme.of(context).colorScheme.onSurface,
         ),
         const SizedBox(width: _PCSpacing.md),
         Text(
@@ -747,7 +747,7 @@ class _TimerOption extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-            color: selected ? PCColors.brownDark : PCColors.brown,
+            color: selected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         if (selected) ...[
@@ -780,7 +780,7 @@ class _StatPill extends StatelessWidget {
           const SizedBox(width: _PCSpacing.sm),
           Text(
             label,
-            style: _PCTextStyles.statLabel,
+            style: _PCTextStyles.statLabel(context),
           ),
         ],
       );

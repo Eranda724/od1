@@ -149,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -185,7 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ..style = ui.PaintingStyle.stroke
                         ..strokeWidth = 5
                         ..strokeJoin = ui.StrokeJoin.round
-                        ..color = Colors.black,
+                        ..color = Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
                     ),
                   ),
                   const Text(
@@ -213,7 +215,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ..style = ui.PaintingStyle.stroke
                         ..strokeWidth = 3
                         ..strokeJoin = ui.StrokeJoin.round
-                        ..color = Colors.black,
+                        ..color = Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
                     ),
                   ),
                   const Text(

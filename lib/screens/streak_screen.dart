@@ -96,7 +96,7 @@ class StreakScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    color: PCColors.brown,
+                    color: PCColors.yellow,
                     letterSpacing: 1.4,
                   ),
                 ),
@@ -422,10 +422,10 @@ class _ExerciseStreakCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: doneToday ? PCColors.green : PCColors.brown.withValues(alpha: 0.25),
+          color: doneToday ? PCColors.green : Theme.of(context).dividerColor,
           width: doneToday ? 2 : 1.5,
         ),
         boxShadow: [
@@ -457,10 +457,10 @@ class _ExerciseStreakCard extends StatelessWidget {
                   children: [
                     Text(
                       def.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
-                        color: PCColors.brownDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -468,7 +468,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                       '$lifetime total ${def.unit}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: PCColors.brown.withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -486,10 +486,10 @@ class _ExerciseStreakCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         '$streak',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
-                          color: PCColors.brownDark,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -498,7 +498,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                     streak == 1 ? 'day' : 'days',
                     style: TextStyle(
                       fontSize: 11,
-                      color: PCColors.brown.withValues(alpha: 0.6),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
