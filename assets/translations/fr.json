@@ -333,6 +333,7 @@
   "edit_btn": "Modifier",
   "timer_seconds_label": "Minuteur (secondes)",
   "desc_optional_title": "Description (Optionnelle)",
-  "exercise_desc_label": "Description de l'Exercice",
-  "save_exercise_btn": "Enregistrer l'Exercice"
+  "exercise_desc_label": "Description de l'exercice",
+  "save_exercise_btn": "Enregistrer l'exercice",
+  "privacy_policy": "Politique de confidentialité"
 }

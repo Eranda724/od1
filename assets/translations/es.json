@@ -334,5 +334,6 @@
   "timer_seconds_label": "Temporizador (segundos)",
   "desc_optional_title": "Descripción (Opcional)",
   "exercise_desc_label": "Descripción del Ejercicio",
-  "save_exercise_btn": "Guardar Ejercicio"
+  "save_exercise_btn": "Guardar Ejercicio",
+  "privacy_policy": "Política de privacidad"
 }

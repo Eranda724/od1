@@ -334,5 +334,6 @@
   "timer_seconds_label": "Timer (seconds)",
   "desc_optional_title": "Description (Optional)",
   "exercise_desc_label": "Exercise Description",
-  "save_exercise_btn": "Save Exercise"
+  "save_exercise_btn": "Save Exercise",
+  "privacy_policy": "Privacy Policy"
 }
