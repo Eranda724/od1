@@ -73,7 +73,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
-                labelColor: Colors.black,
+                labelColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
                 unselectedLabelColor:
                     cs.onSurface.withValues(alpha: 0.6),
                 labelStyle: const TextStyle(

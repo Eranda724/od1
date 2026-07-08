@@ -68,7 +68,7 @@ class _SocialScreenState extends State<SocialScreen> {
     if (uid == null) return const Center(child: Text('Not logged in'));
 
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -76,7 +76,7 @@ class _SocialScreenState extends State<SocialScreen> {
           children: [
             // ── 1. Search & Add ──
             const Text('ADD A FRIEND',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.brown, letterSpacing: 1.4)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,16 +203,16 @@ class _SocialScreenState extends State<SocialScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text('FRIEND REQUESTS',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.brown, letterSpacing: 1.4)),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
                     const SizedBox(height: 12),
                     ...docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
                       return Card(
                         margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: const CircleAvatar(
-                            backgroundColor: PCColors.cream,
-                            child: Icon(Icons.person, color: PCColors.brownDark),
+                          child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: PCColors.yellow.withValues(alpha: 0.3),
+                            child: const Icon(Icons.person, color: PCColors.brownDark),
                           ),
                           title: Text(data['fromName'] ?? 'Someone', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: const Text('Wants to be friends'),
@@ -240,7 +240,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
             // ── 3. Friends List ──
             const Text('YOUR FRIENDS',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.brown, letterSpacing: 1.4)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             StreamBuilder<List<FriendInfo>>(
               stream: FriendsService.instance.getFriendsList(uid),

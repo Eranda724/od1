@@ -112,8 +112,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const SizedBox(height: 12),
                     Text(
                       page['subtitle']!,
-                      style: const TextStyle(
-                        color: Color(0xFF444444),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : const Color(0xFF444444),
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         height: 1.6,
@@ -143,9 +145,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: _currentPage == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: _currentPage == index
+                  color: _currentPage == index
                         ? const Color(0xFFFFC72C)
-                        : Colors.black26,
+                        : Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white24
+                            : Colors.black26,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

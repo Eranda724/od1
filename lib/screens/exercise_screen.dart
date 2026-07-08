@@ -219,7 +219,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             ),
                             Expanded(child: Center(child: buildExerciseVisual(def, size: 48))),
                             if (hasGoals)
-                              Text('?? ${goals.join(' � ')}', style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                              Text('?? ${goals.join('  ')}', style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600)),
                             if (streak > 0 || lifetime > 0)
                               Padding(
                                 padding: const EdgeInsets.only(top: 2),
@@ -278,7 +278,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     Text(displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                     if (hasGoals) ...[
                                       const SizedBox(height: 4),
-                                      Text('?? ${goals.join(' � ')}', style: const TextStyle(fontSize: 13, color: Colors.blueGrey, fontWeight: FontWeight.w600)),
+                                      Text('?? ${goals.join('  ')}', style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600)),
                                     ],
                                     if (streak > 0 || lifetime > 0) ...[
                                       const SizedBox(height: 4),
@@ -361,7 +361,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     ),
                                   ),
                                 ),
-                              buildSection('To Do', todoExercises, false, Colors.black),
+                              buildSection('To Do', todoExercises, false, Theme.of(context).colorScheme.onSurface),
                               buildSection('Completed Today', doneExercises, true, Colors.green),
                             ],
                           ),

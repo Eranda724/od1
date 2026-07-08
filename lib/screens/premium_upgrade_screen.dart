@@ -54,7 +54,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Upgrade to Premium'),
         leading: IconButton(
