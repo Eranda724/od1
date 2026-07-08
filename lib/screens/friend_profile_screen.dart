@@ -33,13 +33,13 @@ class FriendProfileScreen extends StatelessWidget {
     final pairId = FriendsService.getPairId(currentUid, friend.uid);
 
     return Scaffold(
-      backgroundColor: PCColors.background,
+      backgroundColor: context.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        backgroundColor: PCColors.yellow,
+        backgroundColor: context.appBarColor,
         elevation: 0,
       ),
       body: StreamBuilder<DocumentSnapshot>(
@@ -72,10 +72,10 @@ class FriendProfileScreen extends StatelessWidget {
                     // ── USER DETAILS ──
                     Row(
                       children: [
-                        const CircleAvatar(
+                        CircleAvatar(
                           radius: 32,
-                          backgroundColor: PCColors.cream,
-                          child: Icon(Icons.person, size: 32, color: PCColors.brownDark),
+                          backgroundColor: context.cardColor,
+                          child: Icon(Icons.person, size: 32, color: context.textPrimary),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -84,7 +84,7 @@ class FriendProfileScreen extends StatelessWidget {
                             children: [
                               Text(
                                 friend.displayName,
-                                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: PCColors.brownDark),
+                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: context.textPrimary),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -109,20 +109,20 @@ class FriendProfileScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: PCColors.cream,
+                                color: context.cardColor,
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(color: PCColors.yellowDark, width: 2),
                               ),
                               child: Column(
                                 children: [
-                                  const Text('SHARED STREAK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: PCColors.brownDark)),
+                                  Text('SHARED STREAK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      const Icon(Icons.handshake_rounded, color: PCColors.brownDark, size: 28),
+                                      Icon(Icons.handshake_rounded, color: context.textPrimary, size: 28),
                                       const SizedBox(width: 8),
-                                      Text('${friend.sharedStreak}', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: PCColors.brownDark)),
+                                      Text('${friend.sharedStreak}', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.textPrimary)),
                                     ],
                                   ),
                                 ],

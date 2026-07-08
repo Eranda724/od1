@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../app_settings.dart';
 
 class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
@@ -34,7 +35,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).inputDecorationTheme.fillColor,
             ),
             onChanged: (value) {
               setState(() {
@@ -103,7 +104,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: data['isPremium'] == true ? const Color(0xFFFFC72C) : Colors.grey.shade300,
+                              color: data['isPremium'] == true ? const Color(0xFFFFC72C) : Theme.of(context).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -135,7 +136,8 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           title: const Text('Premium Status', style: TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: const Text('Grants ad-free experience (Lifetime)'),
                           value: data['isPremium'] == true,
-                          activeColor: const Color(0xFFFFC72C),
+                          activeThumbColor: const Color(0xFFFFC72C),
+                          activeTrackColor: const Color(0xFFFFC72C).withValues(alpha: 0.4),
                           onChanged: (bool value) async {
                             await doc.reference.update({'isPremium': value});
                           },
@@ -164,7 +166,7 @@ class _StatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Icon(icon, color: Colors.orange, size: 28),
+        Icon(icon, color: PCColors.yellow, size: 28),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),

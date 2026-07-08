@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'login_screen.dart';
+import '../app_settings.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -102,7 +103,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       page['title']!,
                       style: const TextStyle(
-                        color: Color.fromARGB(255, 213, 94, 3),
+                        color: PCColors.yellow,
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 0.3,
@@ -113,9 +114,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     Text(
                       page['subtitle']!,
                       style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white70
-                            : const Color(0xFF444444),
+                        color: context.textSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         height: 1.6,
@@ -146,10 +145,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   height: 8,
                   decoration: BoxDecoration(
                   color: _currentPage == index
-                        ? const Color(0xFFFFC72C)
-                        : Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white24
-                            : Colors.black26,
+                      ? const Color(0xFFFFC72C)
+                      : context.borderColor,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

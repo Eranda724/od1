@@ -209,9 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ..style = ui.PaintingStyle.stroke
                                   ..strokeWidth = 5
                                   ..strokeJoin = ui.StrokeJoin.round
-                                  ..color = Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white
-                                      : Colors.black,
+                                  ..color = context.textPrimary,
                               ),
                             ),
                             const Text(
@@ -239,17 +237,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ..style = ui.PaintingStyle.stroke
                                   ..strokeWidth = 3
                                   ..strokeJoin = ui.StrokeJoin.round
-                                  ..color = Theme.of(context).brightness == Brightness.dark
-                                      ? Colors.white
-                                      : Colors.black,
+                                  ..color = context.textPrimary,
                               ),
                             ),
-                            const Text(
+                            Text(
                               '60 Second Routine',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: context.isDark ? Colors.white : Colors.white,
                                 letterSpacing: 0.9,
                               ),
                             ),

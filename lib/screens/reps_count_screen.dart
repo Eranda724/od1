@@ -141,6 +141,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
           }
         }
         
+        if (!navContext.mounted) return;
         Navigator.of(navContext).pushReplacement(
           MaterialPageRoute(
             builder: (_) => DailySummaryScreen(
@@ -151,6 +152,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         );
       } catch (e) {
         // Fallback
+        if (!navContext.mounted) return;
         Navigator.of(navContext).popUntil((route) => route.isFirst);
       }
     }
@@ -229,12 +231,12 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.cream,
+      backgroundColor: context.surface,
       appBar: AppBar(
-        backgroundColor: PCColors.cream,
+        backgroundColor: context.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: PCColors.brownDark),
+          icon: Icon(Icons.close_rounded, color: context.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -247,10 +249,10 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               Text(
                 widget.exerciseName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: PCColors.brown,
+                  color: context.textSecondary,
                   letterSpacing: 1,
                 ),
               ),
@@ -260,13 +262,13 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                   child: buildExerciseVisual(widget.exerciseDef!, size: 48),
                 ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'How many did you complete?',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: PCColors.brownDark,
+                  color: context.textPrimary,
                 ),
               ),
 
@@ -288,18 +290,26 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.w900,
-                        color: PCColors.brownDark,
+                        color: context.textPrimary,
                       ),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: Colors.white,
+                        fillColor: context.cardColor,
                         contentPadding: const EdgeInsets.symmetric(vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(color: PCColors.brown, width: 2),
+                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(18),
+                          borderSide: const BorderSide(color: PCColors.yellow, width: 2),
                         ),
                       ),
                       onChanged: (val) {
@@ -324,7 +334,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: PCColors.brown.withValues(alpha: 0.7),
+                  color: context.textSecondary,
                   letterSpacing: 1,
                 ),
               ),
@@ -395,10 +405,10 @@ class _RoundIconButton extends StatelessWidget {
         height: 48,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white,
-          border: Border.all(color: PCColors.brown, width: 1.5),
+          color: context.cardColor,
+          border: Border.all(color: context.borderColor, width: 1.5),
         ),
-        child: Icon(icon, color: PCColors.brownDark, size: 24),
+        child: Icon(icon, color: context.textPrimary, size: 24),
       ),
     );
   }

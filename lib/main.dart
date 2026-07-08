@@ -101,10 +101,10 @@ class _StartRouterState extends State<StartRouter> {
             future: checkIsAdmin(user.uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
-                return const Scaffold(
-                  backgroundColor: Color(0xFFFAF1E4),
-                  body: Center(
-                    child: CircularProgressIndicator(color: Color(0xFFFFC93C)),
+                return Scaffold(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  body: const Center(
+                    child: CircularProgressIndicator(color: Color(0xFFFFC72C)),
                   ),
                 );
               }
@@ -129,11 +129,11 @@ class _StartRouterState extends State<StartRouter> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFF4ECE1),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFFFC72C),
+          color: const Color(0xFFFFC72C),
         ),
       ),
     );

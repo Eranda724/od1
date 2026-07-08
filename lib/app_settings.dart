@@ -78,3 +78,35 @@ class PCColors {
   static const Color background = Color(0xFFFAF1E4);
 }
 
+/// Convenience extension — use `context.appColors` in any widget instead of
+/// repeating `Theme.of(context).brightness == Brightness.dark ? x : y`.
+extension AppColorsX on BuildContext {
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
+
+  // ── Backgrounds ────────────────────────────────────────────────────────────
+  /// Main scaffold / page background
+  Color get surface => isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF4ECE1);
+
+  /// Card / sheet surface
+  Color get cardColor => isDark ? const Color(0xFF2A2A2A) : Colors.white;
+
+  /// Text field fill colour
+  Color get inputFill => isDark ? const Color(0xFF2A2A2A) : Colors.white;
+
+  /// Subtle border / divider colour
+  Color get borderColor => isDark ? const Color(0xFF3A3A3A) : Colors.black12;
+
+  // ── Text ───────────────────────────────────────────────────────────────────
+  Color get textPrimary   => isDark ? Colors.white        : Colors.black87;
+  Color get textSecondary => isDark ? Colors.white60      : Colors.black54;
+
+  // ── Brand ──────────────────────────────────────────────────────────────────
+  Color get yellow => PCColors.yellow;
+
+  /// General page background (respects dark mode, unlike PCColors.background)
+  Color get background => isDark ? const Color(0xFF1A1A1A) : PCColors.background;
+
+  /// AppBar / header surface
+  Color get appBarColor => isDark ? const Color(0xFF2A2A2A) : PCColors.yellow;
+}
+

@@ -62,15 +62,15 @@ class DailySummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: PCColors.cream,
+      backgroundColor: context.surface,
       appBar: AppBar(
-        backgroundColor: PCColors.cream,
+        backgroundColor: context.surface,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           "TODAY'S SUMMARY",
           style: TextStyle(
-            color: PCColors.brownDark,
+            color: context.textPrimary,
             fontWeight: FontWeight.w900,
             letterSpacing: 1.2,
             fontSize: 16,
@@ -87,7 +87,7 @@ class DailySummaryScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: PCColors.brown.withValues(alpha: 0.7),
+                color: context.textSecondary,
               ),
             ),
 
@@ -261,9 +261,9 @@ class _ExerciseSummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: PCColors.brown.withValues(alpha: 0.3), width: 1.5),
+        border: Border.all(color: context.borderColor, width: 1.5),
       ),
       child: Row(
         children: [
@@ -274,10 +274,10 @@ class _ExerciseSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   item.exerciseName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w900,
-                    color: PCColors.brownDark,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -286,7 +286,7 @@ class _ExerciseSummaryCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: PCColors.brown.withValues(alpha: 0.8),
+                    color: context.textSecondary,
                   ),
                 ),
               ],
@@ -321,15 +321,15 @@ class _MiniStat extends StatelessWidget {
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w900,
-            color: highlight ? PCColors.greenDark : PCColors.brownDark,
+            color: highlight ? PCColors.green : context.textPrimary,
           ),
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
-            color: PCColors.brown,
+            color: context.textSecondary,
             letterSpacing: 0.6,
           ),
         ),

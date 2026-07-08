@@ -100,7 +100,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     final isLast = widget.isLastExercise;
 
     return Scaffold(
-      backgroundColor: PCColors.cream,
+      backgroundColor: context.surface,
       body: Stack(
         children: [
           SafeArea(
@@ -114,10 +114,10 @@ class _CongratulationScreenState extends State<CongratulationScreen>
               if (widget.totalExercises != null && widget.totalExercises! > 1)
                 Text(
                   'EXERCISE ${widget.exerciseIndex} OF ${widget.totalExercises}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: PCColors.brown,
+                    color: context.textSecondary,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -130,7 +130,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: PCColors.brownDark,
+                  color: PCColors.yellow,
                 ),
               ),
               const SizedBox(height: 4),
@@ -139,7 +139,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: PCColors.brown.withValues(alpha: 0.8),
+                  color: PCColors.yellow,
                 ),
               ),
 
@@ -154,10 +154,10 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     const SizedBox(height: 4),
                     Text(
                       '${widget.dayStreak}-Day Streak',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
-                        color: PCColors.brownDark,
+                        color: context.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -166,7 +166,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: PCColors.brown.withValues(alpha: 0.7),
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -179,9 +179,9 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: PCColors.yellow.withValues(alpha: 0.25),
+                    color: PCColors.yellow.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: PCColors.brown.withValues(alpha: 0.4), width: 1.5),
+                    border: Border.all(color: PCColors.yellow.withValues(alpha: 0.5), width: 1.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -190,10 +190,10 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                       const SizedBox(width: 6),
                       Text(
                         '${widget.overallStreak}-Day Overall Streak',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: PCColors.brownDark,
+                          color: context.textPrimary,
                         ),
                       ),
                     ],
@@ -332,10 +332,10 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: highlight ? PCColors.yellow.withValues(alpha: 0.25) : Colors.white,
+        color: highlight ? PCColors.yellow.withValues(alpha: 0.2) : context.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: highlight ? PCColors.brown : PCColors.brown.withValues(alpha: 0.3),
+          color: highlight ? PCColors.yellow.withValues(alpha: 0.6) : context.borderColor,
           width: highlight ? 1.8 : 1.5,
         ),
       ),
@@ -343,20 +343,20 @@ class _StatCard extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: PCColors.brown,
+              color: context.textSecondary,
               letterSpacing: 1,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w900,
-              color: PCColors.brownDark,
+              color: context.textPrimary,
             ),
           ),
           Text(
@@ -364,7 +364,7 @@ class _StatCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: PCColors.brown.withValues(alpha: 0.7),
+              color: context.textSecondary,
             ),
           ),
         ],

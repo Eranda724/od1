@@ -195,9 +195,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ..style = ui.PaintingStyle.stroke
                                         ..strokeWidth = 5
                                         ..strokeJoin = ui.StrokeJoin.round
-                                        ..color = Theme.of(context).brightness == Brightness.dark
-                                            ? Colors.white
-                                            : Colors.black,
+                                        ..color = context.textPrimary,
                                     ),
                                   ),
                                   const Text(
@@ -226,9 +224,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         ..style = ui.PaintingStyle.stroke
                                         ..strokeWidth = 3
                                         ..strokeJoin = ui.StrokeJoin.round
-                                        ..color = Theme.of(context).brightness == Brightness.dark
-                                            ? Colors.white
-                                            : Colors.black,
+                                        ..color = context.textPrimary,
                                     ),
                                   ),
                                   const Text(

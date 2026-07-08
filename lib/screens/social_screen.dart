@@ -95,14 +95,14 @@ class _SocialScreenState extends State<SocialScreen> {
                         final snap1 = await FirebaseFirestore.instance
                             .collection('users')
                             .where('displayName', isGreaterThanOrEqualTo: queryLower)
-                            .where('displayName', isLessThanOrEqualTo: queryLower + '\uf8ff')
+                            .where('displayName', isLessThanOrEqualTo: '$queryLower\uf8ff')
                             .limit(4)
                             .get();
                             
                         final snap2 = await FirebaseFirestore.instance
                             .collection('users')
                             .where('displayName', isGreaterThanOrEqualTo: queryCapitalized)
-                            .where('displayName', isLessThanOrEqualTo: queryCapitalized + '\uf8ff')
+                            .where('displayName', isLessThanOrEqualTo: '$queryCapitalized\uf8ff')
                             .limit(4)
                             .get();
                             
@@ -212,7 +212,7 @@ class _SocialScreenState extends State<SocialScreen> {
                           child: ListTile(
                           leading: CircleAvatar(
                             backgroundColor: PCColors.yellow.withValues(alpha: 0.3),
-                            child: const Icon(Icons.person, color: PCColors.brownDark),
+                            child: Icon(Icons.person, color: context.textPrimary),
                           ),
                           title: Text(data['fromName'] ?? 'Someone', style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: const Text('Wants to be friends'),
@@ -286,8 +286,8 @@ class _SocialScreenState extends State<SocialScreen> {
                           children: [
                             CircleAvatar(
                               radius: 24,
-                              backgroundColor: f.friendDoneToday ? PCColors.green : PCColors.cream,
-                              child: Icon(Icons.person, color: f.friendDoneToday ? Colors.white : PCColors.brownDark),
+                              backgroundColor: f.friendDoneToday ? PCColors.green : context.cardColor,
+                              child: Icon(Icons.person, color: f.friendDoneToday ? Colors.white : context.textPrimary),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -309,9 +309,9 @@ class _SocialScreenState extends State<SocialScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.handshake_rounded, size: 16, color: PCColors.brownDark),
+                                  Icon(Icons.handshake_rounded, size: 16, color: context.textPrimary),
                                   const SizedBox(width: 6),
-                                  Text('${f.sharedStreak}', style: const TextStyle(fontWeight: FontWeight.bold, color: PCColors.brownDark)),
+                                  Text('${f.sharedStreak}', style: TextStyle(fontWeight: FontWeight.bold, color: context.textPrimary)),
                                 ],
                               ),
                             ),

@@ -80,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                 ),
+
                 child: const Text('Admin'),
               ),
             ),

@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
+import '../app_settings.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
   final ExerciseItem? existing;
@@ -138,7 +139,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEdit ? 'Edit Exercise' : 'Add Exercise'),
-        backgroundColor: const Color(0xFFFFC72C),
+        backgroundColor: context.appBarColor,
       ),
       body: Form(
         key: _formKey,
@@ -162,7 +163,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                 SizedBox(
                   width: 180,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedIcon,
+                    initialValue: _selectedIcon,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       border: OutlineInputBorder(),
@@ -181,7 +182,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                           value: item.id,
                           child: Row(
                             children: [
-                              Icon(item.icon, size: 20, color: Colors.black87),
+                              Icon(item.icon, size: 20),
                               const SizedBox(width: 8),
                               Text(item.label, style: const TextStyle(fontSize: 13)),
                             ],
@@ -234,8 +235,11 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                 else
                   Container(
                     width: 64, height: 64,
-                    decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(8)),
-                    child: const Icon(Icons.image, color: Colors.grey),
+                    decoration: BoxDecoration(
+                      color: context.cardColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.image, color: context.textSecondary),
                   ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -290,8 +294,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                     });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _isDetailsCustom ? const Color(0xFFFFC72C) : Colors.grey.shade200,
-                    foregroundColor: Colors.black,
+                    backgroundColor: _isDetailsCustom
+                        ? PCColors.yellow
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    foregroundColor: context.textPrimary,
                     elevation: 0,
                   ),
                   child: Text(_isDetailsCustom ? 'Save' : 'Edit', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -351,7 +357,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         Expanded(child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
         IconButton(
           icon: const Icon(Icons.remove_circle_outline),
-          color: _isDetailsCustom ? Colors.black : Colors.grey,
+          color: _isDetailsCustom ? context.textPrimary : context.textSecondary,
           onPressed: _isDetailsCustom ? () {
             int val = int.tryParse(controller.text) ?? 0;
             if (val > 0) controller.text = (val - 1).toString();
@@ -368,15 +374,17 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
               border: const OutlineInputBorder(),
-              disabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey.shade300)),
+              disabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: context.borderColor),
+              ),
               filled: !_isDetailsCustom,
-              fillColor: Colors.grey.shade200,
+              fillColor: context.cardColor,
             ),
           ),
         ),
         IconButton(
           icon: const Icon(Icons.add_circle_outline),
-          color: _isDetailsCustom ? Colors.black : Colors.grey,
+          color: _isDetailsCustom ? context.textPrimary : context.textSecondary,
           onPressed: _isDetailsCustom ? () {
             int val = int.tryParse(controller.text) ?? 0;
             controller.text = (val + 1).toString();
