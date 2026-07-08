@@ -134,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<bool> _isUsernameTaken(String username) async {
     final usersRef = FirebaseFirestore.instance.collection('users');
-    
+
     // Check displayName
     var snap = await usersRef.where('displayName', isEqualTo: username).limit(1).get();
     if (snap.docs.isNotEmpty) return true;
@@ -146,210 +146,246 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // resizeToAvoidBottomInset true so the body shrinks when keyboard appears
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(child: Image.asset('assets/images/register.png', height: 220)),
-                  const SizedBox(height: 16),
-                  // Potato title
-                  Center(
-                    child: Stack(
-                      children: [
-                        Text(
-                          'Potato',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.2,
-                            foreground: Paint()
-                              ..style = ui.PaintingStyle.stroke
-                              ..strokeWidth = 5
-                              ..strokeJoin = ui.StrokeJoin.round
-                              ..color = Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black,
-                          ),
-                        ),
-                        const Text(
-                          'Potato',
-                          style: TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFFFFC72C),
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  // Only scrollable when keyboard is open (bottomInset > 0)
+                  physics: bottomInset > 0
+                      ? const ClampingScrollPhysics()
+                      : const NeverScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                  ),
-                  // Subtitle
-                  Center(
-                    child: Stack(
-                      children: [
-                        Text(
-                          '60 Second Routine',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.9,
-                            foreground: Paint()
-                              ..style = ui.PaintingStyle.stroke
-                              ..strokeWidth = 3
-                              ..strokeJoin = ui.StrokeJoin.round
-                              ..color = Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.white
-                                  : Colors.black,
-                          ),
-                        ),
-                        const Text(
-                          '60 Second Routine',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 0.9,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  TextField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.text,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                    ),
-                    obscureText: _obscurePassword,
-                  ),
-                  const SizedBox(height: 16),
-                  if (_errorMessage != null)
-                    Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  const SizedBox(height: 16),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ElevatedButton(
-                          onPressed: _register,
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                          child: const Text('Create Account'),
-                        ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Already have an account? Login'),
-                  ),
-
-                  // ── Social Sign-In ──
-                  if (_isLoadingSocial)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text(
-                            'OR',
-                            style: TextStyle(
-                              color: Colors.grey.shade500,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 56, 24, 24),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // ── Branding ──
+                            Center(
+                              child: Image.asset(
+                                'assets/images/register.png',
+                                height: screenHeight * 0.19,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            // Potato title
+                            Center(
+                              child: Stack(
+                                children: [
+                                  Text(
+                                    'Potato',
+                                    style: TextStyle(
+                                      fontSize: 44,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.2,
+                                      foreground: Paint()
+                                        ..style = ui.PaintingStyle.stroke
+                                        ..strokeWidth = 5
+                                        ..strokeJoin = ui.StrokeJoin.round
+                                        ..color = Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Potato',
+                                    style: TextStyle(
+                                      fontSize: 44,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFFFFC72C),
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Subtitle
+                            Center(
+                              child: Stack(
+                                children: [
+                                  Text(
+                                    '60 Second Routine',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.9,
+                                      foreground: Paint()
+                                        ..style = ui.PaintingStyle.stroke
+                                        ..strokeWidth = 3
+                                        ..strokeJoin = ui.StrokeJoin.round
+                                        ..color = Theme.of(context).brightness == Brightness.dark
+                                            ? Colors.white
+                                            : Colors.black,
+                                    ),
+                                  ),
+                                  const Text(
+                                    '60 Second Routine',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      letterSpacing: 0.9,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const Spacer(),
+
+                            // ── Form ──
+                            TextField(
+                              controller: _usernameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Username',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.text,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _emailController,
+                              decoration: const InputDecoration(
+                                labelText: 'Email',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _passwordController,
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                border: const OutlineInputBorder(),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _obscurePassword = !_obscurePassword;
+                                    });
+                                  },
+                                ),
+                              ),
+                              obscureText: _obscurePassword,
+                            ),
+                            if (_errorMessage != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            const SizedBox(height: 12),
+                            _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : ElevatedButton(
+                                    onPressed: _register,
+                                    style: ElevatedButton.styleFrom(
+                                      minimumSize: const Size(double.infinity, 50),
+                                    ),
+                                    child: const Text('Create Account'),
+                                  ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Already have an account? Login'),
+                            ),
+
+                            // ── Social Sign-In ──
+                            if (_isLoadingSocial)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 12),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const Expanded(child: Divider()),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    child: Text(
+                                      'OR',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  const Expanded(child: Divider()),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // Google Sign-In
+                              OutlinedButton.icon(
+                                onPressed: _signInWithGoogle,
+                                icon: Image.asset(
+                                  'assets/images/google.png',
+                                  height: 22,
+                                  width: 22,
+                                ),
+                                label: const Text('Continue with Google'),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(double.infinity, 50),
+                                  foregroundColor: Colors.black87,
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                              // Apple Sign-In — iOS only
+                              if (Platform.isIOS) ...[
+                                const SizedBox(height: 10),
+                                OutlinedButton.icon(
+                                  onPressed: _signInWithApple,
+                                  icon: Image.asset(
+                                    'assets/images/apple.png',
+                                    height: 22,
+                                    width: 22,
+                                    color: Colors.white,
+                                  ),
+                                  label: const Text(
+                                    'Continue with Apple',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(double.infinity, 50),
+                                    backgroundColor: Colors.black,
+                                    side: BorderSide.none,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ],
                         ),
-                        const Expanded(child: Divider()),
-                      ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    // Google Sign-In
-                    OutlinedButton.icon(
-                      onPressed: _signInWithGoogle,
-                      icon: Image.network(
-                        'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                        height: 20,
-                        width: 20,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.login, size: 20),
-                      ),
-                      label: const Text('Continue with Google'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),
-                        foregroundColor: Colors.black87,
-                        side: BorderSide(color: Colors.grey.shade300),
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    // Apple Sign-In — iOS only
-                    if (Platform.isIOS) ...[
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        onPressed: _signInWithApple,
-                        icon: const Icon(Icons.apple, size: 22, color: Colors.white),
-                        label: const Text(
-                          'Continue with Apple',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size(double.infinity, 50),
-                          backgroundColor: Colors.black,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 8),
-                  ],
-                ],
-              ),
+                  ),
+                );
+              },
             ),
+            // Back button overlay
             Positioned(
               top: 8,
               left: 8,
