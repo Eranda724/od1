@@ -7,19 +7,15 @@ class AppSettings extends ChangeNotifier {
   AppSettings._internal();
 
   ThemeMode _themeMode = ThemeMode.light;
-  String _languageCode = 'en';
   bool _notificationsEnabled = true;
 
   final ValueNotifier<bool> gridViewNotifier = ValueNotifier<bool>(false);
 
   ThemeMode get themeMode => _themeMode;
-  String get languageCode => _languageCode;
   bool get isGridView => gridViewNotifier.value;
   bool get notificationsEnabled => _notificationsEnabled;
-  Locale get locale => Locale(_languageCode);
 
   static const _keyTheme = 'themeMode';
-  static const _keyLang = 'languageCode';
   static const _keyGrid = 'isGridView';
   static const _keyNotifications = 'notificationsEnabled';
 
@@ -27,7 +23,6 @@ class AppSettings extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final isDark = prefs.getBool(_keyTheme) ?? false;
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
-    _languageCode = prefs.getString(_keyLang) ?? 'en';
     gridViewNotifier.value = prefs.getBool(_keyGrid) ?? false; // default: list view
     _notificationsEnabled = prefs.getBool(_keyNotifications) ?? true;
     notifyListeners();
@@ -40,12 +35,7 @@ class AppSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setLanguage(String code) async {
-    _languageCode = code;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyLang, code);
-    notifyListeners();
-  }
+
 
   Future<void> setGridView(bool value) async {
     gridViewNotifier.value = value;
@@ -63,7 +53,9 @@ class AppSettings extends ChangeNotifier {
 
   /// Supported languages: code -> native label
   static const Map<String, String> supportedLanguages = {
-    'en': '🇬🇧  English',
+    'en': '🇬🇧 English',
+    'fr': '🇫🇷 Français',
+    'es': '🇪🇸 Español',
   };
 }
 

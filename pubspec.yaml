@@ -31,6 +31,7 @@ dependencies:
   cached_network_image: ^3.4.1
   google_sign_in: ^6.2.2
   sign_in_with_apple: ^6.1.4
+  easy_localization: ^3.0.8
 
 dev_dependencies:
   flutter_test:
@@ -46,6 +47,7 @@ flutter:
     - .env
     - assets/sounds/
     - assets/images/
+    - assets/translations/
 
 flutter_launcher_icons:
   android: true

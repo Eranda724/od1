@@ -11,6 +11,7 @@ import 'leaderboard_screen.dart';
 import 'social_screen.dart';
 import 'admin_screen.dart';
 import 'premium_upgrade_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isAdmin;
@@ -58,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
-        title: const Text('Potato 🥔'),
+        title: Text('home_title'.tr()),
         actions: [
           if (widget.isAdmin)
             Padding(
@@ -81,7 +82,7 @@ class _HomeScreenState extends State<HomeScreen>
                   textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
                 ),
 
-                child: const Text('Admin'),
+                child: Text('admin_panel'.tr()),
               ),
             ),
         ],
@@ -207,12 +208,12 @@ class _HomeScreenState extends State<HomeScreen>
           ]),
         ),
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'settings',
           child: Row(children: [
-            Icon(Icons.settings_outlined, size: 20),
+            const Icon(Icons.settings_outlined, size: 20),
             SizedBox(width: 10),
-            Text('Settings'),
+            Text('settings'.tr()),
           ]),
         ),
         if (!isPremium) ...[
@@ -227,13 +228,13 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
         const PopupMenuDivider(),
-        const PopupMenuItem<String>(
+        PopupMenuItem<String>(
           value: 'logout',
           child: Row(children: [
-            Icon(Icons.logout_rounded, size: 20, color: Colors.red),
-            SizedBox(width: 10),
-            Text('Log Out',
-                style: TextStyle(
+            const Icon(Icons.logout_rounded, size: 20, color: Colors.red),
+            const SizedBox(width: 10),
+            Text('logout'.tr(),
+                style: const TextStyle(
                     color: Colors.red, fontWeight: FontWeight.w600)),
           ]),
         ),

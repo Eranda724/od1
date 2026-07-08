@@ -1,0 +1,20 @@
+{
+  "login_title": "Bon retour",
+  "login_subtitle": "Connectez-vous pour continuer.",
+  "email_label": "E-mail",
+  "password_label": "Mot de passe",
+  "login_button": "Se connecter",
+  "forgot_password": "Mot de passe oublié ?",
+  "no_account": "Vous n'avez pas de compte ?",
+  "sign_up": "Inscrivez-vous ici",
+  "home_title": "Potato 🥔",
+  "admin_panel": "Panneau d'administration",
+  "settings": "Paramètres",
+  "change_language": "Changer de langue",
+  "logout": "Se déconnecter",
+  "username_label": "Nom d'utilisateur",
+  "create_account_button": "Créer un compte",
+  "already_have_account": "Vous avez déjà un compte ? Se connecter",
+  "continue_google": "Continuer avec Google",
+  "continue_apple": "Continuer avec Apple"
+}

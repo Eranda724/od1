@@ -9,6 +9,8 @@ import 'forgot_password_screen.dart';
 import '../main.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../widgets/language_switcher.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -170,6 +172,10 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: const [
+          LanguageSwitcher(),
+          SizedBox(width: 8),
+        ],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -258,9 +264,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       // ── Form ──
                       TextField(
                         controller: _emailController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email or Username',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: 'email_label'.tr(),
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.text,
                       ),
@@ -268,7 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextField(
                         controller: _passwordController,
                         decoration: InputDecoration(
-                          labelText: 'Password',
+                          labelText: 'password_label'.tr(),
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -294,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             );
                           },
-                          child: const Text('Forgot Password?'),
+                          child: Text('forgot_password'.tr()),
                         ),
                       ),
                       if (_errorMessage != null)
@@ -312,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: ElevatedButton.styleFrom(
                                 minimumSize: const Size(double.infinity, 50),
                               ),
-                              child: const Text('Login'),
+                              child: Text('login_button'.tr()),
                             ),
                       TextButton(
                         onPressed: () {
@@ -321,7 +327,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             MaterialPageRoute(builder: (context) => const RegisterScreen()),
                           );
                         },
-                        child: const Text("Don't have an account? Register"),
+                        child: Text('no_account'.tr()),
                       ),
 
                       // ── Social Sign-In ──
@@ -358,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             height: 22,
                             width: 22,
                           ),
-                          label: const Text('Continue with Google'),
+                          label: Text('continue_google'.tr()),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 50),
                             foregroundColor: Colors.black87,
@@ -380,9 +386,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 22,
                               color: Colors.white,
                             ),
-                            label: const Text(
-                              'Continue with Apple',
-                              style: TextStyle(color: Colors.white),
+                            label: Text(
+                              'continue_apple'.tr(),
+                              style: const TextStyle(color: Colors.white),
                             ),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 50),

@@ -5,6 +5,7 @@ import '../app_settings.dart';
 import '../services/notification_service.dart';
 import '../services/iap_service.dart';
 import 'premium_upgrade_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -115,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _card(
             child: Column(
               children: AppSettings.supportedLanguages.entries.map((entry) {
-                final isSelected = _settings.languageCode == entry.key;
+                final isSelected = context.locale.languageCode == entry.key;
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -133,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: Color(0xFFFFC72C))
                           : null,
                       onTap: () async {
-                        await _settings.setLanguage(entry.key);
+                        await context.setLocale(Locale(entry.key));
                         setState(() {});
                       },
                     ),

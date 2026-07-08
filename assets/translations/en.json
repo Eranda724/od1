@@ -1,0 +1,20 @@
+{
+  "login_title": "Welcome Back",
+  "login_subtitle": "Sign in to continue your journey.",
+  "email_label": "Email",
+  "password_label": "Password",
+  "login_button": "Login",
+  "forgot_password": "Forgot Password?",
+  "no_account": "Don't have an account?",
+  "sign_up": "Sign up here",
+  "home_title": "Potato 🥔",
+  "admin_panel": "Admin Panel",
+  "settings": "Settings",
+  "change_language": "Change Language",
+  "logout": "Log Out",
+  "username_label": "Username",
+  "create_account_button": "Create Account",
+  "already_have_account": "Already have an account? Login",
+  "continue_google": "Continue with Google",
+  "continue_apple": "Continue with Apple"
+}

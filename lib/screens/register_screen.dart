@@ -7,6 +7,8 @@ import 'home_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
 import '../main.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../widgets/language_switcher.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -245,18 +247,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             // ── Form ──
                             TextField(
                               controller: _usernameController,
-                              decoration: const InputDecoration(
-                                labelText: 'Username',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: 'username_label'.tr(),
+                                border: const OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.text,
                             ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: _emailController,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: 'email_label'.tr(),
+                                border: const OutlineInputBorder(),
                               ),
                               keyboardType: TextInputType.emailAddress,
                             ),
@@ -264,7 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             TextField(
                               controller: _passwordController,
                               decoration: InputDecoration(
-                                labelText: 'Password',
+                                labelText: 'password_label'.tr(),
                                 border: const OutlineInputBorder(),
                                 suffixIcon: IconButton(
                                   icon: Icon(
@@ -295,11 +297,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     style: ElevatedButton.styleFrom(
                                       minimumSize: const Size(double.infinity, 50),
                                     ),
-                                    child: const Text('Create Account'),
+                                    child: Text('create_account_button'.tr()),
                                   ),
                             TextButton(
                               onPressed: () => Navigator.pop(context),
-                              child: const Text('Already have an account? Login'),
+                              child: Text('already_have_account'.tr()),
                             ),
 
                             // ── Social Sign-In ──
@@ -336,7 +338,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   height: 22,
                                   width: 22,
                                 ),
-                                label: const Text('Continue with Google'),
+                                label: Text('continue_google'.tr()),
                                 style: OutlinedButton.styleFrom(
                                   minimumSize: const Size(double.infinity, 50),
                                   foregroundColor: Colors.black87,
@@ -358,9 +360,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     width: 22,
                                     color: Colors.white,
                                   ),
-                                  label: const Text(
-                                    'Continue with Apple',
-                                    style: TextStyle(color: Colors.white),
+                                  label: Text(
+                                    'continue_apple'.tr(),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
                                   style: OutlinedButton.styleFrom(
                                     minimumSize: const Size(double.infinity, 50),
@@ -389,6 +391,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
                 onPressed: () => Navigator.pop(context),
               ),
+            ),
+            const Positioned(
+              top: 8,
+              right: 8,
+              child: LanguageSwitcher(),
             ),
           ],
         ),

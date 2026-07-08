@@ -13,9 +13,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'services/notification_service.dart';
 import 'services/ad_service.dart';
 import 'services/iap_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -30,7 +32,14 @@ void main() async {
   // Initialize In-App Purchases listener
   IapService.instance.initialize();
   
-  runApp(const MyApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('fr'), Locale('es')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -65,7 +74,9 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _settings.themeMode,
-      locale: _settings.locale,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       home: const StartRouter(),
     );
   }
