@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Represents one leaderboard entry.
 class LeaderboardEntry {
@@ -56,11 +57,11 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
   String get label {
     switch (this) {
       case LeaderboardPeriod.daily:
-        return 'Daily';
+        return 'daily_period'.tr();
       case LeaderboardPeriod.weekly:
-        return 'Weekly';
+        return 'weekly_period'.tr();
       case LeaderboardPeriod.monthly:
-        return 'Monthly';
+        return 'monthly_period'.tr();
     }
   }
 }

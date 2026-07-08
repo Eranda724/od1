@@ -13,6 +13,7 @@ import 'exercise_start_screen.dart';
 import 'daily_summary_screen.dart';
 import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
 /// Lets them enter how many reps they completed, then saves to Firestore
@@ -162,13 +163,13 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
   /// to the Congratulation screen.
   Future<void> _submit() async {
     if (_reps <= 0) {
-      setState(() => _error = 'Enter at least 1 ${widget.unit}.');
+      setState(() => _error = 'enter_at_least_1'.tr(args: [widget.unit]));
       return;
     }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      setState(() => _error = 'You need to be signed in to save this.');
+      setState(() => _error = 'not_signed_in_save'.tr());
       return;
     }
 
@@ -195,7 +196,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       await FriendsService.instance.maybeSendFriendActivityNotification(
         currentUid: user.uid,
         exerciseName: widget.exerciseName,
-        detail: 'completed ${widget.exerciseName} today! 👏',
+        detail: 'completed_exercise_today'.tr(args: [widget.exerciseName]),
       );
 
       if (!mounted) return;
@@ -223,7 +224,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _error = "Couldn't save — check your connection and try again.";
+        _error = 'error_saving'.tr();
       });
     }
   }
@@ -263,7 +264,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                 ),
               const SizedBox(height: 8),
               Text(
-                'How many did you complete?',
+                'how_many_completed'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
@@ -373,8 +374,8 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                           height: 24,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text(
-                          'Submit',
+                      : Text(
+                          'submit_btn'.tr(),
                           style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                         ),
                 ),

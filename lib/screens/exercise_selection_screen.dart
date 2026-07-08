@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/exercise_item.dart';
 import 'home_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ExerciseSelectionScreen extends StatefulWidget {
   const ExerciseSelectionScreen({super.key});
@@ -53,12 +54,12 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Your Exercises')),
+      appBar: AppBar(title: Text('choose_exercises_title'.tr())),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -76,11 +77,11 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
           }
 
           if (exercises.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Text(
-                  'No exercises available yet. Please contact support.',
+                  'no_exercises_available'.tr(),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -92,8 +93,8 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Pick the exercises you want to build a streak with:',
+                Text(
+                  'pick_exercises_desc'.tr(),
                   style: TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 16),
@@ -124,7 +125,7 @@ class _ExerciseSelectionScreenState extends State<ExerciseSelectionScreen> {
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 50),
                         ),
-                        child: const Text('Continue'),
+                        child: Text('continue_btn'.tr()),
                       ),
               ],
             ),

@@ -7,6 +7,7 @@ export '../models/exercise_item.dart' show ExerciseMedia;
 import 'exercise_start_screen.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ExerciseScreen extends StatefulWidget {
   final User? user;
@@ -65,7 +66,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   Widget build(BuildContext context) {
     final uid = widget.user?.uid;
-    if (uid == null) return const Center(child: Text('Please sign in.'));
+    if (uid == null) return Center(child: Text('please_sign_in'.tr()));
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
@@ -82,7 +83,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               .collection('users').doc(uid).collection('exercises').snapshots(),
           builder: (context, userExercisesSnap) {
             if (userExercisesSnap.hasError) {
-              return Center(child: Text('Error: ${userExercisesSnap.error}'));
+              return Center(child: Text('error_loading'.tr(args: [userExercisesSnap.error.toString()])));
             }
             final exercises = <String, Map<String, dynamic>>{};
             if (userExercisesSnap.hasData) {
@@ -95,7 +96,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
               builder: (context, exerciseSnapshot) {
                 if (exerciseSnapshot.hasError) {
-                  return Center(child: Text('Error loading exercises: ${exerciseSnapshot.error}'));
+                  return Center(child: Text('error_loading'.tr(args: [exerciseSnapshot.error.toString()])));
                 }
 
                 final exerciseDefs = <String, ExerciseItem>{};
@@ -137,9 +138,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
                   final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
                   final goals = <String>[];
-                  if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} Reps');
+                  if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} ' + 'reps_label'.tr());
                   if ((def?.defaultTimer ?? 0) > 0) goals.add('${def!.defaultTimer}s');
-                  if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} Days');
+                  if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} ' + 'days_label'.tr());
 
                   void startExercise() {
                     List<SessionItem> queue = [];
@@ -225,7 +226,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 padding: const EdgeInsets.only(top: 2),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 11))],
+                                  children: [Text('$lifetime ' + 'total_label'.tr() + ' ($unit)', style: const TextStyle(fontSize: 11))],
                                 ),
                               ),
                             const SizedBox(height: 8),
@@ -237,7 +238,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                                   minimumSize: const Size(0, 36),
                                 ),
-                                child: Text(isDone ? 'Do Again' : 'Start', style: const TextStyle(fontSize: 13)),
+                                child: Text(isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(), style: const TextStyle(fontSize: 13)),
                               ),
                             ),
                           ],
@@ -282,7 +283,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     ],
                                     if (streak > 0 || lifetime > 0) ...[
                                       const SizedBox(height: 4),
-                                      Text('$lifetime Total ($unit)', style: const TextStyle(fontSize: 13)),
+                                      Text('$lifetime ' + 'total_label'.tr() + ' ($unit)', style: const TextStyle(fontSize: 13)),
                                     ],
                                   ],
                                 ),
@@ -293,7 +294,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 16),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                                 ),
-                                child: Text(isDone ? 'Again' : 'Start'),
+                                child: Text(isDone ? 'again_btn'.tr() : 'start_btn'.tr()),
                               ),
                               if (isDone)
                                 const Padding(
@@ -352,17 +353,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                             children: [
                               if (isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.only(top: 48.0),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 48.0),
                                   child: Center(
                                     child: Text(
-                                      'No exercises selected.',
+                                      'no_exercises_selected'.tr(),
                                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                                     ),
                                   ),
                                 ),
-                              buildSection('To Do', todoExercises, false, Theme.of(context).colorScheme.onSurface),
-                              buildSection('Completed Today', doneExercises, true, Colors.green),
+                              buildSection('to_do_label'.tr(), todoExercises, false, Theme.of(context).colorScheme.onSurface),
+                              buildSection('completed_today_label'.tr(), doneExercises, true, Colors.green),
                             ],
                           ),
                           Positioned(
@@ -373,7 +374,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 children: [
                                   // Toggle between list and grid view
                                   IconButton(
-                                    tooltip: _settings.isGridView ? 'Switch to List View' : 'Switch to Grid View',
+                                    tooltip: _settings.isGridView ? 'switch_list_view'.tr() : 'switch_grid_view'.tr(),
                                     icon: Icon(
                                       _settings.isGridView
                                           ? Icons.view_list_rounded
@@ -383,7 +384,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ),
                                   if (exerciseDefs.isNotEmpty)
                                     IconButton(
-                                      tooltip: 'Manage Exercises',
+                                      tooltip: 'manage_exercises_title'.tr(),
                                       icon: const Icon(Icons.edit_rounded),
                                       onPressed: () => _showManageSheet(
                                         context,
@@ -468,7 +469,7 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
 
   Future<void> _save() async {
     if (_selected.isEmpty) {
-      setState(() => _errorMessage = 'Please select at least one exercise.');
+      setState(() => _errorMessage = 'select_at_least_one'.tr());
       return;
     }
     setState(() {
@@ -495,7 +496,7 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not save: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('could_not_save'.tr(args: [e.toString()]))));
       }
     }
   }
@@ -522,9 +523,9 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text('Manage Exercises', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            Text('manage_exercises_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 4),
-            const Text('Choose which exercises appear on your dashboard.', style: TextStyle(fontSize: 13, color: Colors.grey)),
+            Text('manage_exercises_desc'.tr(), style: const TextStyle(fontSize: 13, color: Colors.grey)),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -536,7 +537,7 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
                     color: const Color(0xFFFFC72C),
                   ),
                   label: Text(
-                    _selected.length == widget.exerciseDefs.length ? 'Deselect All' : 'Select All',
+                    _selected.length == widget.exerciseDefs.length ? 'deselect_all_btn'.tr() : 'select_all_btn'.tr(),
                     style: const TextStyle(color: Color(0xFF444444)),
                   ),
                 ),
@@ -583,7 +584,7 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Text('Save', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    : Text('save_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
               ),
             ),
           ],

@@ -8,6 +8,7 @@ import '../app_settings.dart';
 import '../models/session_item.dart';
 import '../models/exercise_item.dart';
 import 'session_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Design Tokens
@@ -279,7 +280,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           value: -1,
           height: 48,
           child: _TimerOption(
-            label: 'Custom…',
+            label: 'custom_label'.tr(),
             icon: Icons.edit_rounded,
             selected: ![3, 5, 10].contains(_readyTimeSeconds),
           ),
@@ -309,7 +310,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           side: const BorderSide(color: PCColors.brown, width: 2),
         ),
         title: Text(
-          'Ready Time',
+          'ready_time_dialog_title'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.w900,
             color: Theme.of(context).colorScheme.onSurface,
@@ -345,7 +346,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
-              'Cancel',
+              'cancel_btn'.tr(),
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
@@ -365,8 +366,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               }
               Navigator.pop(ctx);
             },
-            child: const Text(
-              'Set',
+            child: Text(
+              'set_btn'.tr(),
               style: TextStyle(fontWeight: FontWeight.w800),
             ),
           ),
@@ -414,7 +415,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   Widget _buildExerciseTimer() {
     return _buildDetailCard(
-      label: 'TIMER',
+      label: 'timer_label'.tr(),
       value: '${widget.defaultTimer}s',
       icon: Icons.timer_outlined,
     );
@@ -447,14 +448,14 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               const SizedBox(width: _PCSpacing.xs),
-              Text('READY TIME', style: _PCTextStyles.sectionLabel(context).copyWith(fontSize: 16)),
+              Text('ready_time_label'.tr(), style: _PCTextStyles.sectionLabel(context).copyWith(fontSize: 16)),
             ],
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                _wantsReadyTime ? '${_readyTimeSeconds}s' : 'OFF',
+                _wantsReadyTime ? '${_readyTimeSeconds}s' : 'off_label'.tr(),
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
@@ -550,7 +551,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'START\nNOW',
+                      'start_now'.tr(),
                       textAlign: TextAlign.center,
                       style: _PCTextStyles.startButton,
                     ),
@@ -651,7 +652,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _StatPill(icon: '🔥', label: '${widget.streak}-Day Streak'),
+                      _StatPill(icon: '🔥', label: 'day_streak_count'.tr(args: [widget.streak.toString()])),
                       Container(
                         width: 1,
                         height: 28,
@@ -659,7 +660,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       ),
                       _StatPill(
                         icon: '💪',
-                        label: '${widget.lifetimeTotal} Lifetime',
+                        label: 'lifetime_total_count'.tr(args: [widget.lifetimeTotal.toString()]),
                       ),
                     ],
                   ),

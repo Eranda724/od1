@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import '../services/account_deletion_service.dart';
 import 'login_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -65,12 +66,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Update display name
       if (newName != user.displayName) {
         if (newName.isEmpty) {
-          throw FirebaseAuthException(code: 'invalid-username', message: 'Username is required.');
+          throw FirebaseAuthException(code: 'invalid-username', message: 'username_required'.tr());
         }
 
         final isTaken = await _isUsernameTaken(newName);
         if (isTaken) {
-          throw FirebaseAuthException(code: 'username-taken', message: 'This username is already taken. Please choose another.');
+          throw FirebaseAuthException(code: 'username-taken', message: 'username_taken'.tr());
         }
 
         await user.updateDisplayName(newName);
@@ -96,13 +97,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully!'), backgroundColor: Colors.green),
+          SnackBar(content: Text('profile_updated'.tr()), backgroundColor: Colors.green),
         );
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Failed to update profile'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.message ?? 'failed_update_profile'.tr()), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -133,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password updated successfully!'), backgroundColor: Colors.green),
+          SnackBar(content: Text('password_updated'.tr()), backgroundColor: Colors.green),
         );
         _oldPasswordController.clear();
         _newPasswordController.clear();
@@ -142,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } on FirebaseAuthException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'Failed to update password'), backgroundColor: Colors.red),
+          SnackBar(content: Text(e.message ?? 'failed_update_password'.tr()), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -168,22 +169,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
-        title: const Text(
-          'Delete Account?',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        title: Text(
+          'delete_account_title'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        content: const Text(
-          'This will permanently delete your account, all your workout data, streaks, and friend connections.\n\nThis action cannot be undone.',
+        content: Text(
+          'delete_account_confirm_msg'.tr(),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text('cancel'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Yes, Delete My Account'),
+            child: Text('yes_delete_my_account'.tr()),
           ),
         ],
       ),
@@ -200,13 +201,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         barrierDismissible: false,
         builder: (ctx) => StatefulBuilder(
           builder: (ctx, setDialogState) => AlertDialog(
-            title: const Text('Confirm Your Password'),
+            title: Text('confirm_your_password'.tr()),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Enter your password to confirm account deletion.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                Text(
+                  'enter_password_confirm_delete'.tr(),
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -214,7 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   obscureText: _obscureDeletePassword,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'password_label'.tr(),
                     border: const OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(_obscureDeletePassword
@@ -230,12 +231,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, null),
-                child: const Text('Cancel'),
+                child: Text('cancel'.tr()),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, passwordController.text),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
-                child: const Text('Delete Forever'),
+                child: Text('delete_forever'.tr()),
               ),
             ],
           ),
@@ -261,7 +262,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message ?? 'Failed to delete account. Please try again.'),
+            content: Text(e.message ?? 'failed_delete_account'.tr()),
             backgroundColor: Colors.red,
           ),
         );
@@ -270,7 +271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('error_msg'.tr(args: [e.toString()])),
             backgroundColor: Colors.red,
           ),
         );
@@ -285,7 +286,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text('profile_menu'.tr()),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.pop(context),
@@ -340,12 +341,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(color: const Color(0xFFFFC72C)),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.star_rounded, color: Color(0xFFFFC72C), size: 16),
-                                SizedBox(width: 4),
-                                Text('Premium Member', style: TextStyle(color: Color(0xFFFFC72C), fontWeight: FontWeight.bold, fontSize: 12)),
+                                const Icon(Icons.star_rounded, color: Color(0xFFFFC72C), size: 16),
+                                const SizedBox(width: 4),
+                                Text('premium_member'.tr(), style: const TextStyle(color: Color(0xFFFFC72C), fontWeight: FontWeight.bold, fontSize: 12)),
                               ],
                             ),
                           ),
@@ -358,7 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 24),
               
               // ── Profile Information ──
-              const Text('Profile Information', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('profile_information'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Form(
                 key: _formKeyProfile,
@@ -367,23 +368,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     TextFormField(
                       controller: _displayNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Username',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'username_label'.tr(),
+                        border: const OutlineInputBorder(),
                       ),
-                      validator: (value) => value == null || value.trim().isEmpty ? 'Please enter a username' : null,
+                      validator: (value) => value == null || value.trim().isEmpty ? 'please_enter_username'.tr() : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: 'email_label'.tr(),
+                        border: const OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
-                        if (value == null || value.trim().isEmpty) return 'Please enter an email';
-                        if (!value.contains('@')) return 'Please enter a valid email';
+                        if (value == null || value.trim().isEmpty) return 'please_enter_email_valid'.tr();
+                        if (!value.contains('@')) return 'please_enter_valid_email'.tr();
                         return null;
                       },
                     ),
@@ -393,7 +394,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : ElevatedButton(
                             onPressed: _updateProfile,
                             style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
-                            child: const Text('Update Profile'),
+                            child: Text('update_profile'.tr()),
                           ),
                   ],
                 ),
@@ -402,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 48),
 
               // ── Change Password ──
-              const Text('Change Password', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text('change_password'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Form(
                 key: _formKeyPassword,
@@ -413,21 +414,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: _oldPasswordController,
                       obscureText: _obscureOld,
                       decoration: InputDecoration(
-                        labelText: 'Old Password',
+                        labelText: 'old_password'.tr(),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(_obscureOld ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscureOld = !_obscureOld),
                         ),
                       ),
-                      validator: (value) => value == null || value.isEmpty ? 'Please enter old password' : null,
+                      validator: (value) => value == null || value.isEmpty ? 'please_enter_old_password'.tr() : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _newPasswordController,
                       obscureText: _obscureNew,
                       decoration: InputDecoration(
-                        labelText: 'New Password',
+                        labelText: 'new_password'.tr(),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
@@ -435,8 +436,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please enter new password';
-                        if (value.length < 6) return 'Password must be at least 6 characters';
+                        if (value == null || value.isEmpty) return 'please_enter_new_password'.tr();
+                        if (value.length < 6) return 'password_min_length'.tr();
                         return null;
                       },
                     ),
@@ -445,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       controller: _confirmPasswordController,
                       obscureText: _obscureConfirm,
                       decoration: InputDecoration(
-                        labelText: 'Confirm New Password',
+                        labelText: 'confirm_new_password'.tr(),
                         border: const OutlineInputBorder(),
                         suffixIcon: IconButton(
                           icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
@@ -453,8 +454,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                       validator: (value) {
-                        if (value == null || value.isEmpty) return 'Please confirm your password';
-                        if (value != _newPasswordController.text) return 'Passwords do not match';
+                        if (value == null || value.isEmpty) return 'please_confirm_password'.tr();
+                        if (value != _newPasswordController.text) return 'passwords_do_not_match'.tr();
                         return null;
                       },
                     ),
@@ -473,7 +474,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   : Colors.white,
                               side: BorderSide.none,
                             ),
-                            child: const Text('Change Password'),
+                            child: Text('change_password'.tr()),
                           ),
                   ],
                 ),
@@ -488,7 +489,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    'DANGER ZONE',
+                    'danger_zone'.tr(),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -504,7 +505,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   : OutlinedButton.icon(
                       onPressed: _deleteAccount,
                       icon: const Icon(Icons.delete_forever_rounded),
-                      label: const Text('Delete Account'),
+                      label: Text('delete_account_btn'.tr()),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),

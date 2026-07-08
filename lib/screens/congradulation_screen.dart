@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import '../app_settings.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Shown right after a user submits reps for one exercise.
 /// Celebrates the streak, shows today's + lifetime stats, then either
@@ -113,7 +114,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
               // ── Progress indicator ("Exercise 2 of 3") ──────────────────
               if (widget.totalExercises != null && widget.totalExercises! > 1)
                 Text(
-                  'EXERCISE ${widget.exerciseIndex} OF ${widget.totalExercises}',
+                  'exercise_x_of_y'.tr(args: [widget.exerciseIndex.toString(), widget.totalExercises.toString()]),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
@@ -125,8 +126,8 @@ class _CongratulationScreenState extends State<CongratulationScreen>
               const Spacer(),
 
               // ── "Nice work" headline ─────────────────────────────────────
-              const Text(
-                'Nice work! 🎉',
+              Text(
+                'nice_work'.tr(),
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
@@ -153,7 +154,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     const Text('🔥', style: TextStyle(fontSize: 56)),
                     const SizedBox(height: 4),
                     Text(
-                      '${widget.dayStreak}-Day Streak',
+                      'day_streak_count'.tr(args: [widget.dayStreak.toString()]),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
@@ -162,7 +163,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${widget.exerciseName} streak',
+                      'exercise_streak_label'.tr(args: [widget.exerciseName]),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -189,7 +190,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                       const Text('🏆', style: TextStyle(fontSize: 18)),
                       const SizedBox(width: 6),
                       Text(
-                        '${widget.overallStreak}-Day Overall Streak',
+                        'overall_streak_count'.tr(args: [widget.overallStreak.toString()]),
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
@@ -208,7 +209,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 children: [
                   Expanded(
                     child: _StatCard(
-                      label: 'TODAY',
+                      label: 'today_label'.tr(),
                       value: '${widget.todayReps}',
                       sub: widget.unit,
                     ),
@@ -216,7 +217,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: _StatCard(
-                      label: 'LIFETIME',
+                      label: 'lifetime_label'.tr(),
                       value: '${widget.lifetimeTotal}',
                       sub: widget.unit,
                       highlight: true,
@@ -247,7 +248,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        isLast ? 'Finish & Summary' : 'Next Exercise',
+                        isLast ? 'finish_and_summary'.tr() : 'next_exercise'.tr(),
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(width: 6),
