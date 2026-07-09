@@ -335,5 +335,16 @@
   "desc_optional_title": "Description (Optional)",
   "exercise_desc_label": "Exercise Description",
   "save_exercise_btn": "Save Exercise",
-  "privacy_policy": "Privacy Policy"
+  "privacy_policy": "Privacy Policy",
+  "err_weak_password": "Password is too weak.",
+  "err_email_in_use": "An account already exists with this email.",
+  "err_invalid_email": "Invalid email address format.",
+  "err_network": "Network connection error.",
+  "err_register_failed": "Registration failed. Please try again.",
+  "err_default": "An unexpected error occurred.",
+  "err_username_taken": "This username is already taken. Please choose another.",
+  "err_invalid_username": "Username is required.",
+  "err_invalid_credential": "Invalid email or password.",
+  "err_user_disabled": "This account has been disabled.",
+  "err_login_failed": "Login failed. Please try again."
 }

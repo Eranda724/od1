@@ -335,5 +335,16 @@
   "desc_optional_title": "Descripción (Opcional)",
   "exercise_desc_label": "Descripción del Ejercicio",
   "save_exercise_btn": "Guardar Ejercicio",
-  "privacy_policy": "Política de privacidad"
+  "privacy_policy": "Política de privacidad",
+  "err_weak_password": "La contraseña es demasiado débil.",
+  "err_email_in_use": "Ya existe una cuenta con este correo.",
+  "err_invalid_email": "Formato de correo electrónico inválido.",
+  "err_network": "Error de conexión de red.",
+  "err_register_failed": "El registro falló. Inténtalo de nuevo.",
+  "err_default": "Ocurrió un error inesperado.",
+  "err_username_taken": "Este nombre de usuario ya está en uso. Por favor, elige otro.",
+  "err_invalid_username": "El nombre de usuario es obligatorio.",
+  "err_invalid_credential": "Correo electrónico o contraseña inválidos.",
+  "err_user_disabled": "Esta cuenta ha sido deshabilitada.",
+  "err_login_failed": "El inicio de sesión falló. Inténtalo de nuevo."
 }

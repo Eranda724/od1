@@ -335,5 +335,16 @@
   "desc_optional_title": "Description (Optionnelle)",
   "exercise_desc_label": "Description de l'exercice",
   "save_exercise_btn": "Enregistrer l'exercice",
-  "privacy_policy": "Politique de confidentialité"
+  "privacy_policy": "Politique de confidentialité",
+  "err_weak_password": "Le mot de passe est trop faible.",
+  "err_email_in_use": "Un compte existe déjà avec cet e-mail.",
+  "err_invalid_email": "Format d'adresse e-mail invalide.",
+  "err_network": "Erreur de connexion réseau.",
+  "err_register_failed": "L'inscription a échoué. Veuillez réessayer.",
+  "err_default": "Une erreur inattendue est survenue.",
+  "err_username_taken": "Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre.",
+  "err_invalid_username": "Le nom d'utilisateur est requis.",
+  "err_invalid_credential": "E-mail ou mot de passe invalide.",
+  "err_user_disabled": "Ce compte a été désactivé.",
+  "err_login_failed": "La connexion a échoué. Veuillez réessayer."
 }

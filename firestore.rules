@@ -27,20 +27,38 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Must be logged in to read user data
+      allow read: if request.auth != null;
+      
+      // Allow user to create/delete their own document, and update it as long as they don't try to escalate privileges
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.get('isAdmin', false) == false
+                    && request.resource.data.get('isSuperAdmin', false) == false
+                    && request.resource.data.get('isPremium', false) == false;
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
+                    && request.resource.data.get('isSuperAdmin', false) == resource.data.get('isSuperAdmin', false)
+                    && request.resource.data.get('isPremium', false) == resource.data.get('isPremium', false);
+      allow delete: if request.auth != null && request.auth.uid == userId;
       
       match /{document=**} {
-        allow read: if true;
+        allow read: if request.auth != null;
         allow write: if request.auth != null && request.auth.uid == userId;
       }
     }
     match /friendPairs/{pairId} {
-      allow read, write: if request.auth != null;
+      // Only users involved in the pair can read or modify it
+      allow read, update, delete: if request.auth != null && request.auth.uid in resource.data.uids;
+      allow create: if request.auth != null && request.auth.uid in request.resource.data.uids;
     }
 
     match /friendRequests/{requestId} {
-      allow read, write: if request.auth != null;
+      // Sender or receiver can read and delete
+      allow read, delete: if request.auth != null && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
+      // Only sender can create
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.fromUid;
+      // Sender or receiver can update (typically receiver to accept, sender if they withdraw)
+      allow update: if request.auth != null && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
     }
   }
 }

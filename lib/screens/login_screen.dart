@@ -37,42 +37,15 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final input = _emailController.text.trim();
       if (input.isEmpty) {
-        throw FirebaseAuthException(code: 'invalid-email', message: 'Please enter an email or username.');
+        throw FirebaseAuthException(code: 'empty-email', message: 'Please enter your email.');
       }
-
-      String emailToUse = input;
-
-      // If the input doesn't look like an email, try resolving it as a username
-      if (!input.contains('@')) {
-        final usersRef = FirebaseFirestore.instance.collection('users');
-
-        // Check new displayName field
-        var snap = await usersRef.where('displayName', isEqualTo: input).limit(1).get();
-        if (snap.docs.isNotEmpty) {
-          emailToUse = snap.docs.first.data()['email'] ?? '';
-        } else {
-          // Check old username field for legacy users
-          snap = await usersRef.where('username', isEqualTo: input).limit(1).get();
-          if (snap.docs.isNotEmpty) {
-            emailToUse = snap.docs.first.data()['email'] ?? '';
-          } else {
-            throw FirebaseAuthException(
-              code: 'user-not-found',
-              message: 'No account found with this username.',
-            );
-          }
-        }
-
-        if (emailToUse.isEmpty) {
-          throw FirebaseAuthException(
-            code: 'user-not-found',
-            message: 'Account found, but email is missing. Please contact support.',
-          );
-        }
+      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+      if (!emailRegex.hasMatch(input)) {
+        throw FirebaseAuthException(code: 'invalid-email', message: 'Invalid email address format.');
       }
 
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailToUse,
+        email: input,
         password: _passwordController.text.trim(),
       );
 
@@ -94,7 +67,31 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _errorMessage = e.message ?? 'Login failed';
+        switch (e.code) {
+          case 'empty-email':
+            _errorMessage = 'please_enter_email'.tr();
+            break;
+          case 'invalid-credential':
+          case 'user-not-found':
+          case 'wrong-password':
+            _errorMessage = 'err_invalid_credential'.tr();
+            break;
+          case 'user-disabled':
+            _errorMessage = 'err_user_disabled'.tr();
+            break;
+          case 'invalid-email':
+            _errorMessage = 'err_invalid_email'.tr();
+            break;
+          case 'network-request-failed':
+            _errorMessage = 'err_network'.tr();
+            break;
+          default:
+            _errorMessage = 'err_login_failed'.tr();
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'err_default'.tr();
       });
     } finally {
       setState(() {
@@ -268,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           labelText: 'email_label'.tr(),
                           border: const OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.text,
+                        keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 12),
                       TextField(
