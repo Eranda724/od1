@@ -348,5 +348,13 @@
   "err_user_disabled": "Esta cuenta ha sido deshabilitada.",
   "err_login_failed": "El inicio de sesión falló. Inténtalo de nuevo.",
   "err_requires_recent_login": "Esta operación es sensible y requiere autenticación reciente. Por favor, cierre sesión y vuelva a iniciarla.",
-  "err_wrong_password": "Contraseña incorrecta."
+  "err_wrong_password": "Contraseña incorrecta.",
+  "forgot_password_title": "¿Olvidaste tu contraseña?",
+  "forgot_password_subtitle": "Ingresa tu correo electrónico y te enviaremos un enlace de restablecimiento.",
+  "please_enter_email": "Por favor, ingresa tu correo electrónico.",
+  "reset_email_sent": "Se ha enviado un enlace de restablecimiento a tu correo.",
+  "something_went_wrong": "Algo salió mal. Inténtalo de nuevo.",
+  "send_reset_link": "Enviar enlace de restablecimiento",
+  "back_to_login": "Volver al inicio de sesión",
+  "err_user_not_found": "No se encontró ningún usuario con este correo."
 }

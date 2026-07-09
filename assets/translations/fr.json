@@ -348,5 +348,13 @@
   "err_user_disabled": "Ce compte a été désactivé.",
   "err_login_failed": "La connexion a échoué. Veuillez réessayer.",
   "err_requires_recent_login": "Cette opération est sensible et nécessite une authentification récente. Veuillez vous déconnecter et vous reconnecter.",
-  "err_wrong_password": "Mot de passe incorrect."
+  "err_wrong_password": "Mot de passe incorrect.",
+  "forgot_password_title": "Mot de passe oublié ?",
+  "forgot_password_subtitle": "Entrez votre adresse e-mail et nous vous enverrons un lien de réinitialisation.",
+  "please_enter_email": "Veuillez entrer votre adresse e-mail.",
+  "reset_email_sent": "Un lien de réinitialisation a été envoyé à votre e-mail.",
+  "something_went_wrong": "Une erreur est survenue. Veuillez réessayer.",
+  "send_reset_link": "Envoyer le lien",
+  "back_to_login": "Retour à la connexion",
+  "err_user_not_found": "Aucun utilisateur trouvé avec cet e-mail."
 }
