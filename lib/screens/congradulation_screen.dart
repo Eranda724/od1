@@ -51,7 +51,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
   AudioPlayer? _player;
-  Timer? _confettiTimer;
 
   @override
   void initState() {
@@ -72,15 +71,12 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     _confettiController = ConfettiController(duration: const Duration(seconds: 4));
     _confettiController.play(); // fireworks start immediately
 
-    // ── Play sound after 3s ────────────────────────────────────────────────
-    _confettiTimer = Timer(const Duration(seconds: 1), () {
-      if (mounted) _playSound();
-    });
+    // ── Play sound immediately ──────────────────────────────────────────────
+    _playSound();
   }
 
   @override
   void dispose() {
-    _confettiTimer?.cancel();
     _confettiController.dispose();
     _controller.dispose();
     _player?.dispose();

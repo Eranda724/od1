@@ -77,8 +77,13 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
   Future<void> _playClick() async {
     try {
-      await HapticFeedback.lightImpact();
-    } catch (_) {}
+      HapticFeedback.lightImpact();
+      await _player.stop();
+      await _player.setVolume(0.3); // Low-medium volume
+      await _player.play(AssetSource('sounds/click.mp3'));
+    } catch (e) {
+      debugPrint('Error playing click sound: $e');
+    }
   }
 
   void _changeReps(int delta) {
@@ -189,11 +194,12 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       if (!mounted) return;
 
       // Cancel the evening streak-saver notification — user worked out today!
-      await NotificationService.instance.cancelTodayEveningReminder();
+      // (Fire and forget, no need to await and block the UI)
+      NotificationService.instance.cancelTodayEveningReminder();
 
-      // Trigger Social/Friend updates
-      await FriendsService.instance.recordExerciseDone(user.uid);
-      await FriendsService.instance.maybeSendFriendActivityNotification(
+      // Trigger Social/Friend updates asynchronously
+      FriendsService.instance.recordExerciseDone(user.uid);
+      FriendsService.instance.maybeSendFriendActivityNotification(
         currentUid: user.uid,
         exerciseName: widget.exerciseName,
         detail: 'completed_exercise_today'.tr(args: [widget.exerciseName]),
