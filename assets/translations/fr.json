@@ -346,5 +346,7 @@
   "err_invalid_username": "Le nom d'utilisateur est requis.",
   "err_invalid_credential": "E-mail ou mot de passe invalide.",
   "err_user_disabled": "Ce compte a été désactivé.",
-  "err_login_failed": "La connexion a échoué. Veuillez réessayer."
+  "err_login_failed": "La connexion a échoué. Veuillez réessayer.",
+  "err_requires_recent_login": "Cette opération est sensible et nécessite une authentification récente. Veuillez vous déconnecter et vous reconnecter.",
+  "err_wrong_password": "Mot de passe incorrect."
 }

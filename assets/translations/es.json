@@ -346,5 +346,7 @@
   "err_invalid_username": "El nombre de usuario es obligatorio.",
   "err_invalid_credential": "Correo electrónico o contraseña inválidos.",
   "err_user_disabled": "Esta cuenta ha sido deshabilitada.",
-  "err_login_failed": "El inicio de sesión falló. Inténtalo de nuevo."
+  "err_login_failed": "El inicio de sesión falló. Inténtalo de nuevo.",
+  "err_requires_recent_login": "Esta operación es sensible y requiere autenticación reciente. Por favor, cierre sesión y vuelva a iniciarla.",
+  "err_wrong_password": "Contraseña incorrecta."
 }

@@ -346,5 +346,7 @@
   "err_invalid_username": "Username is required.",
   "err_invalid_credential": "Invalid email or password.",
   "err_user_disabled": "This account has been disabled.",
-  "err_login_failed": "Login failed. Please try again."
+  "err_login_failed": "Login failed. Please try again.",
+  "err_requires_recent_login": "This operation is sensitive and requires recent authentication. Please log out and log in again.",
+  "err_wrong_password": "Incorrect password."
 }
