@@ -356,5 +356,6 @@
   "something_went_wrong": "Une erreur est survenue. Veuillez réessayer.",
   "send_reset_link": "Envoyer le lien",
   "back_to_login": "Retour à la connexion",
-  "err_user_not_found": "Aucun utilisateur trouvé avec cet e-mail."
+  "err_user_not_found": "Aucun utilisateur trouvé avec cet e-mail.",
+  "streak_freeze": "Protection de série"
 }

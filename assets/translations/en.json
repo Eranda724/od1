@@ -356,5 +356,6 @@
   "something_went_wrong": "Something went wrong. Please try again.",
   "send_reset_link": "Send Reset Link",
   "back_to_login": "Back to Login",
-  "err_user_not_found": "No user found with this email."
+  "err_user_not_found": "No user found with this email.",
+  "streak_freeze": "Streak Freeze"
 }

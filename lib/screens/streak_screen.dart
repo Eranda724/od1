@@ -190,6 +190,61 @@ class _OverallStreakCard extends StatelessWidget {
     return daysLeft > 1 ? 'next_freeze_in_days'.tr(args: [daysLeft.toString()]) : 'next_freeze_in_day'.tr();
   }
 
+  Widget _buildFreezeSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: Colors.blueAccent.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Two freeze shield slots
+          Row(
+            children: List.generate(2, (index) {
+              final isFilled = index < freezesAvailable;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _FreezeShield(filled: isFilled),
+              );
+            }),
+          ),
+          const SizedBox(width: 12),
+          // Text info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'streak_freeze'.tr(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _timeUntilNextFreeze(),
+                  style: TextStyle(
+                    color: Colors.blueAccent.withValues(alpha: 0.8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isActiveToday = lastDate == today;
@@ -227,24 +282,6 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (freezesAvailable > 0)
-                Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.blueAccent.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blueAccent, width: 1),
-                  ),
-                  child: Text(
-                    '❄️ $freezesAvailable/2',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
               if (isActiveToday)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -293,14 +330,6 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text(
-                _timeUntilNextFreeze(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white38,
-                ),
-              ),
             ],
           ),
 
@@ -319,6 +348,8 @@ class _OverallStreakCard extends StatelessWidget {
               );
             }).toList(),
           ),
+
+          _buildFreezeSection(context),
         ],
       ),
     );
@@ -374,6 +405,49 @@ class _DayDot extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FreezeShield extends StatelessWidget {
+  final bool filled;
+  const _FreezeShield({required this.filled});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: filled
+            ? Colors.blueAccent.withValues(alpha: 0.2)
+            : Colors.white.withValues(alpha: 0.05),
+        border: Border.all(
+          color: filled
+              ? Colors.blueAccent
+              : Colors.white24,
+          width: 2,
+        ),
+        boxShadow: filled
+            ? [
+                BoxShadow(
+                  color: Colors.blueAccent.withValues(alpha: 0.4),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          filled ? '❄️' : '○',
+          style: TextStyle(
+            fontSize: filled ? 20 : 16,
+            color: filled ? null : Colors.white24,
+          ),
+        ),
+      ),
     );
   }
 }
