@@ -30,6 +30,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoadingProfile = false;
   bool _isLoadingPassword = false;
   bool _isLoadingDelete = false;
+  bool _isSuperAdmin = false;
   bool _obscureOld = true;
   bool _obscureNew = true;
   bool _obscureConfirm = true;
@@ -46,7 +47,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (user != null) {
       _displayNameController.text = user.displayName ?? '';
       _emailController.text = user.email ?? '';
+      _checkSuperAdmin(user.uid);
     }
+  }
+
+  Future<void> _checkSuperAdmin(String uid) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (doc.exists && mounted) {
+        setState(() {
+          _isSuperAdmin = doc.data()?['adminRole'] == 'super';
+        });
+      }
+    } catch (_) {}
   }
 
   void _onUsernameChanged(String value) {
@@ -590,37 +603,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 48),
 
               // ── Danger Zone ──
-              const Divider(),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    'danger_zone'.tr(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                      color: Colors.red.shade700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              _isLoadingDelete
-                  ? const Center(child: CircularProgressIndicator(color: Colors.red))
-                  : OutlinedButton.icon(
-                      onPressed: _deleteAccount,
-                      icon: const Icon(Icons.delete_forever_rounded),
-                      label: Text('delete_account_btn'.tr()),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        minimumSize: const Size(double.infinity, 50),
+              if (!_isSuperAdmin) ...[
+                const Divider(),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      'danger_zone'.tr(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: Colors.red.shade700,
                       ),
                     ),
-              const SizedBox(height: 32),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _isLoadingDelete
+                    ? const Center(child: CircularProgressIndicator(color: Colors.red))
+                    : OutlinedButton.icon(
+                        onPressed: _deleteAccount,
+                        icon: const Icon(Icons.delete_forever_rounded),
+                        label: Text('delete_account_btn'.tr()),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          minimumSize: const Size(double.infinity, 50),
+                        ),
+                      ),
+                const SizedBox(height: 32),
+              ],
             ],
           ),
         ),
