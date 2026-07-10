@@ -77,7 +77,7 @@ class _SocialScreenState extends State<SocialScreen> {
           children: [
             // ── 1. Search & Add ──
             Text('add_a_friend'.tr(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -212,7 +212,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text('friend_requests'.tr(),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface, letterSpacing: 1.4)),
                     const SizedBox(height: 12),
                     ...docs.map((doc) {
                       final data = doc.data() as Map<String, dynamic>;
@@ -249,7 +249,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
             // ── 3. Friends List ──
             Text('your_friends'.tr(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: PCColors.yellow, letterSpacing: 1.4)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface, letterSpacing: 1.4)),
             const SizedBox(height: 12),
             StreamBuilder<List<FriendInfo>>(
               stream: FriendsService.instance.getFriendsList(uid),
