@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -22,9 +23,71 @@ class AdService {
   BannerAd? get sessionAd => _isSessionAdLoaded && !_isPremiumCache ? _sessionAd : null;
   bool get isPremium => _isPremiumCache;
 
-  /// Initializes the MobileAds SDK
+  bool _isPrivacyOptionsRequired = false;
+  
+  /// Whether the privacy options form is required (for GDPR compliance in settings)
+  bool get isPrivacyOptionsRequired => _isPrivacyOptionsRequired;
+
+  /// Initializes the MobileAds SDK and handles GDPR consent via UMP
   Future<void> initialize() async {
-    await MobileAds.instance.initialize();
+    final completer = Completer<void>();
+    final params = ConsentRequestParameters();
+
+    ConsentInformation.instance.requestConsentInfoUpdate(
+      params,
+      () async {
+        if (await ConsentInformation.instance.isConsentFormAvailable()) {
+          ConsentForm.loadAndShowConsentFormIfRequired((FormError? formError) async {
+            if (formError != null) {
+              debugPrint('Consent form error: ${formError.message}');
+            }
+            await _completeInit(completer);
+          });
+        } else {
+          await _completeInit(completer);
+        }
+      },
+      (FormError formError) async {
+        debugPrint('Consent request error: ${formError.message}');
+        await _completeInit(completer);
+      },
+    );
+
+    return completer.future.timeout(
+      const Duration(seconds: 5),
+      onTimeout: () async {
+        debugPrint('Consent request timeout.');
+        await _completeInit(null);
+      },
+    );
+  }
+
+  Future<void> _completeInit(Completer<void>? completer) async {
+    if (completer != null && completer.isCompleted) return;
+    
+    // Cache the privacy options requirement status so the UI can check it synchronously
+    final status = await ConsentInformation.instance.getPrivacyOptionsRequirementStatus();
+    _isPrivacyOptionsRequired = status == PrivacyOptionsRequirementStatus.required;
+
+    final canRequestAds = await ConsentInformation.instance.canRequestAds();
+    if (canRequestAds) {
+      await MobileAds.instance.initialize();
+    } else {
+      debugPrint('Cannot request ads. Missing consent.');
+    }
+    
+    if (completer != null && !completer.isCompleted) {
+      completer.complete();
+    }
+  }
+
+  /// Show the privacy options form to allow users to revoke/manage consent
+  void showPrivacyOptionsForm() {
+    ConsentForm.showPrivacyOptionsForm((FormError? formError) {
+      if (formError != null) {
+        debugPrint('Error showing privacy options form: ${formError.message}');
+      }
+    });
   }
 
   /// Checks if the current user is premium (ad-free)

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import '../services/notification_service.dart';
 import '../services/iap_service.dart';
+import '../services/ad_service.dart';
 import 'premium_upgrade_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -157,20 +158,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 24),
           _card(
-            child: ListTile(
-              leading: const Icon(Icons.privacy_tip_rounded, color: Colors.blue),
-              title: Text('privacy_policy'.tr()),
-              trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
-              onTap: () async {
-                final Uri url = Uri.parse('https://sites.google.com/view/potato60secondroutine/privacy-policy?authuser=0'); // TODO: Replace with the actual URL
-                if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not launch privacy policy URL.')),
-                    );
-                  }
-                }
-              },
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_rounded, color: Colors.blue),
+                  title: Text('privacy_policy'.tr()),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
+                  onTap: () async {
+                    final Uri url = Uri.parse('https://sites.google.com/view/potato60secondroutine/privacy-policy?authuser=0'); // TODO: Replace with the actual URL
+                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Could not launch privacy policy URL.')),
+                        );
+                      }
+                    }
+                  },
+                ),
+                if (AdService.instance.isPrivacyOptionsRequired) ...[
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.cookie_rounded, color: Colors.orange),
+                    title: const Text('Manage Privacy Options'),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
+                    onTap: () {
+                      AdService.instance.showPrivacyOptionsForm();
+                    },
+                  ),
+                ],
+              ],
             ),
           ),
           const SizedBox(height: 24),
