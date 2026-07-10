@@ -463,11 +463,18 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
   late Set<String> _selected;
   bool _isSaving = false;
   String? _errorMessage;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _selected = Set<String>.from(widget.currentSelected);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _toggleSelectAll() {
@@ -569,27 +576,58 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
             const SizedBox(height: 12),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: allIds.length,
-                itemBuilder: (context, index) {
-                  final id = allIds[index];
-                  final def = widget.exerciseDefs[id]!;
-                  final isSelected = _selected.contains(id);
-                  return CheckboxListTile(
-                    value: isSelected,
-                    title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
-                        if (_selected.isNotEmpty) _errorMessage = null;
-                      });
-                    },
-                    activeColor: const Color(0xFFFFC72C),
-                    checkColor: Colors.black,
-                    contentPadding: EdgeInsets.zero,
-                  );
-                },
+              child: Stack(
+                children: [
+                  Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    radius: const Radius.circular(8),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      shrinkWrap: true,
+                      itemCount: allIds.length,
+                      itemBuilder: (context, index) {
+                        final id = allIds[index];
+                        final def = widget.exerciseDefs[id]!;
+                        final isSelected = _selected.contains(id);
+                        return CheckboxListTile(
+                          value: isSelected,
+                          title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
+                              if (_selected.isNotEmpty) _errorMessage = null;
+                            });
+                          },
+                          activeColor: const Color(0xFFFFC72C),
+                          checkColor: Colors.black,
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      },
+                    ),
+                  ),
+                  // Bottom fade — visually hints there are more items to scroll
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Theme.of(context).colorScheme.surface.withOpacity(0.0),
+                              Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),

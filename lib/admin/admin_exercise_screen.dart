@@ -113,6 +113,35 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
           .doc(id)
           .set(item.toMap(), SetOptions(merge: true));
 
+      // For new exercises (not edits), push the new exercise id into every
+      // user's selectedExercises list so it appears enabled in their Manage
+      // Exercises sheet and shows in their to-do list.
+      // Users who have never configured (no selectedExercises field) already
+      // see all exercises by default, so we only update those who have the
+      // field set.
+      if (!isEdit) {
+        final usersSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .where('selectedExercises', isNotEqualTo: null)
+            .get();
+
+        if (usersSnap.docs.isNotEmpty) {
+          final batch = FirebaseFirestore.instance.batch();
+          for (final userDoc in usersSnap.docs) {
+            batch.update(userDoc.reference, {
+              'selectedExercises': FieldValue.arrayUnion([id]),
+            });
+            // Also seed the exercise stats doc so the card can load smoothly.
+            batch.set(
+              userDoc.reference.collection('exercises').doc(id),
+              {'currentStreak': 0, 'lifetimeTotal': 0, 'lastCompletedDate': null},
+              SetOptions(merge: true),
+            );
+          }
+          await batch.commit();
+        }
+      }
+
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
