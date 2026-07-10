@@ -357,5 +357,10 @@
   "send_reset_link": "Send Reset Link",
   "back_to_login": "Back to Login",
   "err_user_not_found": "No user found with this email.",
-  "streak_freeze": "Streak Freeze"
+  "streak_freeze": "Streak Freeze",
+  "shared_streak_desc": "Days you both worked out",
+  "current_streak": "Current\nStreak",
+  "together_streak": "Together\nStreak",
+  "shared_streak_sentence": "You and {} have completed\n{} days together.",
+  "weekly_activity": "Weekly Activity"
 }

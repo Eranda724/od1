@@ -50,12 +50,9 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.userChanges(),
-      builder: (context, snapshot) {
-        final user = snapshot.data ?? FirebaseAuth.instance.currentUser;
+    final user = FirebaseAuth.instance.currentUser;
 
-        return Scaffold(
+    return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
@@ -116,8 +113,6 @@ class _HomeScreenState extends State<HomeScreen>
           const SocialScreen(),
         ],
       ),
-    );
-      },
     );
   }
 

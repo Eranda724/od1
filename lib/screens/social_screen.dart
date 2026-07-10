@@ -106,34 +106,42 @@ class _SocialScreenState extends State<SocialScreen> {
                             .where('displayName', isLessThanOrEqualTo: '$queryCapitalized\uf8ff')
                             .limit(4)
                             .get();
+
+                        final snap3 = await FirebaseFirestore.instance
+                            .collection('users')
+                            .where('username', isGreaterThanOrEqualTo: queryLower)
+                            .where('username', isLessThanOrEqualTo: '$queryLower\uf8ff')
+                            .limit(4)
+                            .get();
                             
                         final currentUid = FirebaseAuth.instance.currentUser?.uid;
                         
-                        final allDocs = [...snap1.docs, ...snap2.docs];
+                        final allDocs = [...snap1.docs, ...snap2.docs, ...snap3.docs];
                         final Map<String, Map<String, dynamic>> uniqueUsers = {};
                         
                         for (var d in allDocs) {
                           if (d.id == currentUid) continue; // Exclude current user
                           final data = d.data();
                           data['uid'] = d.id;
-                          final name = data['displayName'] as String?;
+                          final name = (data['displayName'] ?? data['username']) as String?;
                           if (name != null && name.isNotEmpty) {
+                            data['display_name_resolved'] = name;
                             uniqueUsers[d.id] = data;
                           }
                         }
                         
-                        return uniqueUsers.values.take(4);
+                        return uniqueUsers.values.take(6);
                       } catch (e) {
                         return const Iterable<Map<String, dynamic>>.empty();
                       }
                     },
-                    displayStringForOption: (option) => option['displayName'] as String,
+                    displayStringForOption: (option) => option['display_name_resolved'] as String,
                     onSelected: (Map<String, dynamic> selection) {
-                      _autoCompleteController?.text = selection['displayName'] as String;
+                      _autoCompleteController?.text = selection['display_name_resolved'] as String;
                       
                       final friend = FriendInfo(
                         uid: selection['uid'] as String,
-                        displayName: selection['displayName'] as String,
+                        displayName: selection['display_name_resolved'] as String,
                         pairId: '',
                         sharedStreak: 0,
                         overallStreak: (selection['overallStreak'] as num?)?.toInt() ?? 0,
