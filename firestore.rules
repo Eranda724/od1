@@ -5,13 +5,19 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('adminRole', '') == 'admin';
     }
 
-    // Anyone signed in can read the exercise catalog, only admins can write
+    function isSuperAdmin() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('adminRole', '') == 'super';
+    }
+
+    // Anyone signed in can read the exercise catalog, only admins/super-admins can write
     match /exercises/{exerciseId} {
       allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
     }
 
     // App config (e.g. notifications) — all users can read, only admins write
@@ -30,20 +36,28 @@ service cloud.firestore {
       // Must be logged in to read user data
       allow read: if request.auth != null;
       
-      // Allow user to create/delete their own document, and update it as long as they don't try to escalate privileges
+      // Allow user to create their own document, but not escalate privileges
       allow create: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.get('isAdmin', false) == false
                     && request.resource.data.get('isSuperAdmin', false) == false
                     && request.resource.data.get('isPremium', false) == false;
+
+      // Super admins can update ANY user document freely (isPremium, isAdmin, adminRole, etc.)
+      allow update: if isSuperAdmin();
+
+      // Regular users can update their own doc but cannot change privilege fields
       allow update: if request.auth != null && request.auth.uid == userId
                     && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
                     && request.resource.data.get('isSuperAdmin', false) == resource.data.get('isSuperAdmin', false)
-                    && request.resource.data.get('isPremium', false) == resource.data.get('isPremium', false);
+                    && request.resource.data.get('isPremium', false) == resource.data.get('isPremium', false)
+                    && request.resource.data.get('adminRole', '') == resource.data.get('adminRole', '');
       allow delete: if request.auth != null && request.auth.uid == userId;
       
       match /{document=**} {
         allow read: if request.auth != null;
-        allow write: if request.auth != null && request.auth.uid == userId;
+        // Owner can write their own subcollections; super admins can write any
+        allow write: if (request.auth != null && request.auth.uid == userId)
+                     || isSuperAdmin();
       }
     }
     match /friendPairs/{pairId} {
