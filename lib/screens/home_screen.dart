@@ -100,7 +100,27 @@ class _HomeScreenState extends State<HomeScreen>
             Tab(icon: const Icon(Icons.fitness_center_rounded), text: 'exercise_tab'.tr()),
             Tab(icon: const Icon(Icons.local_fire_department_rounded), text: 'streaks_tab'.tr()),
             Tab(icon: const Icon(Icons.leaderboard_rounded), text: 'rankings_tab'.tr()),
-            Tab(icon: const Icon(Icons.people_rounded), text: 'social_tab'.tr()),
+            Tab(
+              text: 'social_tab'.tr(),
+              icon: StreamBuilder<QuerySnapshot>(
+                stream: user == null
+                    ? const Stream.empty()
+                    : FirebaseFirestore.instance
+                        .collection('friendRequests')
+                        .where('toUid', isEqualTo: user.uid)
+                        .where('status', isEqualTo: 'pending')
+                        .snapshots(),
+                builder: (context, snap) {
+                  final hasPending = (snap.data?.docs.isNotEmpty) == true;
+                  return Badge(
+                    isLabelVisible: hasPending,
+                    backgroundColor: Colors.red,
+                    smallSize: 8,
+                    child: const Icon(Icons.people_rounded),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -120,12 +140,17 @@ class _HomeScreenState extends State<HomeScreen>
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('users').doc(user?.uid).snapshots(),
       builder: (context, snapshot) {
-        final isPremium = snapshot.data?.data() != null && 
-                          (snapshot.data!.data() as Map<String, dynamic>)['isPremium'] == true;
-                          
+        final data = snapshot.data?.data() as Map<String, dynamic>?;
+        final isPremium = data?['isPremium'] == true;
+
         final isDark = _settings.themeMode == ThemeMode.dark;
-        String dispName = user?.displayName ?? '';
-        if (dispName.trim().isEmpty) {
+        // Prefer Firestore displayName (kept in sync on profile save) over
+        // the cached Auth user object, which won't update mid-session.
+        String dispName = (data?['displayName'] as String? ?? '').trim();
+        if (dispName.isEmpty) {
+          dispName = (user?.displayName ?? '').trim();
+        }
+        if (dispName.isEmpty) {
           dispName = 'profile_menu'.tr();
         }
         return PopupMenuButton<String>(
