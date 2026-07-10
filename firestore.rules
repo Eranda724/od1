@@ -23,7 +23,7 @@ service cloud.firestore {
     // App config (e.g. notifications) — all users can read, only admins write
     match /app_config/{docId} {
       allow read: if request.auth != null;
-      allow write: if isAdmin();
+      allow write: if isAdmin() || isSuperAdmin();
     }
 
     // Admins collection itself — no one can write to it from the client
@@ -45,19 +45,21 @@ service cloud.firestore {
       // Super admins can update ANY user document freely (isPremium, isAdmin, adminRole, etc.)
       allow update: if isSuperAdmin();
 
-      // Regular users can update their own doc but cannot change privilege fields
-      allow update: if request.auth != null && request.auth.uid == userId
+      // Admins can update any user, and Regular users can update their own doc. 
+      // However, neither can change privilege fields (only superadmins can).
+      allow update: if (isAdmin() || (request.auth != null && request.auth.uid == userId))
                     && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
                     && request.resource.data.get('isSuperAdmin', false) == resource.data.get('isSuperAdmin', false)
                     && request.resource.data.get('isPremium', false) == resource.data.get('isPremium', false)
                     && request.resource.data.get('adminRole', '') == resource.data.get('adminRole', '');
+      
       allow delete: if request.auth != null && request.auth.uid == userId;
       
       match /{document=**} {
         allow read: if request.auth != null;
-        // Owner can write their own subcollections; super admins can write any
+        // Owner can write their own subcollections; super admins and admins can write any
         allow write: if (request.auth != null && request.auth.uid == userId)
-                     || isSuperAdmin();
+                     || isSuperAdmin() || isAdmin();
       }
     }
     match /friendPairs/{pairId} {
