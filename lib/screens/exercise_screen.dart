@@ -502,19 +502,10 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
 
     try {
       final userRef = FirebaseFirestore.instance.collection('users').doc(widget.uid);
-      final batch = FirebaseFirestore.instance.batch();
+      
+      // Update the user's selected exercises list.
+      await userRef.update({'selectedExercises': _selected.toList()});
 
-      batch.update(userRef, {'selectedExercises': _selected.toList()});
-
-      for (final id in _selected) {
-        batch.set(
-          userRef.collection('exercises').doc(id),
-          {'currentStreak': 0, 'lifetimeTotal': 0, 'lastCompletedDate': null},
-          SetOptions(merge: true),
-        );
-      }
-
-      await batch.commit();
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
