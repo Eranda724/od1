@@ -8,7 +8,8 @@ import 'exercise_start_screen.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import 'package:easy_localization/easy_localization.dart';
-
+import '../services/ad_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 class ExerciseScreen extends StatefulWidget {
   final User? user;
   const ExerciseScreen({super.key, required this.user});
@@ -23,10 +24,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
+    AdService.instance.loadBannerAd(onLoaded: () {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    AdService.instance.disposeBannerAd();
     super.dispose();
   }
 
@@ -409,6 +414,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       builder: (context, snapshot) {
                         final isPremium = snapshot.data?.data()?['isPremium'] == true;
                         if (isPremium) return const SizedBox(); // No space if premium
+                        
+                        final bannerAd = AdService.instance.bannerAd;
+                        if (bannerAd != null) {
+                          return Container(
+                            alignment: Alignment.center,
+                            width: bannerAd.size.width.toDouble(),
+                            height: bannerAd.size.height.toDouble(),
+                            child: AdWidget(ad: bannerAd),
+                          );
+                        }
+                        
                         return const SizedBox(height: 50); // Reserved space for future banner ad
                       },
                     ),

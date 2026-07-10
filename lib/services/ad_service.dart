@@ -43,6 +43,11 @@ class AdService {
     return false;
   }
 
+  /// Refreshes the premium status cache
+  Future<void> refreshPremiumStatus() async {
+    _isPremiumCache = await _isUserPremium();
+  }
+
   /// Loads a standard banner ad to be displayed on the dashboard.
   Future<void> loadBannerAd({VoidCallback? onLoaded}) async {
     _isPremiumCache = await _isUserPremium();

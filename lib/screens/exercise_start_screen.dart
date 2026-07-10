@@ -185,6 +185,19 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   }
 
   // ── Countdown ──────────────────────────────────────────────────────────────
+  void _stopCountdown() {
+    if (!_isCountingDown) return;
+    _countdownTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _isCountingDown = false;
+      });
+    }
+    try {
+      _player.stop();
+    } catch (_) {}
+  }
+
   void _startCountdown() async {
     if (_isCountingDown) return;
 
@@ -511,7 +524,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   // ── Start Button ──────────────────────────────────────────────────────────
   Widget _buildStartButton() {
     return InkWell(
-      onTap: _startCountdown,
+      onTap: _isCountingDown ? _stopCountdown : _startCountdown,
       customBorder: const CircleBorder(),
       child: Container(
         width: 180,
@@ -543,10 +556,23 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           transitionBuilder: (child, animation) =>
               ScaleTransition(scale: animation, child: child),
           child: _isCountingDown
-              ? Text(
-                  '$_currentCount',
-                  key: const ValueKey('count'),
-                  style: _PCTextStyles.countdownNumber,
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$_currentCount',
+                      key: const ValueKey('count'),
+                      style: _PCTextStyles.countdownNumber,
+                    ),
+                    Text(
+                      'cancel_btn'.tr().toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,
