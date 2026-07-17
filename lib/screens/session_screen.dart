@@ -70,11 +70,13 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   int _tipIndex = 0;
   Timer? _tipTimer;
   
+  DateTime? _sessionStartTime;
+  bool _adTriggered = false;
+  bool _isAdPlaying = false;
+  
   bool _showAdOverlay = false;
   int _adSkipCountdown = 5;
   Timer? _adSkipTimer;
-  bool _canSkip = false;
-  bool _isAdLoadingStarted = false;
   late final String _randomSessionImage;
 
   @override
@@ -102,44 +104,29 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (!_isAdLoadingStarted) {
-      _isAdLoadingStarted = true;
-      _loadAd();
-    }
-  }
-
-  Future<void> _loadAd() async {
-    final size = MediaQuery.of(context).size;
-    final maxWidth = size.width.truncate();
-    final maxHeight = (size.height - 200).truncate().clamp(50, size.height.truncate());
-
-    AdSize adSize = AdSize.getInlineAdaptiveBannerAdSize(maxWidth, maxHeight);
-
-    AdService.instance.loadSessionAd(size: adSize, onLoaded: () {
-      if (mounted) setState(() {});
-    });
+    AdService.instance.loadInterstitialAd();
   }
 
   void _startAdCountdown() {
+    _adSkipCountdown = 3;
     _adSkipTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       setState(() {
         if (_adSkipCountdown > 1) {
           _adSkipCountdown--;
         } else {
-          _canSkip = true;
           timer.cancel();
+          _isAdPlaying = true;
+          AdService.instance.showInterstitialAd(onAdDismissed: () {
+            if (!mounted) return;
+            setState(() {
+              _isAdPlaying = false;
+              _showAdOverlay = false;
+            });
+          });
         }
       });
     });
-  }
-
-  void _skipAd() {
-    if (!_canSkip) return;
-    setState(() {
-      _showAdOverlay = false;
-    });
-    AdService.instance.disposeSessionAd();
   }
 
   Future<void> _playTick() async {
@@ -157,13 +144,17 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   }
 
   void _startSession() {
+    _sessionStartTime = DateTime.now();
     _seconds = widget.challengeSeconds;
-    int elapsed = 0;
 
     // Update displayed time every second.
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      elapsed++;
-      if (elapsed == 5 && !AdService.instance.isPremium) {
+      if (_sessionStartTime == null) return;
+      
+      final elapsedSeconds = DateTime.now().difference(_sessionStartTime!).inSeconds;
+
+      if (elapsedSeconds >= 2 && !_adTriggered && !AdService.instance.isPremium) {
+        _adTriggered = true;
         setState(() {
           _showAdOverlay = true;
         });
@@ -171,15 +162,17 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       }
 
       if (widget.challengeSeconds > 0) {
-        if (_seconds > 0) {
-          setState(() => _seconds--);
-          if (!_showAdOverlay) _playTick();
+        final remaining = widget.challengeSeconds - elapsedSeconds;
+        if (remaining > 0) {
+          setState(() => _seconds = remaining);
+          if (!_isAdPlaying) _playTick();
         } else {
+          setState(() => _seconds = 0);
           _stopSession();
         }
       } else {
-        setState(() => _seconds++);
-        if (!_showAdOverlay) _playTick();
+        setState(() => _seconds = elapsedSeconds);
+        if (!_isAdPlaying) _playTick();
       }
     });
 
@@ -228,7 +221,6 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     _tipTimer?.cancel();
     _adSkipTimer?.cancel();
     _player.dispose();
-    AdService.instance.disposeSessionAd();
     super.dispose();
   }
 
@@ -286,7 +278,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                     padding: const EdgeInsets.only(top: 16),
                     child: buildExerciseVisual(widget.exerciseDef!, size: 64, iconColor: Colors.white),
                   ),
-
+                
                 const Spacer(),
 
                 // Big timer
@@ -410,91 +402,32 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
             ),
           ),
           
-          // ── Ad Overlay ────────────────────────────────────────────────
+          // ── Pre-Ad Popup Overlay ──────────────────────────────────────
           if (_showAdOverlay)
-            Container(
-              color: PCColors.brownDark,
-              child: SafeArea(
-                child: Column(
+            Align(
+              alignment: const Alignment(-1.0, -0.1),
+              child: Container(
+                margin: const EdgeInsets.only(left: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header with Remove Ads button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'ad_break'.tr(),
-                            style: TextStyle(
-                              color: Colors.white54,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          TextButton.icon(
-                            icon: const Icon(Icons.star, color: PCColors.yellow, size: 16),
-                            label: Text(
-                              'remove_ads_btn'.tr(),
-                              style: const TextStyle(
-                                color: PCColors.yellow,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
-                              ).then((_) async {
-                                if (mounted) {
-                                  await AdService.instance.refreshPremiumStatus();
-                                  if (AdService.instance.isPremium) {
-                                    _canSkip = true;
-                                    _skipAd();
-                                  }
-                                }
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-
-                    // Ad Space
-                    Expanded(
-                      child: Center(
-                        child: AdService.instance.sessionAd != null
-                            ? SizedBox(
-                                width: AdService.instance.sessionAd!.size.width.toDouble(),
-                                height: AdService.instance.sessionAd!.size.height.toDouble(),
-                                child: AdWidget(ad: AdService.instance.sessionAd!),
-                              )
-                            : const CircularProgressIndicator(color: PCColors.yellow),
-                      ),
-                    ),
-
-                    // Skip Button
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _canSkip ? _skipAd : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _canSkip ? Colors.white : Colors.white24,
-                            foregroundColor: _canSkip ? Colors.black : Colors.white54,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: Text(
-                            _canSkip ? 'skip_btn'.tr() : 'skip_in_countdown'.tr(args: [_adSkipCountdown.toString()]),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
+                    const Icon(Icons.play_circle_fill, color: Colors.white, size: 18),
+                    const SizedBox(width: 8),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Text(
+                        'Ad in $_adSkipCountdown',
+                        key: ValueKey(_adSkipCountdown),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),

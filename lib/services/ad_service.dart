@@ -14,13 +14,12 @@ class AdService {
   BannerAd? _bannerAd;
   bool _isBannerAdLoaded = false;
   
-  BannerAd? _sessionAd;
-  bool _isSessionAdLoaded = false;
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdLoading = false;
   
   bool _isPremiumCache = false;
 
   BannerAd? get bannerAd => _isBannerAdLoaded && !_isPremiumCache ? _bannerAd : null;
-  BannerAd? get sessionAd => _isSessionAdLoaded && !_isPremiumCache ? _sessionAd : null;
   bool get isPremium => _isPremiumCache;
 
   bool _isPrivacyOptionsRequired = false;
@@ -146,39 +145,66 @@ class AdService {
     _isBannerAdLoaded = false;
   }
 
-  /// Loads a medium rectangle ad (or adaptive) for the active session screen.
-  Future<void> loadSessionAd({AdSize size = AdSize.mediumRectangle, VoidCallback? onLoaded}) async {
+  /// Loads a standard Interstitial Ad for the active session break.
+  Future<void> loadInterstitialAd() async {
     _isPremiumCache = await _isUserPremium();
     if (_isPremiumCache) {
-      debugPrint('User is premium. Session ad loading aborted.');
-      if (onLoaded != null) onLoaded();
+      debugPrint('User is premium. Interstitial ad loading aborted.');
       return;
     }
-    _sessionAd = BannerAd(
-      adUnitId: _bannerAdUnitId, // Reuse banner ID or create a specific one if client provides it
-      size: size,
+    if (_interstitialAd != null || _isInterstitialAdLoading) return;
+    _isInterstitialAdLoading = true;
+    
+    InterstitialAd.load(
+      adUnitId: _interstitialAdUnitId,
       request: const AdRequest(),
-      listener: BannerAdListener(
+      adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
-          debugPrint('SessionAd loaded.');
-          _isSessionAdLoaded = true;
-          if (onLoaded != null) onLoaded();
+          debugPrint('InterstitialAd loaded.');
+          _interstitialAd = ad;
+          _isInterstitialAdLoading = false;
         },
-        onAdFailedToLoad: (ad, error) {
-          debugPrint('SessionAd failed to load: $error');
-          ad.dispose();
-          _sessionAd = null;
-          _isSessionAdLoaded = false;
+        onAdFailedToLoad: (error) {
+          debugPrint('InterstitialAd failed to load: $error');
+          _interstitialAd = null;
+          _isInterstitialAdLoading = false;
         },
       ),
-    )..load();
+    );
   }
 
-  /// Disposes the session ad.
-  void disposeSessionAd() {
-    _sessionAd?.dispose();
-    _sessionAd = null;
-    _isSessionAdLoaded = false;
+  /// Shows the Interstitial Ad and calls onAdDismissed when closed.
+  Future<void> showInterstitialAd({required VoidCallback onAdDismissed}) async {
+    _isPremiumCache = await _isUserPremium();
+    if (_isPremiumCache) {
+      onAdDismissed();
+      return;
+    }
+
+    if (_interstitialAd == null) {
+      debugPrint('Warning: attempt to show interstitial before loaded.');
+      onAdDismissed();
+      return;
+    }
+
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdShowedFullScreenContent: (ad) => debugPrint('Ad showed fullscreen content.'),
+      onAdDismissedFullScreenContent: (ad) {
+        debugPrint('Ad dismissed fullscreen content.');
+        ad.dispose();
+        _interstitialAd = null;
+        loadInterstitialAd(); // Load the next one in advance
+        onAdDismissed();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        debugPrint('Ad failed to show fullscreen content: $error');
+        ad.dispose();
+        _interstitialAd = null;
+        onAdDismissed();
+      },
+    );
+
+    _interstitialAd!.show();
   }
 
   /// Returns the configured ad unit ID for banners.
@@ -187,6 +213,16 @@ class AdService {
       return dotenv.env['ADMOB_BANNER_ID_ANDROID'] ?? 'ca-app-pub-3940256099942544/6300978111';
     } else if (Platform.isIOS) {
       return dotenv.env['ADMOB_BANNER_ID_IOS'] ?? 'ca-app-pub-3940256099942544/2934735716';
+    }
+    throw UnsupportedError('Unsupported platform');
+  }
+
+  /// Returns the configured ad unit ID for standard interstitials.
+  String get _interstitialAdUnitId {
+    if (Platform.isAndroid) {
+      return dotenv.env['ADMOB_INTERSTITIAL_ID_ANDROID'] ?? 'ca-app-pub-3940256099942544/1033173712';
+    } else if (Platform.isIOS) {
+      return dotenv.env['ADMOB_INTERSTITIAL_ID_IOS'] ?? 'ca-app-pub-3940256099942544/4411468910';
     }
     throw UnsupportedError('Unsupported platform');
   }
