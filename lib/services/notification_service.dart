@@ -193,7 +193,7 @@ class NotificationService {
         channelId: 'daily_reminder',
         channelName: 'Daily Reminder',
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -212,7 +212,7 @@ class NotificationService {
         importance: Importance.high,
         priority: Priority.high,
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }

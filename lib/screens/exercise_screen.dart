@@ -8,7 +8,8 @@ import 'exercise_start_screen.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import 'package:easy_localization/easy_localization.dart';
-
+import '../services/ad_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 class ExerciseScreen extends StatefulWidget {
   final User? user;
   const ExerciseScreen({super.key, required this.user});
@@ -23,10 +24,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
+    AdService.instance.loadBannerAd(onLoaded: () {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
+    AdService.instance.disposeBannerAd();
     super.dispose();
   }
 
@@ -409,6 +414,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       builder: (context, snapshot) {
                         final isPremium = snapshot.data?.data()?['isPremium'] == true;
                         if (isPremium) return const SizedBox(); // No space if premium
+                        
+                        final bannerAd = AdService.instance.bannerAd;
+                        if (bannerAd != null) {
+                          return Container(
+                            alignment: Alignment.center,
+                            width: bannerAd.size.width.toDouble(),
+                            height: bannerAd.size.height.toDouble(),
+                            child: AdWidget(ad: bannerAd),
+                          );
+                        }
+                        
                         return const SizedBox(height: 50); // Reserved space for future banner ad
                       },
                     ),
@@ -447,11 +463,18 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
   late Set<String> _selected;
   bool _isSaving = false;
   String? _errorMessage;
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _selected = Set<String>.from(widget.currentSelected);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _toggleSelectAll() {
@@ -479,19 +502,10 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
 
     try {
       final userRef = FirebaseFirestore.instance.collection('users').doc(widget.uid);
-      final batch = FirebaseFirestore.instance.batch();
+      
+      // Update the user's selected exercises list.
+      await userRef.update({'selectedExercises': _selected.toList()});
 
-      batch.update(userRef, {'selectedExercises': _selected.toList()});
-
-      for (final id in _selected) {
-        batch.set(
-          userRef.collection('exercises').doc(id),
-          {'currentStreak': 0, 'lifetimeTotal': 0, 'lastCompletedDate': null},
-          SetOptions(merge: true),
-        );
-      }
-
-      await batch.commit();
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
@@ -553,27 +567,58 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
             const SizedBox(height: 12),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: allIds.length,
-                itemBuilder: (context, index) {
-                  final id = allIds[index];
-                  final def = widget.exerciseDefs[id]!;
-                  final isSelected = _selected.contains(id);
-                  return CheckboxListTile(
-                    value: isSelected,
-                    title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                    onChanged: (checked) {
-                      setState(() {
-                        if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
-                        if (_selected.isNotEmpty) _errorMessage = null;
-                      });
-                    },
-                    activeColor: const Color(0xFFFFC72C),
-                    checkColor: Colors.black,
-                    contentPadding: EdgeInsets.zero,
-                  );
-                },
+              child: Stack(
+                children: [
+                  Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    radius: const Radius.circular(8),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      shrinkWrap: true,
+                      itemCount: allIds.length,
+                      itemBuilder: (context, index) {
+                        final id = allIds[index];
+                        final def = widget.exerciseDefs[id]!;
+                        final isSelected = _selected.contains(id);
+                        return CheckboxListTile(
+                          value: isSelected,
+                          title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          onChanged: (checked) {
+                            setState(() {
+                              if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
+                              if (_selected.isNotEmpty) _errorMessage = null;
+                            });
+                          },
+                          activeColor: const Color(0xFFFFC72C),
+                          checkColor: Colors.black,
+                          contentPadding: EdgeInsets.zero,
+                        );
+                      },
+                    ),
+                  ),
+                  // Bottom fade — visually hints there are more items to scroll
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: IgnorePointer(
+                      child: Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Theme.of(context).colorScheme.surface.withOpacity(0.0),
+                              Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),

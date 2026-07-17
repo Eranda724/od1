@@ -443,10 +443,13 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
-                              ).then((_) {
-                                if (mounted && AdService.instance.isPremium) {
-                                  _canSkip = true;
-                                  _skipAd();
+                              ).then((_) async {
+                                if (mounted) {
+                                  await AdService.instance.refreshPremiumStatus();
+                                  if (AdService.instance.isPremium) {
+                                    _canSkip = true;
+                                    _skipAd();
+                                  }
                                 }
                               });
                             },

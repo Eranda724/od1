@@ -157,8 +157,8 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   // ── Persistence ────────────────────────────────────────────────────────────
   Future<void> _loadSavedPrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedTime = prefs.getInt('readyTime_${widget.exerciseId}');
-    final wantsTime = prefs.getBool('wantsReadyTime_${widget.exerciseId}');
+    final savedTime = prefs.getInt('globalReadyTime');
+    final wantsTime = prefs.getBool('globalWantsReadyTime');
     if (mounted) {
       setState(() {
         if (savedTime != null) _readyTimeSeconds = savedTime;
@@ -169,12 +169,12 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
   Future<void> _saveTime(int t) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('readyTime_${widget.exerciseId}', t);
+    await prefs.setInt('globalReadyTime', t);
   }
 
   Future<void> _saveWantsReadyTime(bool v) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('wantsReadyTime_${widget.exerciseId}', v);
+    await prefs.setBool('globalWantsReadyTime', v);
   }
 
   @override
@@ -185,11 +185,25 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   }
 
   // ── Countdown ──────────────────────────────────────────────────────────────
+  void _stopCountdown() {
+    if (!_isCountingDown) return;
+    _countdownTimer?.cancel();
+    if (mounted) {
+      setState(() {
+        _isCountingDown = false;
+      });
+    }
+    try {
+      _player.stop();
+    } catch (_) {}
+  }
+
   void _startCountdown() async {
     if (_isCountingDown) return;
 
     try {
       await _player.stop();
+      await _player.setVolume(0.25);
       await _player.play(AssetSource('sounds/stop.mp3'));
     } catch (_) {}
 
@@ -510,7 +524,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   // ── Start Button ──────────────────────────────────────────────────────────
   Widget _buildStartButton() {
     return InkWell(
-      onTap: _startCountdown,
+      onTap: _isCountingDown ? _stopCountdown : _startCountdown,
       customBorder: const CircleBorder(),
       child: Container(
         width: 180,
@@ -542,10 +556,23 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
           transitionBuilder: (child, animation) =>
               ScaleTransition(scale: animation, child: child),
           child: _isCountingDown
-              ? Text(
-                  '$_currentCount',
-                  key: const ValueKey('count'),
-                  style: _PCTextStyles.countdownNumber,
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$_currentCount',
+                      key: const ValueKey('count'),
+                      style: _PCTextStyles.countdownNumber,
+                    ),
+                    Text(
+                      'cancel_btn'.tr().toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
                 )
               : Column(
                   mainAxisSize: MainAxisSize.min,

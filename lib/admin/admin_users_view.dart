@@ -162,7 +162,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              _StatItem(icon: Icons.local_fire_department_rounded, label: 'streak_title'.tr(), value: '$overallStreak'),
+                              _StatItem(icon: Icons.local_fire_department_rounded, label: 'overall_streak'.tr(), value: '$overallStreak'),
                               _StatItem(icon: Icons.ac_unit_rounded, label: 'freezes_label'.tr(), value: '$freezes'),
                               _StatItem(icon: Icons.calendar_today_rounded, label: 'last_date_label'.tr(), value: data['overallLastDate'] ?? 'never_label'.tr()),
                             ],

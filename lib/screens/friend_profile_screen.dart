@@ -103,118 +103,145 @@ class FriendProfileScreen extends StatelessWidget {
                       stream: FirebaseFirestore.instance.collection('friendPairs').doc(pairId).snapshots(),
                       builder: (context, pairSnap) {
                         final actuallyFriends = pairSnap.hasData && pairSnap.data!.exists;
-                        if (!actuallyFriends) return const SizedBox.shrink();
                         
-                        return Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                color: context.cardColor,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: PCColors.yellowDark, width: 2),
-                              ),
-                              child: Column(
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [PCColors.brownDark, Color(0xFF3A2010)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // TOP SECTION (Numbers)
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('shared_streak_header'.tr().toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.textPrimary)),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.handshake_rounded, color: context.textPrimary, size: 28),
-                                      const SizedBox(width: 8),
-                                      Text('${friend.sharedStreak}', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: context.textPrimary)),
-                                    ],
+                                  // Left Half: Current Streak
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        const Text('🔥', style: TextStyle(fontSize: 28)),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          '$overallStreak',
+                                          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'current_streak'.tr(),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, height: 1.2),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+                                  
+                                  if (actuallyFriends) ...[
+                                    Container(width: 1, height: 100, color: Colors.white12),
+                                    
+                                    // Right Half: Shared Streak
+                                    Expanded(
+                                      child: Column(
+                                        children: [
+                                          const Text('🤝', style: TextStyle(fontSize: 28)),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            '${friend.sharedStreak}',
+                                            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'together_streak'.tr(),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, height: 1.2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ]
                                 ],
                               ),
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+                              
+                              if (actuallyFriends) ...[
+                                const SizedBox(height: 24),
+                                const Divider(color: Colors.white12, thickness: 1),
+                                const SizedBox(height: 24),
+                                
+                                // MIDDLE SECTION (Shared Context)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Text('🤝', style: TextStyle(fontSize: 16)),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'shared_streak_header'.tr().toUpperCase(),
+                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PCColors.yellow, letterSpacing: 1.4),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'shared_streak_sentence'.tr(args: [friend.displayName, '${friend.sharedStreak}']),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70, height: 1.4),
+                                ),
+                              ],
+                              
+                              const SizedBox(height: 24),
+                              const Divider(color: Colors.white12, thickness: 1),
+                              const SizedBox(height: 24),
+                              
+                              // BOTTOM SECTION (Weekly Activity)
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_month_rounded, color: Colors.white54, size: 16),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'weekly_activity'.tr().toUpperCase(),
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white54, letterSpacing: 1.4),
+                                  ),
+                                  const Spacer(),
+                                  if (freezesAvailable > 0)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.blueAccent, width: 1),
+                                      ),
+                                      child: Text(
+                                        '❄️ $freezesAvailable/2',
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.blueAccent),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: last7.map((day) {
+                                  final isActive = activeDays.contains(day);
+                                  final isToday = day == today;
+                                  return _DayDot(
+                                    label: _shortDay(context, day),
+                                    active: isActive,
+                                    isToday: isToday,
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
                         );
                       },
-                    ),
-
-                    // OVERALL STREAK (like streak_screen)
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [PCColors.brownDark, Color(0xFF3A2010)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Text('🏆', style: TextStyle(fontSize: 20)),
-                              const SizedBox(width: 8),
-                              Text(
-                                'overall_streak'.tr().toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                  color: PCColors.yellow,
-                                  letterSpacing: 1.4,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (freezesAvailable > 0)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blueAccent.withValues(alpha: 0.2),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.blueAccent, width: 1),
-                                  ),
-                                  child: Text(
-                                    '❄️ $freezesAvailable/2',
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                '$overallStreak',
-                                style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
-                              ),
-                              const SizedBox(width: 8),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Text(
-                                  'consecutive_days'.tr(),
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white70, height: 1.4),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: last7.map((day) {
-                              final isActive = activeDays.contains(day);
-                              final isToday = day == today;
-                              return _DayDot(
-                                label: _shortDay(context, day),
-                                active: isActive,
-                                isToday: isToday,
-                              );
-                            }).toList(),
-                          ),
-                        ],
-                      ),
                     ),
 
                     const SizedBox(height: 32),
@@ -274,7 +301,7 @@ class _DayDot extends StatelessWidget {
   }
 }
 
-class _FriendshipActionButtons extends StatelessWidget {
+class _FriendshipActionButtons extends StatefulWidget {
   final String currentUid;
   final FriendInfo friend;
   final String pairId;
@@ -282,15 +309,25 @@ class _FriendshipActionButtons extends StatelessWidget {
   const _FriendshipActionButtons({required this.currentUid, required this.friend, required this.pairId});
 
   @override
+  State<_FriendshipActionButtons> createState() => _FriendshipActionButtonsState();
+}
+
+class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
+  bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
-    if (currentUid.isEmpty || currentUid == friend.uid) return const SizedBox.shrink();
+    if (widget.currentUid.isEmpty || widget.currentUid == widget.friend.uid) return const SizedBox.shrink();
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('friendPairs').doc(pairId).snapshots(),
+      stream: FirebaseFirestore.instance.collection('friendPairs').doc(widget.pairId).snapshots(),
       builder: (context, pairSnap) {
-        if (!pairSnap.hasData) return const Center(child: CircularProgressIndicator());
+        if (pairSnap.hasError) {
+          debugPrint('Error loading pair: ${pairSnap.error}');
+        }
+        if (!pairSnap.hasData && !pairSnap.hasError) return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
         
-        final isFriend = pairSnap.data!.exists;
+        final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
           return Row(
@@ -309,7 +346,7 @@ class _FriendshipActionButtons extends StatelessWidget {
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: _isLoading ? null : () async {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (c) => AlertDialog(
@@ -322,8 +359,13 @@ class _FriendshipActionButtons extends StatelessWidget {
                       ),
                     );
                     if (confirm == true) {
-                      await FriendsService.instance.removeFriend(currentUid, friend.uid);
-                      if (context.mounted) Navigator.pop(context);
+                      setState(() => _isLoading = true);
+                      try {
+                        await FriendsService.instance.removeFriend(widget.currentUid, widget.friend.uid);
+                        if (context.mounted) Navigator.pop(context);
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -333,7 +375,9 @@ class _FriendshipActionButtons extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('remove_friend_title'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: _isLoading 
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
+                      : Text('remove_friend_title'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
             ],
@@ -343,14 +387,17 @@ class _FriendshipActionButtons extends StatelessWidget {
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('friendRequests')
-              .where('fromUid', isEqualTo: currentUid)
-              .where('toUid', isEqualTo: friend.uid)
+              .where('fromUid', isEqualTo: widget.currentUid)
+              .where('toUid', isEqualTo: widget.friend.uid)
               .where('status', isEqualTo: 'pending')
               .snapshots(),
           builder: (context, reqSnap) {
-            if (!reqSnap.hasData) return const Center(child: CircularProgressIndicator());
+            if (reqSnap.hasError) {
+              debugPrint('Error loading requests: ${reqSnap.error}');
+            }
+            if (!reqSnap.hasData && !reqSnap.hasError) return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
             
-            final hasSentRequest = reqSnap.data!.docs.isNotEmpty;
+            final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
             return Row(
               children: [
@@ -368,10 +415,11 @@ class _FriendshipActionButtons extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () async {
+                    onPressed: _isLoading ? null : () async {
+                      setState(() => _isLoading = true);
                       try {
                         if (hasSentRequest) {
-                          await FriendsService.instance.removeFriendRequest(currentUid, friend.uid);
+                          await FriendsService.instance.removeFriendRequest(widget.currentUid, widget.friend.uid);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('request_removed'.tr()), backgroundColor: Colors.grey),
@@ -383,7 +431,7 @@ class _FriendshipActionButtons extends StatelessWidget {
                             await FriendsService.instance.sendFriendRequest(
                               fromUid: currentUser.uid,
                               fromName: currentUser.displayName ?? 'A user',
-                              toUsername: friend.displayName,
+                              toUsername: widget.friend.displayName,
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -395,9 +443,11 @@ class _FriendshipActionButtons extends StatelessWidget {
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('error_msg'.tr(args: [e.toString()])), backgroundColor: Colors.red),
+                            SnackBar(content: Text('error_msg'.tr(args: [e.toString().replaceFirst('Exception: ', '')])), backgroundColor: Colors.red),
                           );
                         }
+                      } finally {
+                        if (mounted) setState(() => _isLoading = false);
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -407,7 +457,9 @@ class _FriendshipActionButtons extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: Text(hasSentRequest ? 'remove_request'.tr() : 'send_request'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: _isLoading 
+                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: hasSentRequest ? Colors.black54 : PCColors.brownDark))
+                        : Text(hasSentRequest ? 'remove_request'.tr() : 'send_request'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
