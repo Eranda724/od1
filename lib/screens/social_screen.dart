@@ -6,6 +6,7 @@ import '../models/friend_info.dart';
 import '../services/friends_service.dart';
 import 'friend_profile_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'dart:async';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -19,10 +20,38 @@ class _SocialScreenState extends State<SocialScreen> {
   TextEditingController? _autoCompleteController;
   bool _isSearching = false;
   String? _searchError;
+  
+  Set<String> _friendUids = {};
+  StreamSubscription? _friendsSub;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      _friendsSub = FirebaseFirestore.instance
+          .collection('friendPairs')
+          .where('uids', arrayContains: uid)
+          .snapshots()
+          .listen((snapshot) {
+        if (mounted) {
+          final uids = <String>{};
+          for (var doc in snapshot.docs) {
+            final array = List<String>.from(doc.data()['uids'] ?? []);
+            uids.addAll(array);
+          }
+          setState(() {
+            _friendUids = uids;
+          });
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _friendsSub?.cancel();
     super.dispose();
   }
 
@@ -121,6 +150,8 @@ class _SocialScreenState extends State<SocialScreen> {
                         
                         for (var d in allDocs) {
                           if (d.id == currentUid) continue; // Exclude current user
+                          if (_friendUids.contains(d.id)) continue; // Exclude current friends
+                          
                           final data = d.data();
                           data['uid'] = d.id;
                           final name = (data['displayName'] ?? data['username']) as String?;
