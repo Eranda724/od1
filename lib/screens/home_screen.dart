@@ -143,7 +143,6 @@ class _HomeScreenState extends State<HomeScreen>
         final data = snapshot.data?.data() as Map<String, dynamic>?;
         final isPremium = data?['isPremium'] == true;
 
-        final isDark = _settings.themeMode == ThemeMode.dark;
         // Prefer Firestore displayName (kept in sync on profile save) over
         // the cached Auth user object, which won't update mid-session.
         String dispName = (data?['displayName'] as String? ?? '').trim();
@@ -153,113 +152,120 @@ class _HomeScreenState extends State<HomeScreen>
         if (dispName.isEmpty) {
           dispName = 'profile_menu'.tr();
         }
-        return PopupMenuButton<String>(
-          icon: const Icon(Icons.menu_rounded),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          offset: const Offset(0, 48),
-      onSelected: (value) async {
-        switch (value) {
-          case 'profile':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfileScreen()),
-            );
-            break;
-          case 'settings':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SettingsScreen()),
-            );
-            break;
-          case 'theme_light':
-            await _settings.setThemeMode(ThemeMode.light);
-            break;
-          case 'theme_dark':
-            await _settings.setThemeMode(ThemeMode.dark);
-            break;
-          case 'remove_ads':
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
-            );
-            break;
-          case 'logout':
-            _logout();
-            break;
-        }
-      },
-      itemBuilder: (context) => [
-        PopupMenuItem<String>(
-          value: 'profile',
-          child: Row(children: [
-            const Icon(Icons.person_outline_rounded, size: 20),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  dispName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                if (isPremium)
-                  Text(
-                    'premium_user_badge'.tr(),
-                    style: const TextStyle(
-                      color: PCColors.yellow,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
+
+        return ListenableBuilder(
+          listenable: _settings,
+          builder: (context, _) {
+            final isDark = _settings.themeMode == ThemeMode.dark;
+            return PopupMenuButton<String>(
+              icon: const Icon(Icons.menu_rounded),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              offset: const Offset(0, 48),
+              onSelected: (value) async {
+                switch (value) {
+                  case 'profile':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                    break;
+                  case 'settings':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );
+                    break;
+                  case 'theme_light':
+                    await _settings.setThemeMode(ThemeMode.light);
+                    break;
+                  case 'theme_dark':
+                    await _settings.setThemeMode(ThemeMode.dark);
+                    break;
+                  case 'remove_ads':
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
+                    );
+                    break;
+                  case 'logout':
+                    _logout();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Row(children: [
+                    const Icon(Icons.person_outline_rounded, size: 20),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          dispName,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        if (isPremium)
+                          Text(
+                            'premium_user_badge'.tr(),
+                            style: const TextStyle(
+                              color: PCColors.yellow,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                      ],
                     ),
+                  ]),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: isDark ? 'theme_light' : 'theme_dark',
+                  child: Row(children: [
+                    Icon(
+                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(isDark ? 'light_mode'.tr() : 'dark_mode'.tr()),
+                  ]),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'settings',
+                  child: Row(children: [
+                    const Icon(Icons.settings_outlined, size: 20),
+                    SizedBox(width: 10),
+                    Text('settings'.tr()),
+                  ]),
+                ),
+                if (!isPremium) ...[
+                  const PopupMenuDivider(),
+                  PopupMenuItem<String>(
+                    value: 'remove_ads',
+                    child: Row(children: [
+                      const Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
+                      const SizedBox(width: 10),
+                      Text('remove_ads_menu'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    ]),
                   ),
+                ],
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(children: [
+                    const Icon(Icons.logout_rounded, size: 20, color: Colors.red),
+                    const SizedBox(width: 10),
+                    Text('logout'.tr(),
+                        style: const TextStyle(
+                            color: Colors.red, fontWeight: FontWeight.w600)),
+                  ]),
+                ),
               ],
-            ),
-          ]),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: isDark ? 'theme_light' : 'theme_dark',
-          child: Row(children: [
-            Icon(
-              isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Text(isDark ? 'light_mode'.tr() : 'dark_mode'.tr()),
-          ]),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'settings',
-          child: Row(children: [
-            const Icon(Icons.settings_outlined, size: 20),
-            SizedBox(width: 10),
-            Text('settings'.tr()),
-          ]),
-        ),
-        if (!isPremium) ...[
-          const PopupMenuDivider(),
-          PopupMenuItem<String>(
-            value: 'remove_ads',
-            child: Row(children: [
-              const Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
-              const SizedBox(width: 10),
-              Text('remove_ads_menu'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-            ]),
-          ),
-        ],
-        const PopupMenuDivider(),
-        PopupMenuItem<String>(
-          value: 'logout',
-          child: Row(children: [
-            const Icon(Icons.logout_rounded, size: 20, color: Colors.red),
-            const SizedBox(width: 10),
-            Text('logout'.tr(),
-                style: const TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.w600)),
-          ]),
-        ),
-      ],
-    );
+            );
+          },
+        );
       },
     );
   }
