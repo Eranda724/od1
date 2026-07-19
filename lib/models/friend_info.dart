@@ -6,6 +6,7 @@ class FriendInfo {
   final String? sharedLastDate;
   final bool friendDoneToday;
   final String pairId;
+  final String? photoUrl;
 
   FriendInfo({
     required this.uid,
@@ -15,5 +16,6 @@ class FriendInfo {
     this.sharedLastDate,
     required this.friendDoneToday,
     required this.pairId,
+    this.photoUrl,
   });
 }

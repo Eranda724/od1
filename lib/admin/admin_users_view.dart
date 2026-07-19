@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../app_settings.dart';
 import 'admin_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
@@ -108,10 +109,15 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                     child: ExpansionTile(
                       leading: CircleAvatar(
                         backgroundColor: Colors.amber.shade200,
-                        child: Text(
-                          displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
-                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                        ),
+                        backgroundImage: data['photoUrl'] != null 
+                            ? CachedNetworkImageProvider(data['photoUrl']) 
+                            : null,
+                        child: data['photoUrl'] == null 
+                            ? Text(
+                                displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
+                              )
+                            : null,
                       ),
                       title: Row(
                         children: [

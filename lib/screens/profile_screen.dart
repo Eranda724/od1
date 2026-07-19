@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../services/account_deletion_service.dart';
 import 'login_screen.dart';
@@ -39,6 +43,49 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Timer? _debounceTimer;
   bool _isCheckingUsername = false;
   bool? _isUsernameAvailable;
+  bool _isUploadingImage = false;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickAndUploadProfileImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    try {
+      final pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 500,
+        maxHeight: 500,
+        imageQuality: 75,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      final file = File(pickedFile.path);
+      final ref = FirebaseStorage.instance.ref().child('users/${user.uid}/profile.jpg');
+      await ref.putFile(file);
+      final downloadUrl = await ref.getDownloadURL();
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'photoUrl': downloadUrl,
+      }, SetOptions(merge: true));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile image updated!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to upload image: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
 
   @override
   void initState() {
@@ -410,10 +457,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Stack(
                           alignment: Alignment.bottomRight,
                           children: [
-                            const CircleAvatar(
-                              radius: 40,
-                              backgroundColor: PCColors.yellow,
-                              child: Icon(Icons.person, size: 48, color: Colors.black),
+                            GestureDetector(
+                              onTap: _pickAndUploadProfileImage,
+                              child: Stack(
+                                alignment: Alignment.bottomRight,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 40,
+                                    backgroundColor: PCColors.yellow,
+                                    backgroundImage: snapshot.data?.data()?['photoUrl'] != null
+                                        ? CachedNetworkImageProvider(snapshot.data!.data()!['photoUrl'])
+                                        : null,
+                                    child: _isUploadingImage 
+                                      ? const CircularProgressIndicator(color: Colors.black)
+                                      : snapshot.data?.data()?['photoUrl'] == null 
+                                          ? const Icon(Icons.person, size: 48, color: Colors.black) 
+                                          : null,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black87,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.camera_alt, color: Colors.white, size: 16),
+                                  ),
+                                ],
+                              ),
                             ),
                             if (isPremium)
                               Container(

@@ -81,12 +81,13 @@ class AdminScreen extends StatelessWidget {
                     leading: Container(
                       width: 48,
                       height: 48,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         color: Colors.amber.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: buildExerciseVisual(exercise, size: 26),
+                        child: buildExerciseVisual(exercise, size: 26, width: 48, height: 48),
                       ),
                     ),
                     title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),

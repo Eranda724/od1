@@ -6,6 +6,7 @@ class LeaderboardEntry {
   final String uid;
   final String displayName;
   final String avatar;
+  final String? photoUrl;
 
   /// Score for the period this entry was fetched for (primary sort key).
   final int score;
@@ -24,6 +25,7 @@ class LeaderboardEntry {
     required this.dailyScore,
     required this.weeklyScore,
     required this.monthlyScore,
+    this.photoUrl,
   });
 
   /// Returns the score for the requested period.
@@ -112,6 +114,7 @@ class LeaderboardService {
           dailyScore: daily,
           weeklyScore: weekly,
           monthlyScore: monthly,
+          photoUrl: data['photoUrl'] as String?,
         ));
       }
       return entries;

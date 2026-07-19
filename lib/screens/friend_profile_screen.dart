@@ -5,6 +5,7 @@ import '../models/friend_info.dart';
 import '../services/friends_service.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -76,7 +77,8 @@ class FriendProfileScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 32,
                           backgroundColor: context.cardColor,
-                          child: Icon(Icons.person, size: 32, color: context.textPrimary),
+                          backgroundImage: friend.photoUrl != null ? CachedNetworkImageProvider(friend.photoUrl!) : null,
+                          child: friend.photoUrl == null ? Icon(Icons.person, size: 32, color: context.textPrimary) : null,
                         ),
                         const SizedBox(width: 16),
                         Expanded(

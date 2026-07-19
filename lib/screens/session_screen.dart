@@ -8,6 +8,7 @@ import '../services/ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'premium_upgrade_screen.dart';
 import '../models/exercise_item.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_icons.dart';
 import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
@@ -69,11 +70,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   ];
   int _tipIndex = 0;
   Timer? _tipTimer;
-  
+
   DateTime? _sessionStartTime;
   bool _adTriggered = false;
   bool _isAdPlaying = false;
-  
+
   bool _showAdOverlay = false;
   int _adSkipCountdown = 5;
   Timer? _adSkipTimer;
@@ -83,7 +84,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   void initState() {
     super.initState();
     _player = AudioPlayer();
-    
+
     final images = [
       'assets/images/screen1.png',
       'assets/images/screen2.png',
@@ -97,10 +98,10 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       'assets/images/screen10.png',
     ];
     _randomSessionImage = images[Random().nextInt(images.length)];
-    
+
     _startSession();
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -117,13 +118,15 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         } else {
           timer.cancel();
           _isAdPlaying = true;
-          AdService.instance.showInterstitialAd(onAdDismissed: () {
-            if (!mounted) return;
-            setState(() {
-              _isAdPlaying = false;
-              _showAdOverlay = false;
-            });
-          });
+          AdService.instance.showInterstitialAd(
+            onAdDismissed: () {
+              if (!mounted) return;
+              setState(() {
+                _isAdPlaying = false;
+                _showAdOverlay = false;
+              });
+            },
+          );
         }
       });
     });
@@ -150,10 +153,14 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     // Update displayed time every second.
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_sessionStartTime == null) return;
-      
-      final elapsedSeconds = DateTime.now().difference(_sessionStartTime!).inSeconds;
 
-      if (elapsedSeconds >= 2 && !_adTriggered && !AdService.instance.isPremium) {
+      final elapsedSeconds = DateTime.now()
+          .difference(_sessionStartTime!)
+          .inSeconds;
+
+      if (elapsedSeconds >= 2 &&
+          !_adTriggered &&
+          !AdService.instance.isPremium) {
         _adTriggered = true;
         setState(() {
           _showAdOverlay = true;
@@ -185,16 +192,18 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   void _stopSession() async {
     _tickTimer?.cancel();
     _tipTimer?.cancel();
-    
+
     await _playStop();
     await Future.delayed(const Duration(milliseconds: 200));
 
-    final secondsCompleted = widget.challengeSeconds > 0 
-        ? widget.challengeSeconds - _seconds 
+    final secondsCompleted = widget.challengeSeconds > 0
+        ? widget.challengeSeconds - _seconds
         : _seconds;
-        
-    final todayAmount = widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time' 
-        ? secondsCompleted 
+
+    final todayAmount =
+        widget.unit.toLowerCase() == 'seconds' ||
+            widget.unit.toLowerCase() == 'time'
+        ? secondsCompleted
         : widget.defaultReps;
 
     if (!mounted) return;
@@ -239,18 +248,18 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
         children: [
           // ── Background image ──────────────────────────────────────────
           Image.asset(
-            _randomSessionImage,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [PCColors.brown, PCColors.brownDark],
+              _randomSessionImage,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [PCColors.brown, PCColors.brownDark],
+                  ),
                 ),
               ),
             ),
-          ),
 
           // ── Dark scrim for text legibility ────────────────────────────
           Container(color: Colors.black.withValues(alpha: 0.45)),
@@ -272,13 +281,18 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                     ),
                   ),
                 ),
-                
-                if (widget.exerciseDef != null)
+
+                if (widget.exerciseDef != null &&
+                    widget.exerciseDef!.mediaItems.isEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: buildExerciseVisual(widget.exerciseDef!, size: 64, iconColor: Colors.white),
+                    child: buildExerciseVisual(
+                      widget.exerciseDef!,
+                      size: 64,
+                      iconColor: Colors.white,
+                    ),
                   ),
-                
+
                 const Spacer(),
 
                 // Big timer
@@ -292,7 +306,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  widget.challengeSeconds > 0 ? 'time_remaining'.tr() : 'time_elapsed'.tr(),
+                  widget.challengeSeconds > 0
+                      ? 'time_remaining'.tr()
+                      : 'time_elapsed'.tr(),
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.7),
                     fontSize: 13,
@@ -307,13 +323,23 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 20,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.4),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: PCColors.yellow.withValues(alpha: 0.3), width: 1.5),
+                      border: Border.all(
+                        color: PCColors.yellow.withValues(alpha: 0.3),
+                        width: 1.5,
+                      ),
                       boxShadow: const [
-                        BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 10,
+                          offset: Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: Column(
@@ -323,20 +349,28 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.lightbulb_outline_rounded, color: PCColors.yellow, size: 22),
+                            const Icon(
+                              Icons.lightbulb_outline_rounded,
+                              color: PCColors.yellow,
+                              size: 22,
+                            ),
                             const SizedBox(width: 8),
-                            Text('quick_tip'.tr(), style: TextStyle(
-                              color: PCColors.yellow.withValues(alpha: 0.9), 
-                              fontWeight: FontWeight.w800, 
-                              letterSpacing: 1.5,
-                              fontSize: 14,
-                            )),
+                            Text(
+                              'quick_tip'.tr(),
+                              style: TextStyle(
+                                color: PCColors.yellow.withValues(alpha: 0.9),
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                                fontSize: 14,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 14),
                         AnimatedSwitcher(
                           duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(opacity: animation, child: child),
                           child: Text(
                             _tipKeys[_tipIndex].tr(),
                             key: ValueKey(_tipIndex),
@@ -379,7 +413,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         border: Border.all(color: Colors.white, width: 3),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFB23A3A).withValues(alpha: 0.5),
+                            color: const Color(
+                              0xFFB23A3A,
+                            ).withValues(alpha: 0.5),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
                           ),
@@ -401,14 +437,17 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
               ],
             ),
           ),
-          
+
           // ── Pre-Ad Popup Overlay ──────────────────────────────────────
           if (_showAdOverlay)
             Align(
               alignment: const Alignment(-1.0, -0.1),
               child: Container(
                 margin: const EdgeInsets.only(left: 24),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(16),
@@ -416,7 +455,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.play_circle_fill, color: Colors.white, size: 18),
+                    const Icon(
+                      Icons.play_circle_fill,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),

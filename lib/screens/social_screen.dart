@@ -6,6 +6,7 @@ import '../models/friend_info.dart';
 import '../services/friends_service.dart';
 import 'friend_profile_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 
 class SocialScreen extends StatefulWidget {
@@ -177,6 +178,7 @@ class _SocialScreenState extends State<SocialScreen> {
                         sharedStreak: 0,
                         overallStreak: (selection['overallStreak'] as num?)?.toInt() ?? 0,
                         friendDoneToday: false,
+                        photoUrl: selection['photoUrl'] as String?,
                       );
                       
                       Navigator.push(
@@ -327,7 +329,8 @@ class _SocialScreenState extends State<SocialScreen> {
                             CircleAvatar(
                               radius: 24,
                               backgroundColor: f.friendDoneToday ? PCColors.green : context.cardColor,
-                              child: Icon(Icons.person, color: f.friendDoneToday ? Colors.white : context.textPrimary),
+                              backgroundImage: f.photoUrl != null ? CachedNetworkImageProvider(f.photoUrl!) : null,
+                              child: f.photoUrl == null ? Icon(Icons.person, color: f.friendDoneToday ? Colors.white : context.textPrimary) : null,
                             ),
                             const SizedBox(width: 16),
                             Expanded(

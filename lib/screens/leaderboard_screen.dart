@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/leaderboard_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   final String? currentUid;
@@ -309,9 +310,14 @@ class _PodiumBar extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Avatar emoji
-        Text(entry.avatar, style: const TextStyle(fontSize: 30)),
-        const SizedBox(height: 2),
+        // Avatar
+        CircleAvatar(
+          radius: 16,
+          backgroundColor: color.withValues(alpha: 0.2),
+          backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
+          child: entry.photoUrl == null ? Text(entry.avatar, style: const TextStyle(fontSize: 20)) : null,
+        ),
+        const SizedBox(height: 4),
         // Name
         SizedBox(
           width: 80,
@@ -417,10 +423,11 @@ class _LeaderboardRow extends StatelessWidget {
           backgroundColor:
               (color ?? Theme.of(context).colorScheme.primary)
                   .withValues(alpha: 0.2),
-          child: Text(
+          backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
+          child: entry.photoUrl == null ? Text(
             entry.avatar,
             style: const TextStyle(fontSize: 20),
-          ),
+          ) : null,
         ),
         title: Row(
           children: [

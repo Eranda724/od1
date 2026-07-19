@@ -245,68 +245,65 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
             const SizedBox(height: 16),
             Text('custom_image_label'.tr(), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                if (_selectedImage != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.file(_selectedImage!, width: 64, height: 64, fit: BoxFit.cover),
-                  )
-                else if (_existingImageUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: CachedNetworkImage(
-                      imageUrl: _existingImageUrl!,
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                    ),
-                  )
-                else
-                  Container(
-                    width: 64, height: 64,
-                    decoration: BoxDecoration(
-                      color: context.cardColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.image, color: context.textSecondary),
-                  ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.upload),
-                        label: Text('upload_image_btn'.tr()),
-                        onPressed: () async {
-                          final img = await _picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 800,
-                            maxHeight: 800,
-                            imageQuality: 75,
-                          );
-                          if (img != null) {
-                            setState(() {
-                              _selectedImage = File(img.path);
-                              _existingImageUrl = null;
-                            });
-                          }
-                        },
-                      ),
-                      if (_selectedImage != null || _existingImageUrl != null)
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedImage = null;
-                              _existingImageUrl = null;
-                            });
-                          },
-                          child: Text('remove_image_btn'.tr(), style: const TextStyle(color: Colors.red)),
-                        ),
-                    ],
-                  ),
+            if (_selectedImage != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(_selectedImage!, width: double.infinity, height: 200, fit: BoxFit.contain),
+              )
+            else if (_existingImageUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  imageUrl: _existingImageUrl!,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
+              )
+            else
+              Container(
+                width: double.infinity, height: 120,
+                decoration: BoxDecoration(
+                  color: context.cardColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.image, color: context.textSecondary, size: 48),
+              ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload),
+                  label: Text('upload_image_btn'.tr()),
+                  onPressed: () async {
+                    final img = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 800,
+                      maxHeight: 800,
+                      imageQuality: 75,
+                    );
+                    if (img != null) {
+                      setState(() {
+                        _selectedImage = File(img.path);
+                        _existingImageUrl = null;
+                      });
+                    }
+                  },
+                ),
+                if (_selectedImage != null || _existingImageUrl != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedImage = null;
+                          _existingImageUrl = null;
+                        });
+                      },
+                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                    ),
+                  ),
               ],
             ),
 

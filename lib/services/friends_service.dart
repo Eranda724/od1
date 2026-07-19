@@ -155,6 +155,7 @@ class FriendsService {
           sharedLastDate: data['sharedLastDate'],
           friendDoneToday: data['${friendUid}_doneToday'] ?? false,
           pairId: doc.id,
+          photoUrl: fData['photoUrl'],
         ));
       }
       return friends;
