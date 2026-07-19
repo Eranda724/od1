@@ -65,7 +65,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
     super.initState();
     _reps = widget.defaultReps;
     _controller.text = _reps.toString();
-    _player = AudioPlayer();
+    _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
   }
 
   @override

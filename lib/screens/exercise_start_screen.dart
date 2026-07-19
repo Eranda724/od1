@@ -132,7 +132,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
+    _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
     _loadSavedPrefs();
 
     final images = [

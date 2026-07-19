@@ -83,7 +83,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer();
+    _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
 
     final images = [
       'assets/images/screen1.png',

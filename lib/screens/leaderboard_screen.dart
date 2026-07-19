@@ -311,11 +311,22 @@ class _PodiumBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Avatar
-        CircleAvatar(
-          radius: 16,
-          backgroundColor: color.withValues(alpha: 0.2),
-          backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
-          child: entry.photoUrl == null ? Text(entry.avatar, style: const TextStyle(fontSize: 20)) : null,
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: color.withValues(alpha: 0.2),
+              backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
+              child: entry.photoUrl == null ? const Icon(Icons.person, size: 20, color: Colors.black54) : null,
+            ),
+            if (rank <= 3)
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: Text(entry.avatar, style: const TextStyle(fontSize: 16)),
+              ),
+          ],
         ),
         const SizedBox(height: 4),
         // Name
@@ -419,15 +430,27 @@ class _LeaderboardRow extends StatelessWidget {
       child: ListTile(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: CircleAvatar(
-          backgroundColor:
-              (color ?? Theme.of(context).colorScheme.primary)
-                  .withValues(alpha: 0.2),
-          backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
-          child: entry.photoUrl == null ? Text(
-            entry.avatar,
-            style: const TextStyle(fontSize: 20),
-          ) : null,
+        leading: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            CircleAvatar(
+              backgroundColor:
+                  (color ?? Theme.of(context).colorScheme.primary)
+                      .withValues(alpha: 0.2),
+              backgroundImage: entry.photoUrl != null ? CachedNetworkImageProvider(entry.photoUrl!) : null,
+              child: entry.photoUrl == null ? Icon(
+                Icons.person,
+                size: 24,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black54,
+              ) : null,
+            ),
+            if (rank <= 3)
+              Positioned(
+                right: -6,
+                bottom: -6,
+                child: Text(entry.avatar, style: const TextStyle(fontSize: 18)),
+              ),
+          ],
         ),
         title: Row(
           children: [
