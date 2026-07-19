@@ -47,25 +47,27 @@ Widget buildExerciseIconWidget(String value, {double size = 28, Color? iconColor
 }
 
 /// Comprehensive widget — renders uploaded image if available, else falls back to icon.
-Widget buildExerciseVisual(dynamic exercise, {double size = 28, Color? iconColor}) {
+Widget buildExerciseVisual(dynamic exercise, {double size = 28, double? width, double? height, Color? iconColor, BoxFit fit = BoxFit.contain}) {
   if (exercise.mediaItems.isNotEmpty) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: CachedNetworkImage(
-        imageUrl: exercise.mediaItems.first.url,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        placeholder: (context, url) => SizedBox(
-          width: size,
-          height: size,
-          child: const Padding(
-            padding: EdgeInsets.all(4.0),
+    final double? w = width ?? size;
+    final double? h = height ?? size;
+    return CachedNetworkImage(
+      imageUrl: exercise.mediaItems.first.url,
+      width: w,
+      height: h,
+      fit: fit,
+      placeholder: (context, url) => SizedBox(
+        width: w,
+        height: h,
+        child: const Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        errorWidget: (context, url, error) => buildExerciseIconWidget(exercise.icon, size: size, iconColor: iconColor),
       ),
+      errorWidget: (context, url, error) => buildExerciseIconWidget(exercise.icon, size: size, iconColor: iconColor),
     );
   }
   return buildExerciseIconWidget(exercise.icon, size: size, iconColor: iconColor);

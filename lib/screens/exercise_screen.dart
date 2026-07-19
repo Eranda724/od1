@@ -136,6 +136,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final lifetime = exerciseData['lifetimeTotal'] ?? 0;
+                  final todayReps = exerciseData['todayReps'] ?? 0;
                   final def = exerciseDefs[id]!;
                   final displayName = def.name;
                   final icon = def.icon;
@@ -199,55 +200,78 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   Widget gridCard() {
                     return Card(
                       margin: EdgeInsets.zero,
+                      clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : const BorderSide(color: Colors.black, width: 2),
                       ),
                       elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    displayName,
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            height: 100,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFC72C).withOpacity(0.1),
+                            ),
+                            child: Center(
+                              child: buildExerciseVisual(
+                                def,
+                                size: 72,
+                                width: double.infinity,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 4,
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          displayName,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                      if (isDone) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.check_circle, color: Colors.green, size: 18)),
+                                    ],
                                   ),
-                                ),
-                                if (isDone) const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                              ],
-                            ),
-                            Expanded(child: Center(child: buildExerciseVisual(def, size: 48))),
-                            if (hasGoals)
-                              Text('?? ${goals.join('  ')}', style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600)),
-                            if (streak > 0 || lifetime > 0)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [Text('$lifetime ' + 'total_label'.tr() + ' ($unit)', style: const TextStyle(fontSize: 11))],
-                                ),
-                              ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: startExercise,
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                                  minimumSize: const Size(0, 36),
-                                ),
-                                child: Text(isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(), style: const TextStyle(fontSize: 13)),
+                                  const Spacer(),
+                                  if (isDone)
+                                    Text(
+                                      '$todayReps $unit', 
+                                      style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      onPressed: startExercise,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                        minimumSize: const Size(0, 32),
+                                      ),
+                                      child: Text(isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(), style: const TextStyle(fontSize: 12)),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -257,7 +281,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : BorderSide.none,
+                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : const BorderSide(color: Colors.black, width: 2),
                       ),
                       elevation: 2,
                       child: InkWell(
@@ -268,13 +292,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           child: Row(
                             children: [
                               Container(
-                                width: 54,
-                                height: 54,
+                                width: 64,
+                                height: 64,
+                                clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFFC72C).withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: Center(child: buildExerciseVisual(def, size: 28)),
+                                child: Center(child: buildExerciseVisual(def, size: 32, width: 64, height: 64, fit: BoxFit.contain)),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
@@ -282,13 +307,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                                    if (hasGoals) ...[
+                                    if (isDone) ...[
                                       const SizedBox(height: 4),
-                                      Text('?? ${goals.join('  ')}', style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600)),
-                                    ],
-                                    if (streak > 0 || lifetime > 0) ...[
-                                      const SizedBox(height: 4),
-                                      Text('$lifetime ' + 'total_label'.tr() + ' ($unit)', style: const TextStyle(fontSize: 13)),
+                                      Text(
+                                        '$todayReps $unit', 
+                                        style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -329,9 +355,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.85,
+                            childAspectRatio: isDone ? 0.82 : 0.9,
                             crossAxisSpacing: 12,
                             mainAxisSpacing: 12,
                           ),
