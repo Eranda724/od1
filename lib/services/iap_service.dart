@@ -20,7 +20,7 @@ class IapService extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  static const String removeAdsId = 'remove_ads_yearly';
+  static const String removeAdsId = 'remove_ads_yearly_subscription';
 
   void initialize() {
     final purchaseUpdated = _iap.purchaseStream;
@@ -65,7 +65,7 @@ class IapService extends ChangeNotifier {
     notifyListeners();
     
     final PurchaseParam purchaseParam = PurchaseParam(productDetails: _removeAdsProduct!);
-    _iap.buyConsumable(purchaseParam: purchaseParam);
+    _iap.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
   void restorePurchases() {
