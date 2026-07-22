@@ -173,13 +173,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
             .set({
               'displayName': displayName,
               'email': credential.user!.email,
+              'scores': {
+                'daily': 0,
+                'weekly': 0,
+                'monthly': 0,
+                'lifetime': 0,
+              },
             }, SetOptions(merge: true));
       }
 
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const StartRouter()),
         );
       }
     } on FirebaseAuthException catch (e) {

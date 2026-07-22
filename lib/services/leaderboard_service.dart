@@ -156,54 +156,14 @@ class LeaderboardService {
     required int points,
     required DateTime now,
   }) {
-    final lastUpdated = (existing['lastUpdated'] as Timestamp?)?.toDate();
     final newScores = Map<String, dynamic>.from(existing);
 
-    newScores['daily'] = _resetIfStale(
-          existing['daily'],
-          lastUpdated,
-          _isSameDay,
-          now,
-        ) +
-        points;
-    newScores['weekly'] = _resetIfStale(
-          existing['weekly'],
-          lastUpdated,
-          _isSameWeek,
-          now,
-        ) +
-        points;
-    newScores['monthly'] = _resetIfStale(
-          existing['monthly'],
-          lastUpdated,
-          _isSameMonth,
-          now,
-        ) +
-        points;
+    newScores['daily'] = (existing['daily'] as num? ?? 0).toInt() + points;
+    newScores['weekly'] = (existing['weekly'] as num? ?? 0).toInt() + points;
+    newScores['monthly'] = (existing['monthly'] as num? ?? 0).toInt() + points;
+    newScores['lifetime'] = (existing['lifetime'] as num? ?? 0).toInt() + points;
     newScores['lastUpdated'] = Timestamp.fromDate(now);
 
     return newScores;
   }
-
-  static int _resetIfStale(
-    dynamic current,
-    DateTime? lastUpdated,
-    bool Function(DateTime, DateTime) isSamePeriod,
-    DateTime now,
-  ) {
-    if (current == null || lastUpdated == null) return 0;
-    return isSamePeriod(lastUpdated, now) ? (current as num).toInt() : 0;
-  }
-
-  static bool _isSameDay(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
-
-  static bool _isSameWeek(DateTime a, DateTime b) {
-    final aMonday = a.subtract(Duration(days: a.weekday - 1));
-    final bMonday = b.subtract(Duration(days: b.weekday - 1));
-    return _isSameDay(aMonday, bMonday);
-  }
-
-  static bool _isSameMonth(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month;
 }

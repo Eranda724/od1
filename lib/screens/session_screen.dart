@@ -133,10 +133,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   }
 
   Future<void> _playTick() async {
-    try {
-      await _player.stop();
-      await _player.play(AssetSource('sounds/tick.mp3'));
-    } catch (_) {}
+    // Tick sound removed per client request
   }
 
   Future<void> _playStop() async {

@@ -1,0 +1,12 @@
+{
+  "name": "leaderboard-functions",
+  "description": "Scheduled cloud functions for resetting leaderboard scores",
+  "dependencies": {
+    "firebase-admin": "^11.11.1",
+    "firebase-functions": "^4.5.0"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "index.js"
+}

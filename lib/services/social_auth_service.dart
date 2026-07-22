@@ -40,7 +40,8 @@ class SocialAuthService {
     final userCredential = await _auth.signInWithCredential(credential);
 
     // Upsert Firestore profile (won't overwrite existing data)
-    await _upsertProfile(userCredential.user);
+    final isNew = userCredential.additionalUserInfo?.isNewUser ?? false;
+    await _upsertProfile(userCredential.user, isNewUser: isNew);
 
     return userCredential;
   }
@@ -88,7 +89,8 @@ class SocialAuthService {
     }
 
     // Upsert Firestore profile
-    await _upsertProfile(userCredential.user, displayNameOverride: displayName);
+    final isNew = userCredential.additionalUserInfo?.isNewUser ?? false;
+    await _upsertProfile(userCredential.user, isNewUser: isNew, displayNameOverride: displayName);
 
     return userCredential;
   }
@@ -136,6 +138,7 @@ class SocialAuthService {
   /// Uses merge so existing fields (streak, scores, etc.) are never lost.
   static Future<void> _upsertProfile(
     User? user, {
+    bool isNewUser = false,
     String? displayNameOverride,
   }) async {
     if (user == null) return;
@@ -157,6 +160,15 @@ class SocialAuthService {
 
     if (user.email != null) {
       data['email'] = user.email;
+    }
+
+    if (isNewUser) {
+      data['scores'] = {
+        'daily': 0,
+        'weekly': 0,
+        'monthly': 0,
+        'lifetime': 0,
+      };
     }
 
     if (data.isNotEmpty) {
