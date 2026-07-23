@@ -67,23 +67,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     }
   }
 
-  void _showManageSheet(
-    BuildContext context,
-    List<String> selectedExercises,
-    Map<String, ExerciseItem> exerciseDefs,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _ManageExercisesSheet(
-        uid: widget.user!.uid,
-        currentSelected: List<String>.from(selectedExercises),
-        exerciseDefs: exerciseDefs,
-      ),
-    );
+  Future<void> _addExerciseToRoutine(String id, List<String> currentSelected) async {
+    final uid = widget.user?.uid;
+    if (uid == null) return;
+    final newSelected = List<String>.from(currentSelected)..add(id);
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'selectedExercises': newSelected,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> _removeExerciseFromRoutine(String id, List<String> currentSelected) async {
+    final uid = widget.user?.uid;
+    if (uid == null) return;
+    final newSelected = List<String>.from(currentSelected)..remove(id);
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'selectedExercises': newSelected,
+    }, SetOptions(merge: true));
   }
 
   @override
@@ -163,6 +162,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 final idsToShow = neverConfigured
                     ? exerciseDefs.keys.toList()
                     : (selectedExercises ?? []);
+                    
+                final libraryIds = exerciseDefs.keys.where((id) => !idsToShow.contains(id)).toList();
 
                 for (final id in idsToShow) {
                   if (!exerciseDefs.containsKey(id)) continue;
@@ -244,7 +245,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   );
                 }
 
-                Widget buildCard(String id, bool isDone) {
+                Widget buildCard(String id, bool isDone, {bool isLibrary = false}) {
                   final exerciseData = Map<String, dynamic>.from(
                     exercises[id] ?? {},
                   );
@@ -253,16 +254,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   final todayReps = exerciseData['todayReps'] ?? 0;
                   final def = exerciseDefs[id]!;
                   final displayName = def.name;
-                  final icon = def.icon;
                   final unit = def.unit;
-
-                  final hasGoals =
-                      (def?.defaultReps ?? 0) > 0 ||
-                      (def?.defaultTimer ?? 0) > 0 ||
-                      (def?.defaultDays ?? 0) > 0;
-                  final goals = <String>[];
-                  if ((def?.defaultReps ?? 0) > 0)
-                    goals.add('${def!.defaultReps} ' + 'reps_label'.tr());
 
                   Widget gridCard() {
                     return Card(
@@ -282,7 +274,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             height: 100,
                             width: double.infinity,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFFFC72C).withOpacity(0.1),
+                              color: const Color(0xFFFFC72C).withValues(alpha: 0.1),
                             ),
                             child: Center(
                               child: buildExerciseVisual(
@@ -345,33 +337,63 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       textAlign: TextAlign.center,
                                     ),
                                   const SizedBox(height: 4),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: ElevatedButton(
-                                      onPressed: () => startExercise(
-                                        id,
-                                        isDone,
-                                        displayName,
-                                        def,
-                                        streak,
-                                        lifetime,
-                                        unit,
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
-                                          vertical: 0,
-                                        ),
-                                        minimumSize: const Size(0, 32),
-                                      ),
-                                      child: Text(
-                                        isDone
-                                            ? 'do_again_btn'.tr()
-                                            : 'start_btn'.tr(),
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
+                                  if (isLibrary) ...[
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: idsToShow.contains(id)
+                                        ? ElevatedButton(
+                                            onPressed: null,
+                                            style: ElevatedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                              minimumSize: const Size(0, 32),
+                                            ),
+                                            child: const Text('Added', style: TextStyle(fontSize: 12)),
+                                          )
+                                        : ElevatedButton(
+                                            onPressed: () => _addExerciseToRoutine(id, idsToShow),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFFFFC72C),
+                                              foregroundColor: Colors.black,
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                              minimumSize: const Size(0, 32),
+                                            ),
+                                            child: const Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                          ),
                                     ),
-                                  ),
+                                  ] else ...[
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () => startExercise(
+                                              id,
+                                              isDone,
+                                              displayName,
+                                              def,
+                                              streak,
+                                              lifetime,
+                                              unit,
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                              minimumSize: const Size(0, 32),
+                                            ),
+                                            child: Text(
+                                              isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(),
+                                              style: const TextStyle(fontSize: 12),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -393,7 +415,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       elevation: 2,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: () => startExercise(
+                        onTap: isLibrary ? null : () => startExercise(
                           id,
                           isDone,
                           displayName,
@@ -416,7 +438,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 decoration: BoxDecoration(
                                   color: const Color(
                                     0xFFFFC72C,
-                                  ).withOpacity(0.3),
+                                  ).withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Center(
@@ -461,37 +483,50 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ],
                                 ),
                               ),
-                              ElevatedButton(
-                                onPressed: () => startExercise(
-                                  id,
-                                  isDone,
-                                  displayName,
-                                  def,
-                                  streak,
-                                  lifetime,
-                                  unit,
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                              if (isLibrary) ...[
+                                idsToShow.contains(id)
+                                  ? ElevatedButton(
+                                      onPressed: null,
+                                      style: ElevatedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      ),
+                                      child: const Text('Added'),
+                                    )
+                                  : ElevatedButton(
+                                      onPressed: () => _addExerciseToRoutine(id, idsToShow),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFFC72C),
+                                        foregroundColor: Colors.black,
+                                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      ),
+                                      child: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    ),
+                              ] else ...[
+                                ElevatedButton(
+                                  onPressed: () => startExercise(
+                                    id,
+                                    isDone,
+                                    displayName,
+                                    def,
+                                    streak,
+                                    lifetime,
+                                    unit,
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                  child: Text(
+                                    isDone ? 'again_btn'.tr() : 'start_btn'.tr(),
                                   ),
                                 ),
-                                child: Text(
-                                  isDone ? 'again_btn'.tr() : 'start_btn'.tr(),
+                                IconButton(
+                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                  onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
                                 ),
-                              ),
-                              if (isDone)
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(
-                                    Icons.check_circle,
-                                    color: Colors.green,
-                                    size: 28,
-                                  ),
-                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -506,23 +541,33 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   String title,
                   List<String> ids,
                   bool isDone,
-                  Color titleColor,
-                ) {
+                  Color titleColor, {
+                  bool isLibrary = false,
+                  Widget? trailing,
+                }) {
                   if (ids.isEmpty) return const SizedBox();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0, bottom: 12.0),
-                        child: Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: titleColor,
+                      if (title.isNotEmpty || trailing != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 0.0, bottom: 0.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (title.isNotEmpty)
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: titleColor,
+                                  ),
+                                ),
+                              if (trailing != null) trailing,
+                            ],
                           ),
                         ),
-                      ),
                       if (_settings.isGridView)
                         GridView.builder(
                           shrinkWrap: true,
@@ -536,12 +581,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               ),
                           itemCount: ids.length,
                           itemBuilder: (context, index) =>
-                              buildCard(ids[index], isDone),
+                              buildCard(ids[index], isDone, isLibrary: isLibrary),
                         )
                       else
                         Column(
                           children: ids
-                              .map((id) => buildCard(id, isDone))
+                              .map((id) => buildCard(id, isDone, isLibrary: isLibrary))
                               .toList(),
                         ),
                     ],
@@ -556,279 +601,193 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     return Column(
                       children: [
                         Expanded(
-                          child: isEmpty
-                              ? Padding(
-                                  padding: const EdgeInsets.all(24.0),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          'No routine created.',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 16),
-                                        ElevatedButton(
-                                          onPressed: () => _showManageSheet(
-                                            context,
-                                            neverConfigured
-                                                ? exerciseDefs.keys.toList()
-                                                : (selectedExercises ?? []),
-                                            exerciseDefs,
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFFFFC72C,
-                                            ),
-                                            foregroundColor: Colors.black,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Create My Routine',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                          child: ListView(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                            children: [
+                              // Dashboard Header for My Routine
+                              Container(
+                                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Theme.of(context).dividerColor,
                                     ),
                                   ),
-                                )
-                              : Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    // Dashboard Header
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: Theme.of(
-                                              context,
-                                            ).dividerColor,
-                                          ),
-                                        ),
+                                    Text(
+                                      _getGreeting(),
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            _getGreeting(),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.w600,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      "Today's Routine",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      ' ${todoExercises.length + doneExercises.length} Exercises',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    if (todoExercises.isNotEmpty) ...[
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: ElevatedButton(
+                                          onPressed: () {
+                                            final firstId = todoExercises.first;
+                                            final def = exerciseDefs[firstId];
+                                            final exData = Map<String, dynamic>.from(
+                                              exercises[firstId] ?? {},
+                                            );
+                                            startExercise(
+                                              firstId,
+                                              false,
+                                              def?.name ?? _fallbackName(firstId),
+                                              def,
+                                              exData['currentStreak'] ?? 0,
+                                              exData['lifetimeTotal'] ?? 0,
+                                              def?.unit ?? 'reps',
+                                            );
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFFFC72C),
+                                            foregroundColor: Colors.black,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(16),
                                             ),
+                                            elevation: 4,
                                           ),
-                                          const SizedBox(height: 2),
-                                          const Text(
-                                            "Today's Routine",
+                                          child: const Text(
+                                            'Start My Routine',
                                             style: TextStyle(
-                                              fontSize: 20,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.w900,
                                             ),
                                           ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            ' ${todoExercises.length + doneExercises.length} Exercises',
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          if (todoExercises.isNotEmpty) ...[
-                                            SizedBox(
-                                              width: double.infinity,
-                                              height: 48,
-                                              child: ElevatedButton(
-                                                onPressed: () {
-                                                  // Start from the first unfinished exercise
-                                                  final firstId =
-                                                      todoExercises.first;
-                                                  final def =
-                                                      exerciseDefs[firstId];
-                                                  final exData =
-                                                      Map<String, dynamic>.from(
-                                                        exercises[firstId] ??
-                                                            {},
-                                                      );
-                                                  startExercise(
-                                                    firstId,
-                                                    false,
-                                                    def?.name ??
-                                                        _fallbackName(firstId),
-                                                    def,
-                                                    exData['currentStreak'] ??
-                                                        0,
-                                                    exData['lifetimeTotal'] ??
-                                                        0,
-                                                    def?.unit ?? 'reps',
-                                                  );
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(
-                                                    0xFFFFC72C,
-                                                  ),
-                                                  foregroundColor: Colors.black,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          16,
-                                                        ),
-                                                  ),
-                                                  elevation: 4,
-                                                ),
-                                                child: const Text(
-                                                  'Start My Routine',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w900,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(height: 12),
-                                            const Text(
-                                              "Tap to finish your daily routine",
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          ] else
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 12,
-                                                  ),
-                                              width: double.infinity,
-                                              decoration: BoxDecoration(
-                                                color: Colors.green.withOpacity(
-                                                  0.1,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                                border: Border.all(
-                                                  color: Colors.green,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Routine Completed for Today! 🎉',
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  color: Colors.green,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ),
-                                          const SizedBox(height: 4),
-                                          TextButton.icon(
-                                            onPressed: () => _showManageSheet(
-                                              context,
-                                              neverConfigured
-                                                  ? exerciseDefs.keys.toList()
-                                                  : (selectedExercises ?? []),
-                                              exerciseDefs,
-                                            ),
-                                            icon: const Icon(
-                                              Icons.edit_rounded,
-                                              size: 16,
-                                            ),
-                                            label: const Text(
-                                              'Edit Routine',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 13,
-                                              ),
-                                            ),
-                                            style: TextButton.styleFrom(
-                                              foregroundColor: Theme.of(
-                                                context,
-                                              ).textTheme.bodyMedium?.color,
-                                              minimumSize: Size.zero,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 8,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                    // Exercise List/Grid
-                                    Expanded(
-                                      child: Stack(
-                                        children: [
-                                          ListView(
-                                            padding: const EdgeInsets.fromLTRB(
-                                              16,
-                                              16,
-                                              16,
-                                              80,
-                                            ),
-                                            children: [
-                                              buildSection(
-                                                'to_do_label'.tr(),
-                                                todoExercises,
-                                                false,
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurface,
-                                              ),
-                                              buildSection(
-                                                'completed_today_label'.tr(),
-                                                doneExercises,
-                                                true,
-                                                Colors.green,
-                                              ),
-                                            ],
-                                          ),
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                // Toggle between list and grid view
-                                                IconButton(
-                                                  tooltip: _settings.isGridView
-                                                      ? 'switch_list_view'.tr()
-                                                      : 'switch_grid_view'.tr(),
-                                                  icon: Icon(
-                                                    _settings.isGridView
-                                                        ? Icons
-                                                              .view_list_rounded
-                                                        : Icons
-                                                              .grid_view_rounded,
-                                                  ),
-                                                  onPressed: () =>
-                                                      _settings.setGridView(
-                                                        !_settings.isGridView,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                      const SizedBox(height: 12),
+                                      const Text(
+                                        "Tap to finish your daily routine",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                    ),
+                                    ] else if (!isEmpty) ...[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: Colors.green),
+                                        ),
+                                        child: const Text(
+                                          'Routine Completed for Today! 🎉',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            color: Colors.green,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ),
+                              ),
+                              
+                              if (isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                                  child: Center(
+                                    child: Text(
+                                      "Choose your first 60-second exercise below. Add more anytime!",
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+
+                              buildSection(
+                                'to_do_label'.tr(),
+                                todoExercises,
+                                false,
+                                Theme.of(context).colorScheme.onSurface,
+                                trailing: IconButton(
+                                  tooltip: _settings.isGridView
+                                      ? 'switch_list_view'.tr()
+                                      : 'switch_grid_view'.tr(),
+                                  icon: Icon(
+                                    _settings.isGridView
+                                        ? Icons.view_list_rounded
+                                        : Icons.grid_view_rounded,
+                                  ),
+                                  onPressed: () => _settings.setGridView(!_settings.isGridView),
+                                ),
+                              ),
+                              buildSection(
+                                'completed_today_label'.tr(),
+                                doneExercises,
+                                true,
+                                Colors.green,
+                              ),
+                              
+
+                              
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    "Exercises",
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  if (todoExercises.isEmpty)
+                                    IconButton(
+                                      tooltip: _settings.isGridView
+                                          ? 'switch_list_view'.tr()
+                                          : 'switch_grid_view'.tr(),
+                                      icon: Icon(
+                                        _settings.isGridView
+                                            ? Icons.view_list_rounded
+                                            : Icons.grid_view_rounded,
+                                      ),
+                                      onPressed: () => _settings.setGridView(!_settings.isGridView),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 0),
+                              buildSection(
+                                '',
+                                libraryIds,
+                                false,
+                                Colors.transparent,
+                                isLibrary: true,
+                              ),
+                            ],
+                          ),
                         ),
                         //>>>>>>for ad
                         StreamBuilder(
@@ -866,245 +825,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           },
         );
       },
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Bottom sheet for managing selected exercises
-// -----------------------------------------------------------------------------
-class _ManageExercisesSheet extends StatefulWidget {
-  final String uid;
-  final List<String> currentSelected;
-  final Map<String, ExerciseItem> exerciseDefs;
-
-  const _ManageExercisesSheet({
-    required this.uid,
-    required this.currentSelected,
-    required this.exerciseDefs,
-  });
-
-  @override
-  State<_ManageExercisesSheet> createState() => _ManageExercisesSheetState();
-}
-
-class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
-  late Set<String> _selected;
-  bool _isSaving = false;
-  String? _errorMessage;
-  final _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = Set<String>.from(widget.currentSelected);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _toggleSelectAll() {
-    setState(() {
-      if (_selected.length == widget.exerciseDefs.length) {
-        _selected.clear();
-      } else {
-        _selected = Set<String>.from(widget.exerciseDefs.keys);
-      }
-      if (_selected.isNotEmpty) {
-        _errorMessage = null;
-      }
-    });
-  }
-
-  Future<void> _save() async {
-    if (_selected.isEmpty) {
-      setState(() => _errorMessage = 'select_at_least_one'.tr());
-      return;
-    }
-    setState(() {
-      _isSaving = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final userRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.uid);
-
-      // Update the user's selected exercises list.
-      await userRef.update({'selectedExercises': _selected.toList()});
-
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('could_not_save'.tr(args: [e.toString()]))),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final allIds = widget.exerciseDefs.keys.toList();
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'manage_exercises_title'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'manage_exercises_desc'.tr(),
-              style: const TextStyle(fontSize: 13, color: Colors.grey),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton.icon(
-                  onPressed: _toggleSelectAll,
-                  icon: Icon(
-                    _selected.length == widget.exerciseDefs.length
-                        ? Icons.remove_circle_outline
-                        : Icons.check_circle_outline,
-                    color: const Color(0xFFFFC72C),
-                  ),
-                  label: Text(
-                    _selected.length == widget.exerciseDefs.length
-                        ? 'deselect_all_btn'.tr()
-                        : 'select_all_btn'.tr(),
-                    style: const TextStyle(color: Color(0xFF444444)),
-                  ),
-                ),
-              ],
-            ),
-            if (_errorMessage != null) ...[
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.red,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.45,
-              ),
-              child: Stack(
-                children: [
-                  Scrollbar(
-                    controller: _scrollController,
-                    thumbVisibility: true,
-                    radius: const Radius.circular(8),
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      shrinkWrap: true,
-                      itemCount: allIds.length,
-                      itemBuilder: (context, index) {
-                        final id = allIds[index];
-                        final def = widget.exerciseDefs[id]!;
-                        final isSelected = _selected.contains(id);
-                        return CheckboxListTile(
-                          value: isSelected,
-                          title: Text(
-                            def.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          onChanged: (checked) {
-                            setState(() {
-                              if (checked == true) {
-                                _selected.add(id);
-                              } else {
-                                _selected.remove(id);
-                              }
-                              if (_selected.isNotEmpty) _errorMessage = null;
-                            });
-                          },
-                          activeColor: const Color(0xFFFFC72C),
-                          checkColor: Colors.black,
-                          contentPadding: EdgeInsets.zero,
-                        );
-                      },
-                    ),
-                  ),
-                  // Bottom fade — visually hints there are more items to scroll
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: IgnorePointer(
-                      child: Container(
-                        height: 36,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Theme.of(
-                                context,
-                              ).colorScheme.surface.withOpacity(0.0),
-                              Theme.of(
-                                context,
-                              ).colorScheme.surface.withOpacity(0.85),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isSaving ? null : _save,
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        'save_btn'.tr(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                        ),
-                      ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -107,27 +107,7 @@ class _StartRouterState extends State<StartRouter> {
     if (!mounted) return;
 
     if (user != null) {
-      // First check if they have a routine setup
-      bool hasRoutine = false;
-      try {
-        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          final data = doc.data();
-          hasRoutine = data?['hasRoutine'] == true || (data != null && data.containsKey('selectedExercises'));
-        }
-      } catch (e) {
-        // Fallback safely
-      }
-
       if (!mounted) return;
-
-      if (!hasRoutine) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const RoutineSetupScreen()),
-        );
-        return;
-      }
 
       Navigator.pushReplacement(
         context,
