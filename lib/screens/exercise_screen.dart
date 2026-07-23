@@ -10,6 +10,7 @@ import '../models/session_item.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+
 class ExerciseScreen extends StatefulWidget {
   final User? user;
   const ExerciseScreen({super.key, required this.user});
@@ -24,9 +25,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
-    AdService.instance.loadBannerAd(onLoaded: () {
-      if (mounted) setState(() {});
-    });
+    AdService.instance.loadBannerAd(
+      onLoaded: () {
+        if (mounted) setState(() {});
+      },
+    );
   }
 
   @override
@@ -37,16 +40,31 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   String _fallbackName(String id) {
     switch (id) {
-      case 'pushups': return 'Push-Up';
-      case 'squats': return 'Squat';
-      case 'situps': return 'Sit-Up';
-      default: return id;
+      case 'pushups':
+        return 'Push-Up';
+      case 'squats':
+        return 'Squat';
+      case 'situps':
+        return 'Sit-Up';
+      default:
+        return id;
     }
   }
 
   String _todayKey() {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 0 && hour < 12) {
+      return 'Good Morning';
+    } else if (hour >= 12 && hour < 18) {
+      return 'Good Evening';
+    } else {
+      return 'Good Night';
+    }
   }
 
   void _showManageSheet(
@@ -74,21 +92,36 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (uid == null) return Center(child: Text('please_sign_in'.tr()));
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots(),
       builder: (context, userDocSnap) {
-        final userData = userDocSnap.data?.data() as Map<String, dynamic>? ?? {};
+        final userData =
+            userDocSnap.data?.data() as Map<String, dynamic>? ?? {};
         // null means the field was never set (new user) — treat as "all selected".
         // An explicit empty list [] means the user deliberately deselected everything.
         final rawSelected = userData['selectedExercises'];
         final bool neverConfigured = rawSelected == null;
-        final selectedExercises = neverConfigured ? null : List<String>.from(rawSelected);
+        final selectedExercises = neverConfigured
+            ? null
+            : List<String>.from(rawSelected);
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
-              .collection('users').doc(uid).collection('exercises').snapshots(),
+              .collection('users')
+              .doc(uid)
+              .collection('exercises')
+              .snapshots(),
           builder: (context, userExercisesSnap) {
             if (userExercisesSnap.hasError) {
-              return Center(child: Text('error_loading'.tr(args: [userExercisesSnap.error.toString()])));
+              return Center(
+                child: Text(
+                  'error_loading'.tr(
+                    args: [userExercisesSnap.error.toString()],
+                  ),
+                ),
+              );
             }
             final exercises = <String, Map<String, dynamic>>{};
             if (userExercisesSnap.hasData) {
@@ -98,17 +131,27 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             }
 
             return StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
+              stream: FirebaseFirestore.instance
+                  .collection('exercises')
+                  .snapshots(),
               builder: (context, exerciseSnapshot) {
                 if (exerciseSnapshot.hasError) {
-                  return Center(child: Text('error_loading'.tr(args: [exerciseSnapshot.error.toString()])));
+                  return Center(
+                    child: Text(
+                      'error_loading'.tr(
+                        args: [exerciseSnapshot.error.toString()],
+                      ),
+                    ),
+                  );
                 }
 
                 final exerciseDefs = <String, ExerciseItem>{};
                 if (exerciseSnapshot.hasData) {
                   for (final doc in exerciseSnapshot.data!.docs) {
                     exerciseDefs[doc.id] = ExerciseItem.fromMap(
-                        doc.id, doc.data() as Map<String, dynamic>);
+                      doc.id,
+                      doc.data() as Map<String, dynamic>,
+                    );
                   }
                 }
 
@@ -123,8 +166,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
                 for (final id in idsToShow) {
                   if (!exerciseDefs.containsKey(id)) continue;
-                  final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
-                  final lastCompleted = exerciseData['lastCompletedDate'] as String?;
+                  final exerciseData = Map<String, dynamic>.from(
+                    exercises[id] ?? {},
+                  );
+                  final lastCompleted =
+                      exerciseData['lastCompletedDate'] as String?;
                   if (lastCompleted == today) {
                     doneExercises.add(id);
                   } else {
@@ -132,8 +178,76 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   }
                 }
 
+                void startExercise(
+                  String targetId,
+                  bool isDoneTarget,
+                  String targetDisplayName,
+                  ExerciseItem? targetDef,
+                  int targetStreak,
+                  int targetLifetime,
+                  String targetUnit,
+                ) {
+                  List<SessionItem> queue = [];
+                  int startingIndex = 1;
+                  int totalTodos = todoExercises.length;
+
+                  if (!isDoneTarget) {
+                    final index = todoExercises.indexOf(targetId);
+                    if (index != -1) {
+                      startingIndex = index + 1;
+                      for (int i = index + 1; i < todoExercises.length; i++) {
+                        final nextId = todoExercises[i];
+                        final nEx = Map<String, dynamic>.from(
+                          exercises[nextId] ?? {},
+                        );
+                        final nDef = exerciseDefs[nextId];
+                        queue.add(
+                          SessionItem(
+                            exerciseId: nextId,
+                            exerciseName: nDef?.name ?? _fallbackName(nextId),
+                            description: (nDef?.description?.isNotEmpty == true)
+                                ? nDef!.description
+                                : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                            streak: nEx['currentStreak'] ?? 0,
+                            lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
+                            defaultReps: nDef?.defaultReps ?? 0,
+                            defaultTimer: nDef?.defaultTimer ?? 0,
+                            unit: nDef?.unit ?? 'reps',
+                            exerciseDef: nDef,
+                          ),
+                        );
+                      }
+                    }
+                  }
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ExerciseStartScreen(
+                        exerciseId: targetId,
+                        exerciseName: targetDisplayName,
+                        description:
+                            (targetDef?.description?.isNotEmpty == true)
+                            ? targetDef!.description
+                            : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                        streak: targetStreak,
+                        lifetimeTotal: targetLifetime,
+                        defaultReps: targetDef?.defaultReps ?? 0,
+                        defaultTimer: targetDef?.defaultTimer ?? 0,
+                        unit: targetUnit,
+                        exerciseDef: targetDef,
+                        sessionQueue: queue,
+                        exerciseIndex: isDoneTarget ? 1 : startingIndex,
+                        totalExercises: isDoneTarget ? 1 : totalTodos,
+                      ),
+                    ),
+                  );
+                }
+
                 Widget buildCard(String id, bool isDone) {
-                  final exerciseData = Map<String, dynamic>.from(exercises[id] ?? {});
+                  final exerciseData = Map<String, dynamic>.from(
+                    exercises[id] ?? {},
+                  );
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final lifetime = exerciseData['lifetimeTotal'] ?? 0;
                   final todayReps = exerciseData['todayReps'] ?? 0;
@@ -142,60 +256,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   final icon = def.icon;
                   final unit = def.unit;
 
-                  final hasGoals = (def?.defaultReps ?? 0) > 0 || (def?.defaultTimer ?? 0) > 0 || (def?.defaultDays ?? 0) > 0;
+                  final hasGoals =
+                      (def?.defaultReps ?? 0) > 0 ||
+                      (def?.defaultTimer ?? 0) > 0 ||
+                      (def?.defaultDays ?? 0) > 0;
                   final goals = <String>[];
-                  if ((def?.defaultReps ?? 0) > 0) goals.add('${def!.defaultReps} ' + 'reps_label'.tr());
-                  if ((def?.defaultTimer ?? 0) > 0) goals.add('${def!.defaultTimer}s');
-                  if ((def?.defaultDays ?? 0) > 0) goals.add('${def!.defaultDays} ' + 'days_label'.tr());
-
-                  void startExercise() {
-                    List<SessionItem> queue = [];
-                    int startingIndex = 1;
-                    int totalTodos = todoExercises.length;
-
-                    if (!isDone) {
-                      final index = todoExercises.indexOf(id);
-                      if (index != -1) {
-                        startingIndex = index + 1;
-                        for (int i = index + 1; i < todoExercises.length; i++) {
-                          final nextId = todoExercises[i];
-                          final nEx = Map<String, dynamic>.from(exercises[nextId] ?? {});
-                          final nDef = exerciseDefs[nextId];
-                          queue.add(SessionItem(
-                            exerciseId: nextId,
-                            exerciseName: nDef?.name ?? _fallbackName(nextId),
-                            description: (nDef?.description?.isNotEmpty == true) ? nDef!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
-                            streak: nEx['currentStreak'] ?? 0,
-                            lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
-                            defaultReps: nDef?.defaultReps ?? 0,
-                            defaultTimer: nDef?.defaultTimer ?? 0,
-                            unit: nDef?.unit ?? 'reps',
-                            exerciseDef: nDef,
-                          ));
-                        }
-                      }
-                    }
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ExerciseStartScreen(
-                          exerciseId: id,
-                          exerciseName: displayName,
-                          description: (def?.description?.isNotEmpty == true) ? def!.description : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
-                          streak: streak,
-                          lifetimeTotal: lifetime,
-                          defaultReps: def?.defaultReps ?? 0,
-                          defaultTimer: def?.defaultTimer ?? 0,
-                          unit: unit,
-                          exerciseDef: def,
-                          sessionQueue: queue,
-                          exerciseIndex: isDone ? 1 : startingIndex,
-                          totalExercises: isDone ? 1 : totalTodos,
-                        ),
-                      ),
-                    );
-                  }
+                  if ((def?.defaultReps ?? 0) > 0)
+                    goals.add('${def!.defaultReps} ' + 'reps_label'.tr());
 
                   Widget gridCard() {
                     return Card(
@@ -203,7 +270,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : const BorderSide(color: Colors.black, width: 2),
+                        side: isDone
+                            ? const BorderSide(color: Colors.green, width: 2)
+                            : const BorderSide(color: Colors.black, width: 2),
                       ),
                       elevation: 2,
                       child: Column(
@@ -232,25 +301,45 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               child: Column(
                                 children: [
                                   Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Expanded(
                                         child: Text(
                                           displayName,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.center,
                                         ),
                                       ),
-                                      if (isDone) const Padding(padding: EdgeInsets.only(left: 4), child: Icon(Icons.check_circle, color: Colors.green, size: 18)),
+                                      if (isDone)
+                                        const Padding(
+                                          padding: EdgeInsets.only(left: 4),
+                                          child: Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green,
+                                            size: 18,
+                                          ),
+                                        ),
                                     ],
                                   ),
                                   const Spacer(),
                                   if (isDone)
                                     Text(
-                                      '$todayReps $unit', 
-                                      style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600),
+                                      '$todayReps $unit',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white70
+                                            : Colors.blueGrey,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center,
@@ -259,12 +348,28 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton(
-                                      onPressed: startExercise,
+                                      onPressed: () => startExercise(
+                                        id,
+                                        isDone,
+                                        displayName,
+                                        def,
+                                        streak,
+                                        lifetime,
+                                        unit,
+                                      ),
                                       style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 0,
+                                        ),
                                         minimumSize: const Size(0, 32),
                                       ),
-                                      child: Text(isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(), style: const TextStyle(fontSize: 12)),
+                                      child: Text(
+                                        isDone
+                                            ? 'do_again_btn'.tr()
+                                            : 'start_btn'.tr(),
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -281,14 +386,27 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone ? const BorderSide(color: Colors.green, width: 2) : const BorderSide(color: Colors.black, width: 2),
+                        side: isDone
+                            ? const BorderSide(color: Colors.green, width: 2)
+                            : const BorderSide(color: Colors.black, width: 2),
                       ),
                       elevation: 2,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(16),
-                        onTap: startExercise,
+                        onTap: () => startExercise(
+                          id,
+                          isDone,
+                          displayName,
+                          def,
+                          streak,
+                          lifetime,
+                          unit,
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 16.0,
+                          ),
                           child: Row(
                             children: [
                               Container(
@@ -296,22 +414,46 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 height: 64,
                                 clipBehavior: Clip.antiAlias,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFC72C).withOpacity(0.3),
+                                  color: const Color(
+                                    0xFFFFC72C,
+                                  ).withOpacity(0.3),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
-                                child: Center(child: buildExerciseVisual(def, size: 32, width: 64, height: 64, fit: BoxFit.contain)),
+                                child: Center(
+                                  child: buildExerciseVisual(
+                                    def,
+                                    size: 32,
+                                    width: 64,
+                                    height: 64,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(displayName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      displayName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                     if (isDone) ...[
                                       const SizedBox(height: 4),
                                       Text(
-                                        '$todayReps $unit', 
-                                        style: TextStyle(fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.blueGrey, fontWeight: FontWeight.w600),
+                                        '$todayReps $unit',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white70
+                                              : Colors.blueGrey,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -320,17 +462,35 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ),
                               ),
                               ElevatedButton(
-                                onPressed: startExercise,
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                onPressed: () => startExercise(
+                                  id,
+                                  isDone,
+                                  displayName,
+                                  def,
+                                  streak,
+                                  lifetime,
+                                  unit,
                                 ),
-                                child: Text(isDone ? 'again_btn'.tr() : 'start_btn'.tr()),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: Text(
+                                  isDone ? 'again_btn'.tr() : 'start_btn'.tr(),
+                                ),
                               ),
                               if (isDone)
                                 const Padding(
                                   padding: EdgeInsets.only(left: 8.0),
-                                  child: Icon(Icons.check_circle, color: Colors.green, size: 28),
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                    size: 28,
+                                  ),
                                 ),
                             ],
                           ),
@@ -342,30 +502,48 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   return _settings.isGridView ? gridCard() : listCard();
                 }
 
-                Widget buildSection(String title, List<String> ids, bool isDone, Color titleColor) {
+                Widget buildSection(
+                  String title,
+                  List<String> ids,
+                  bool isDone,
+                  Color titleColor,
+                ) {
                   if (ids.isEmpty) return const SizedBox();
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Padding(
                         padding: const EdgeInsets.only(top: 16.0, bottom: 12.0),
-                        child: Text(title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: titleColor)),
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: titleColor,
+                          ),
+                        ),
                       ),
                       if (_settings.isGridView)
                         GridView.builder(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: isDone ? 0.82 : 0.9,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: isDone ? 0.82 : 0.9,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                              ),
                           itemCount: ids.length,
-                          itemBuilder: (context, index) => buildCard(ids[index], isDone),
+                          itemBuilder: (context, index) =>
+                              buildCard(ids[index], isDone),
                         )
                       else
-                        Column(children: ids.map((id) => buildCard(id, isDone)).toList()),
+                        Column(
+                          children: ids
+                              .map((id) => buildCard(id, isDone))
+                              .toList(),
+                        ),
                     ],
                   );
                 }
@@ -377,84 +555,309 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   builder: (context, _) {
                     return Column(
                       children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
-                            children: [
-                              if (isEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 48.0),
+                        Expanded(
+                          child: isEmpty
+                              ? Padding(
+                                  padding: const EdgeInsets.all(24.0),
                                   child: Center(
-                                    child: Text(
-                                      'no_exercises_selected'.tr(),
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'No routine created.',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        ElevatedButton(
+                                          onPressed: () => _showManageSheet(
+                                            context,
+                                            neverConfigured
+                                                ? exerciseDefs.keys.toList()
+                                                : (selectedExercises ?? []),
+                                            exerciseDefs,
+                                          ),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(
+                                              0xFFFFC72C,
+                                            ),
+                                            foregroundColor: Colors.black,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Create My Routine',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ),
-                              buildSection('to_do_label'.tr(), todoExercises, false, Theme.of(context).colorScheme.onSurface),
-                              buildSection('completed_today_label'.tr(), doneExercises, true, Colors.green),
-                            ],
-                          ),
-                          Positioned(
-                              top: 8,
-                              right: 8,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Toggle between list and grid view
-                                  IconButton(
-                                    tooltip: _settings.isGridView ? 'switch_list_view'.tr() : 'switch_grid_view'.tr(),
-                                    icon: Icon(
-                                      _settings.isGridView
-                                          ? Icons.view_list_rounded
-                                          : Icons.grid_view_rounded,
-                                    ),
-                                    onPressed: () => _settings.setGridView(!_settings.isGridView),
-                                  ),
-                                  if (exerciseDefs.isNotEmpty)
-                                    IconButton(
-                                      tooltip: 'manage_exercises_title'.tr(),
-                                      icon: const Icon(Icons.edit_rounded),
-                                      onPressed: () => _showManageSheet(
-                                        context,
-                                        neverConfigured
-                                            ? exerciseDefs.keys.toList()
-                                            : (selectedExercises ?? []),
-                                        exerciseDefs,
+                                )
+                              : Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    // Dashboard Header
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Theme.of(
+                                              context,
+                                            ).dividerColor,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            _getGreeting(),
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          const Text(
+                                            "Today's Routine",
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            ' ${todoExercises.length + doneExercises.length} Exercises',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.green,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          if (todoExercises.isNotEmpty) ...[
+                                            SizedBox(
+                                              width: double.infinity,
+                                              height: 48,
+                                              child: ElevatedButton(
+                                                onPressed: () {
+                                                  // Start from the first unfinished exercise
+                                                  final firstId =
+                                                      todoExercises.first;
+                                                  final def =
+                                                      exerciseDefs[firstId];
+                                                  final exData =
+                                                      Map<String, dynamic>.from(
+                                                        exercises[firstId] ??
+                                                            {},
+                                                      );
+                                                  startExercise(
+                                                    firstId,
+                                                    false,
+                                                    def?.name ??
+                                                        _fallbackName(firstId),
+                                                    def,
+                                                    exData['currentStreak'] ??
+                                                        0,
+                                                    exData['lifetimeTotal'] ??
+                                                        0,
+                                                    def?.unit ?? 'reps',
+                                                  );
+                                                },
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(
+                                                    0xFFFFC72C,
+                                                  ),
+                                                  foregroundColor: Colors.black,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          16,
+                                                        ),
+                                                  ),
+                                                  elevation: 4,
+                                                ),
+                                                child: const Text(
+                                                  'Start My Routine',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            const Text(
+                                              "Tap to finish your daily routine",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                          ] else
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 12,
+                                                  ),
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.withOpacity(
+                                                  0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                                border: Border.all(
+                                                  color: Colors.green,
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'Routine Completed for Today! 🎉',
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          const SizedBox(height: 4),
+                                          TextButton.icon(
+                                            onPressed: () => _showManageSheet(
+                                              context,
+                                              neverConfigured
+                                                  ? exerciseDefs.keys.toList()
+                                                  : (selectedExercises ?? []),
+                                              exerciseDefs,
+                                            ),
+                                            icon: const Icon(
+                                              Icons.edit_rounded,
+                                              size: 16,
+                                            ),
+                                            label: const Text(
+                                              'Edit Routine',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                              ),
+                                            ),
+                                            style: TextButton.styleFrom(
+                                              foregroundColor: Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.color,
+                                              minimumSize: Size.zero,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 8,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    //>>>>>>for ad
-                    StreamBuilder(
-                      stream: FirebaseFirestore.instance
-                          .collection('users')
-                          .doc(FirebaseAuth.instance.currentUser?.uid)
-                          .snapshots(),
-                      builder: (context, snapshot) {
-                        final isPremium = snapshot.data?.data()?['isPremium'] == true;
-                        if (isPremium) return const SizedBox(); // No space if premium
-                        
-                        final bannerAd = AdService.instance.bannerAd;
-                        if (bannerAd != null) {
-                          return Container(
-                            alignment: Alignment.center,
-                            width: bannerAd.size.width.toDouble(),
-                            height: bannerAd.size.height.toDouble(),
-                            child: AdWidget(ad: bannerAd),
-                          );
-                        }
-                        
-                        return const SizedBox(height: 50); // Reserved space for future banner ad
-                      },
-                    ),
-                  ],
+                                    // Exercise List/Grid
+                                    Expanded(
+                                      child: Stack(
+                                        children: [
+                                          ListView(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              16,
+                                              16,
+                                              16,
+                                              80,
+                                            ),
+                                            children: [
+                                              buildSection(
+                                                'to_do_label'.tr(),
+                                                todoExercises,
+                                                false,
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                              ),
+                                              buildSection(
+                                                'completed_today_label'.tr(),
+                                                doneExercises,
+                                                true,
+                                                Colors.green,
+                                              ),
+                                            ],
+                                          ),
+                                          Positioned(
+                                            top: 8,
+                                            right: 8,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Toggle between list and grid view
+                                                IconButton(
+                                                  tooltip: _settings.isGridView
+                                                      ? 'switch_list_view'.tr()
+                                                      : 'switch_grid_view'.tr(),
+                                                  icon: Icon(
+                                                    _settings.isGridView
+                                                        ? Icons
+                                                              .view_list_rounded
+                                                        : Icons
+                                                              .grid_view_rounded,
+                                                  ),
+                                                  onPressed: () =>
+                                                      _settings.setGridView(
+                                                        !_settings.isGridView,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                        ),
+                        //>>>>>>for ad
+                        StreamBuilder(
+                          stream: FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(FirebaseAuth.instance.currentUser?.uid)
+                              .snapshots(),
+                          builder: (context, snapshot) {
+                            final isPremium =
+                                snapshot.data?.data()?['isPremium'] == true;
+                            if (isPremium)
+                              return const SizedBox(); // No space if premium
+
+                            final bannerAd = AdService.instance.bannerAd;
+                            if (bannerAd != null) {
+                              return Container(
+                                alignment: Alignment.center,
+                                width: bannerAd.size.width.toDouble(),
+                                height: bannerAd.size.height.toDouble(),
+                                child: AdWidget(ad: bannerAd),
+                              );
+                            }
+
+                            return const SizedBox(
+                              height: 50,
+                            ); // Reserved space for future banner ad
+                          },
+                        ),
+                      ],
                     );
                   },
                 );
@@ -527,8 +930,10 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
     });
 
     try {
-      final userRef = FirebaseFirestore.instance.collection('users').doc(widget.uid);
-      
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.uid);
+
       // Update the user's selected exercises list.
       await userRef.update({'selectedExercises': _selected.toList()});
 
@@ -536,7 +941,9 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('could_not_save'.tr(args: [e.toString()]))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('could_not_save'.tr(args: [e.toString()]))),
+        );
       }
     }
   }
@@ -563,9 +970,15 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('manage_exercises_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+            Text(
+              'manage_exercises_title'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 4),
-            Text('manage_exercises_desc'.tr(), style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            Text(
+              'manage_exercises_desc'.tr(),
+              style: const TextStyle(fontSize: 13, color: Colors.grey),
+            ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -573,26 +986,36 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
                 TextButton.icon(
                   onPressed: _toggleSelectAll,
                   icon: Icon(
-                    _selected.length == widget.exerciseDefs.length ? Icons.remove_circle_outline : Icons.check_circle_outline,
+                    _selected.length == widget.exerciseDefs.length
+                        ? Icons.remove_circle_outline
+                        : Icons.check_circle_outline,
                     color: const Color(0xFFFFC72C),
                   ),
                   label: Text(
-                    _selected.length == widget.exerciseDefs.length ? 'deselect_all_btn'.tr() : 'select_all_btn'.tr(),
+                    _selected.length == widget.exerciseDefs.length
+                        ? 'deselect_all_btn'.tr()
+                        : 'select_all_btn'.tr(),
                     style: const TextStyle(color: Color(0xFF444444)),
                   ),
                 ),
               ],
             ),
-            if (_errorMessage != null) ...[  
+            if (_errorMessage != null) ...[
               const SizedBox(height: 6),
               Text(
                 _errorMessage!,
-                style: const TextStyle(fontSize: 12, color: Colors.red, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.red,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
             const SizedBox(height: 12),
             ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.45),
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.45,
+              ),
               child: Stack(
                 children: [
                   Scrollbar(
@@ -609,10 +1032,17 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
                         final isSelected = _selected.contains(id);
                         return CheckboxListTile(
                           value: isSelected,
-                          title: Text(def.name, style: const TextStyle(fontWeight: FontWeight.w600)),
+                          title: Text(
+                            def.name,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
                           onChanged: (checked) {
                             setState(() {
-                              if (checked == true) { _selected.add(id); } else { _selected.remove(id); }
+                              if (checked == true) {
+                                _selected.add(id);
+                              } else {
+                                _selected.remove(id);
+                              }
                               if (_selected.isNotEmpty) _errorMessage = null;
                             });
                           },
@@ -636,8 +1066,12 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              Theme.of(context).colorScheme.surface.withOpacity(0.0),
-                              Theme.of(context).colorScheme.surface.withOpacity(0.85),
+                              Theme.of(
+                                context,
+                              ).colorScheme.surface.withOpacity(0.0),
+                              Theme.of(
+                                context,
+                              ).colorScheme.surface.withOpacity(0.85),
                             ],
                           ),
                         ),
@@ -654,8 +1088,18 @@ class _ManageExercisesSheetState extends State<_ManageExercisesSheet> {
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Text('save_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        'save_btn'.tr(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],

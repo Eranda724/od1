@@ -89,7 +89,7 @@ class ExerciseStartScreen extends StatefulWidget {
   final int defaultTimer;
   final String unit;
   final ExerciseItem? exerciseDef;
-  
+
   final List<SessionItem>? sessionQueue;
   final int? exerciseIndex;
   final int? totalExercises;
@@ -402,7 +402,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurface),
+            Icon(
+              icon,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
             const SizedBox(width: _PCSpacing.xs),
             Text(
               label,
@@ -413,7 +417,10 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         const SizedBox(height: _PCSpacing.xs),
         Text(
           value,
-          style: _PCTextStyles.heroNumber(context).copyWith(fontSize: 42, color: Theme.of(context).colorScheme.onSurface),
+          style: _PCTextStyles.heroNumber(context).copyWith(
+            fontSize: 42,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
       ],
     );
@@ -462,7 +469,12 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               const SizedBox(width: _PCSpacing.xs),
-              Text('ready_time_label'.tr(), style: _PCTextStyles.sectionLabel(context).copyWith(fontSize: 16)),
+              Text(
+                'ready_time_label'.tr(),
+                style: _PCTextStyles.sectionLabel(
+                  context,
+                ).copyWith(fontSize: 16),
+              ),
             ],
           ),
           Row(
@@ -473,7 +485,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: _wantsReadyTime ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  color: _wantsReadyTime
+                      ? Theme.of(context).colorScheme.onSurface
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
               const SizedBox(width: _PCSpacing.sm),
@@ -504,7 +520,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(_PCRadii.sm),
-                      border: Border.all(color: PCColors.brown.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: PCColors.brown.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Icon(
                       Icons.arrow_drop_down_rounded,
@@ -587,7 +605,6 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       size: 48,
                       color: Colors.white,
                     ),
-                    
                   ],
                 ),
         ),
@@ -638,7 +655,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       Text(
                         widget.description!,
                         style: _PCTextStyles.bodyText(context).copyWith(
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.8),
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 2,
@@ -679,7 +698,12 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _StatPill(icon: '🔥', label: 'day_streak_count'.tr(args: [widget.streak.toString()])),
+                      _StatPill(
+                        icon: '🔥',
+                        label: 'day_streak_count'.tr(
+                          args: [widget.streak.toString()],
+                        ),
+                      ),
                       Container(
                         width: 1,
                         height: 28,
@@ -687,7 +711,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       ),
                       _StatPill(
                         icon: '💪',
-                        label: 'lifetime_total_count'.tr(args: [widget.lifetimeTotal.toString()]),
+                        label: 'lifetime_total_count'.tr(
+                          args: [widget.lifetimeTotal.toString()],
+                        ),
                       ),
                     ],
                   ),
@@ -722,11 +748,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               // ── Random Image Spacer ───────────────────────────────────────────
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: _PCSpacing.md, horizontal: _PCSpacing.xl),
-                  child: Image.asset(
-                    _randomImage,
-                    fit: BoxFit.contain,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: _PCSpacing.md,
+                    horizontal: _PCSpacing.xl,
                   ),
+                  child: Image.asset(_randomImage, fit: BoxFit.contain),
                 ),
               ),
 
@@ -767,7 +793,9 @@ class _TimerOption extends StatelessWidget {
         Icon(
           icon ?? Icons.timer_rounded,
           size: 20,
-          color: selected ? PCColors.yellowDark : Theme.of(context).colorScheme.onSurface,
+          color: selected
+              ? PCColors.yellowDark
+              : Theme.of(context).colorScheme.onSurface,
         ),
         const SizedBox(width: _PCSpacing.md),
         Text(
@@ -775,16 +803,16 @@ class _TimerOption extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-            color: selected ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            color: selected
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
         if (selected) ...[
           const Spacer(),
-          const Icon(
-            Icons.check_rounded,
-            size: 20,
-            color: PCColors.green,
-          ),
+          const Icon(Icons.check_rounded, size: 20, color: PCColors.green),
         ],
       ],
     );
@@ -802,14 +830,11 @@ class _StatPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
-          const SizedBox(width: _PCSpacing.sm),
-          Text(
-            label,
-            style: _PCTextStyles.statLabel(context),
-          ),
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(icon, style: const TextStyle(fontSize: 20)),
+      const SizedBox(width: _PCSpacing.sm),
+      Text(label, style: _PCTextStyles.statLabel(context)),
+    ],
+  );
 }

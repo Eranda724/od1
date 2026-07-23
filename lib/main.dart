@@ -6,6 +6,8 @@ import 'firebase_options.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/routine_setup_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
 import 'admin/admin_service.dart';
@@ -105,6 +107,28 @@ class _StartRouterState extends State<StartRouter> {
     if (!mounted) return;
 
     if (user != null) {
+      // First check if they have a routine setup
+      bool hasRoutine = false;
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+        if (doc.exists) {
+          final data = doc.data();
+          hasRoutine = data?['hasRoutine'] == true || (data != null && data.containsKey('selectedExercises'));
+        }
+      } catch (e) {
+        // Fallback safely
+      }
+
+      if (!mounted) return;
+
+      if (!hasRoutine) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const RoutineSetupScreen()),
+        );
+        return;
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
