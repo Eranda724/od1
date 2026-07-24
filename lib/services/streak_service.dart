@@ -61,6 +61,8 @@ class StreakService {
       final overallLastDate = userData['overallLastDate'] as String?;
       int freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
       String? freezeLastRefillDate = userData['freezeLastRefillDate'] as String?;
+      List<String> frozenDates = List<String>.from(userData['frozenDates'] ?? []);
+      List<String> activeDates = List<String>.from(userData['activeDates'] ?? []);
 
       final todayObj = DateTime.parse(today);
 
@@ -88,9 +90,27 @@ class StreakService {
         if (daysMissed > 0 && freezesAvailable >= daysMissed) {
           freezesAvailable -= daysMissed;
           newOverallStreak = prevOverallStreak + 1;
+          
+          for (int i = 1; i <= daysMissed; i++) {
+            final missingDay = lastDateObj.add(Duration(days: i));
+            final missingDayStr = '${missingDay.year}-${missingDay.month.toString().padLeft(2, '0')}-${missingDay.day.toString().padLeft(2, '0')}';
+            if (!frozenDates.contains(missingDayStr)) {
+              frozenDates.add(missingDayStr);
+            }
+          }
         } else {
           newOverallStreak = 1;
         }
+      }
+
+      if (!activeDates.contains(today)) {
+        activeDates.add(today);
+      }
+      if (activeDates.length > 30) {
+        activeDates = activeDates.sublist(activeDates.length - 30);
+      }
+      if (frozenDates.length > 30) {
+        frozenDates = frozenDates.sublist(frozenDates.length - 30);
       }
 
       tx.set(exRef, {
@@ -115,6 +135,8 @@ class StreakService {
         'freezesAvailable': freezesAvailable,
         'freezeLastRefillDate': freezeLastRefillDate,
         'scores': newScores,
+        'activeDates': activeDates,
+        'frozenDates': frozenDates,
       }, SetOptions(merge: true));
 
       return {
@@ -124,5 +146,32 @@ class StreakService {
         'overallStreak': newOverallStreak,
       };
     });
+  }
+
+  /// Checks if the streak is broken and updates the database if necessary.
+  static Future<void> checkAndUpdateStreak(String uid) async {
+    final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
+    final userSnap = await userRef.get();
+    if (!userSnap.exists) return;
+
+    final userData = userSnap.data() ?? {};
+    final overallStreak = (userData['overallStreak'] ?? 0) as int;
+    if (overallStreak <= 0) return;
+
+    final overallLastDate = userData['overallLastDate'] as String?;
+    if (overallLastDate == null) return;
+
+    final freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
+    final today = _todayKey();
+    final todayObj = DateTime.parse(today);
+    final lastDateObj = DateTime.parse(overallLastDate);
+    final daysMissed = todayObj.difference(lastDateObj).inDays - 1;
+
+    // If we missed 1 or more days (yesterday was missed) and we don't have enough freezes
+    if (daysMissed > 0 && freezesAvailable < daysMissed) {
+      await userRef.set({
+        'overallStreak': 0, // Broken streak
+      }, SetOptions(merge: true));
+    }
   }
 }

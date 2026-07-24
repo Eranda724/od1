@@ -5,9 +5,28 @@ import '../app_settings.dart';
 import '../models/exercise_icons.dart';
 import '../models/exercise_item.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../models/session_item.dart';
+import '../services/streak_service.dart';
+import 'exercise_start_screen.dart';
 
-class StreakScreen extends StatelessWidget {
-  const StreakScreen({super.key});
+class StreakScreen extends StatefulWidget {
+  final VoidCallback? onStartRoutine;
+
+  const StreakScreen({super.key, this.onStartRoutine});
+
+  @override
+  State<StreakScreen> createState() => _StreakScreenState();
+}
+
+class _StreakScreenState extends State<StreakScreen> {
+  @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      StreakService.checkAndUpdateStreak(uid);
+    }
+  }
 
   String _todayKey() {
     final now = DateTime.now();
@@ -46,6 +65,8 @@ class StreakScreen extends StatelessWidget {
         final overallLastDate = data['overallLastDate'] as String?;
         final freezesAvailable = (data['freezesAvailable'] ?? 0) as int;
         final freezeLastRefillDate = data['freezeLastRefillDate'] as String?;
+        final activeDates = List<String>.from(data['activeDates'] ?? []);
+        final frozenDates = List<String>.from(data['frozenDates'] ?? []);
         final today = _todayKey();
         final last7 = _last7Days();
 
@@ -75,6 +96,23 @@ class StreakScreen extends StatelessWidget {
               }
             }
 
+            final neverConfigured = data['selectedExercises'] == null;
+            final selectedExercises = (data['selectedExercises'] as List<dynamic>?)?.map((e) => e.toString()).toList();
+            final idsToShow = neverConfigured ? defs.keys.toList() : (selectedExercises ?? []);
+            
+            final todoExercises = <String>[];
+            for (final id in idsToShow) {
+              if (!defs.containsKey(id)) continue;
+              final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
+              if (exData['lastCompletedDate'] != today) {
+                todoExercises.add(id);
+              }
+            }
+
+            final routineExercises = idsToShow.where((id) => defs.containsKey(id)).toList();
+            final totalRoutine = routineExercises.length;
+            final completedRoutine = totalRoutine - todoExercises.length;
+
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
               children: [
@@ -84,9 +122,98 @@ class StreakScreen extends StatelessWidget {
                   lastDate: overallLastDate,
                   today: today,
                   last7Days: last7,
-                  exercisesMap: exercisesMap,
+                  activeDates: activeDates,
+                  frozenDates: frozenDates,
                   freezesAvailable: freezesAvailable,
                   freezeLastRefillDate: freezeLastRefillDate,
+                  totalRoutine: totalRoutine,
+                  completedRoutine: completedRoutine,
+                ),
+
+                const SizedBox(height: 16),
+
+                // ── Start My Routine button ────────────────────────────
+                Builder(
+                  builder: (context) {
+
+                    return Container(
+                      width: double.infinity,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        border: const Border(
+                          bottom: BorderSide(
+                            color: PCColors.greenDark,
+                            width: 4,
+                          ),
+                        ),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (widget.onStartRoutine != null) {
+                            widget.onStartRoutine!();
+                          }
+                          
+                          if (idsToShow.isEmpty || defs.isEmpty) return;
+                          
+                          final targetList = todoExercises.isNotEmpty ? todoExercises : idsToShow;
+                          List<SessionItem> queue = [];
+                          for (final nextId in targetList) {
+                            if (!defs.containsKey(nextId)) continue;
+                            final exData = Map<String, dynamic>.from(exercisesMap[nextId] ?? {});
+                            final tDef = defs[nextId]!;
+                            queue.add(SessionItem(
+                              exerciseId: nextId,
+                              exerciseName: tDef.name,
+                              streak: (exData['currentStreak'] ?? 0) as int,
+                              lifetimeTotal: (exData['lifetimeTotal'] ?? 0) as int,
+                              defaultReps: tDef.defaultReps,
+                              defaultTimer: tDef.defaultTimer,
+                              unit: tDef.unit,
+                              exerciseDef: tDef,
+                            ));
+                          }
+                          
+                          if (queue.isEmpty) return;
+                          
+                          final first = queue.first;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ExerciseStartScreen(
+                                exerciseId: first.exerciseId,
+                                exerciseName: first.exerciseName,
+                                streak: first.streak,
+                                lifetimeTotal: first.lifetimeTotal,
+                                defaultReps: first.defaultReps,
+                                defaultTimer: first.defaultTimer,
+                                unit: first.unit,
+                                exerciseDef: first.exerciseDef,
+                                sessionQueue: queue,
+                                exerciseIndex: 1,
+                                totalExercises: queue.length,
+                              ),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: PCColors.green,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          'start_my_routine'.tr().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 24),
@@ -152,32 +279,25 @@ class _OverallStreakCard extends StatelessWidget {
   final String? lastDate;
   final String today;
   final List<String> last7Days;
-  final Map<String, dynamic> exercisesMap;
+  final List<String> activeDates;
+  final List<String> frozenDates;
   final int freezesAvailable;
   final String? freezeLastRefillDate;
+  final int totalRoutine;
+  final int completedRoutine;
 
   const _OverallStreakCard({
     required this.overallStreak,
     required this.lastDate,
     required this.today,
     required this.last7Days,
-    required this.exercisesMap,
+    required this.activeDates,
+    required this.frozenDates,
     required this.freezesAvailable,
     required this.freezeLastRefillDate,
+    required this.totalRoutine,
+    required this.completedRoutine,
   });
-
-  // A day is "active" in the overall streak if any exercise was done that day.
-  // We use the per-exercise lastCompletedDate to detect which days had activity.
-  Set<String> _activeDays() {
-    final active = <String>{};
-    for (final exData in exercisesMap.values) {
-      if (exData is Map) {
-        final d = exData['lastCompletedDate'] as String?;
-        if (d != null) active.add(d);
-      }
-    }
-    return active;
-  }
 
   String _timeUntilNextFreeze() {
     if (freezesAvailable >= 2) return 'freezes_full'.tr();
@@ -248,7 +368,6 @@ class _OverallStreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActiveToday = lastDate == today;
-    final activeDays = _activeDays();
 
     return Container(
       width: double.infinity,
@@ -282,7 +401,7 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (isActiveToday)
+              if (totalRoutine == 0 && isActiveToday)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -295,6 +414,22 @@ class _OverallStreakCard extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: Colors.white,
+                    ),
+                  ),
+                )
+              else if (totalRoutine > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: completedRoutine == totalRoutine ? PCColors.green : Colors.white24,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    completedRoutine == totalRoutine ? '✓ ${'today_label'.tr()}' : '$completedRoutine/$totalRoutine',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: completedRoutine == totalRoutine ? Colors.white : Colors.white70,
                     ),
                   ),
                 ),
@@ -339,11 +474,13 @@ class _OverallStreakCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: last7Days.map((day) {
-              final isActive = activeDays.contains(day);
+              final isActive = activeDates.contains(day);
+              final isFrozen = frozenDates.contains(day);
               final isToday = day == today;
               return _DayDot(
                 label: _shortDay(context, day),
                 active: isActive,
+                isFrozen: isFrozen,
                 isToday: isToday,
               );
             }).toList(),
@@ -367,9 +504,10 @@ class _OverallStreakCard extends StatelessWidget {
 class _DayDot extends StatelessWidget {
   final String label;
   final bool active;
+  final bool isFrozen;
   final bool isToday;
 
-  const _DayDot({required this.label, required this.active, required this.isToday});
+  const _DayDot({required this.label, required this.active, required this.isFrozen, required this.isToday});
 
   @override
   Widget build(BuildContext context) {
@@ -380,20 +518,24 @@ class _DayDot extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: active ? PCColors.yellow : Colors.white12,
+            color: active ? PCColors.yellow : (isFrozen ? Colors.blue.withValues(alpha: 0.15) : Colors.white12),
             border: isToday
                 ? Border.all(color: PCColors.yellow, width: 2)
-                : null,
+                : (isFrozen ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 1) : null),
           ),
           child: active
               ? const Center(
                   child: Text('🔥', style: TextStyle(fontSize: 16)),
                 )
-              : isToday
+              : isFrozen 
                   ? const Center(
-                      child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1)),
+                      child: Text('❄️', style: TextStyle(fontSize: 14)),
                     )
-                  : null,
+                  : isToday
+                      ? const Center(
+                          child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1)),
+                        )
+                      : null,
         ),
         const SizedBox(height: 4),
         Text(
@@ -401,7 +543,7 @@ class _DayDot extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: active ? PCColors.yellow : Colors.white38,
+            color: active ? PCColors.yellow : (isFrozen ? Colors.blueAccent : Colors.white38),
           ),
         ),
       ],

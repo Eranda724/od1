@@ -128,7 +128,9 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _tabController,
         children: [
           ExerciseScreen(user: user),
-          const StreakScreen(),
+          StreakScreen(onStartRoutine: () {
+            _tabController.animateTo(0);
+          }),
           LeaderboardScreen(currentUid: user?.uid),
           const SocialScreen(),
         ],

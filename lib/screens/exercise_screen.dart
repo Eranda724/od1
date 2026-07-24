@@ -699,12 +699,16 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     if (todoExercises.isNotEmpty) ...[
                                       Container(
                                         width: double.infinity,
-                                        height: 52,
+                                        height: 56,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFD6A000),
                                           borderRadius: BorderRadius.circular(16),
+                                          border: const Border(
+                                            bottom: BorderSide(
+                                              color: PCColors.greenDark,
+                                              width: 4,
+                                            ),
+                                          ),
                                         ),
-                                        padding: const EdgeInsets.only(bottom: 4),
                                         child: ElevatedButton(
                                           onPressed: () {
                                             final firstId = todoExercises.first;
@@ -723,16 +727,16 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             );
                                           },
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(0xFFFFC72C),
-                                            foregroundColor: Colors.black,
+                                            backgroundColor: PCColors.green,
+                                            foregroundColor: Colors.white,
                                             elevation: 0,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(16),
                                             ),
                                           ),
-                                          child: const Text(
-                                            'START MY ROUTINE',
-                                            style: TextStyle(
+                                          child: Text(
+                                            'start_my_routine'.tr().toUpperCase(),
+                                            style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w900,
                                               letterSpacing: 1.0,
