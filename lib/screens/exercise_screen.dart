@@ -259,12 +259,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   Widget gridCard() {
                     return Card(
                       margin: EdgeInsets.zero,
+                      color: isDone ? Colors.green.withValues(alpha: 0.05) : null,
                       clipBehavior: Clip.antiAlias,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone
-                            ? const BorderSide(color: Colors.green, width: 2)
-                            : const BorderSide(color: Colors.black, width: 2),
+                        side: BorderSide.none,
                       ),
                       elevation: 2,
                       child: Column(
@@ -346,41 +345,67 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             style: ElevatedButton.styleFrom(
                                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
                                               minimumSize: const Size(0, 32),
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                             ),
-                                            child: const Text('Added', style: TextStyle(fontSize: 12)),
+                                            child: const Text('ADDED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
                                           )
-                                        : ElevatedButton(
-                                            onPressed: () => _addExerciseToRoutine(id, idsToShow),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFFFFC72C),
-                                              foregroundColor: Colors.black,
-                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                                              minimumSize: const Size(0, 32),
+                                        : Container(
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFD6A000),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
-                                            child: const Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                            padding: const EdgeInsets.only(bottom: 3),
+                                            child: ElevatedButton(
+                                              onPressed: () => _addExerciseToRoutine(id, idsToShow),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFFFFC72C),
+                                                foregroundColor: Colors.black,
+                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              child: const Text('ADD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                                            ),
                                           ),
                                     ),
                                   ] else ...[
                                     Row(
                                       children: [
                                         Expanded(
-                                          child: ElevatedButton(
-                                            onPressed: () => startExercise(
-                                              id,
-                                              isDone,
-                                              displayName,
-                                              def,
-                                              streak,
-                                              lifetime,
-                                              unit,
+                                          child: Container(
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: isDone ? const Color(0xFFE5E5E5) : const Color(0xFFD6A000),
+                                              borderRadius: BorderRadius.circular(8),
                                             ),
-                                            style: ElevatedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
-                                              minimumSize: const Size(0, 32),
-                                            ),
-                                            child: Text(
-                                              isDone ? 'do_again_btn'.tr() : 'start_btn'.tr(),
-                                              style: const TextStyle(fontSize: 12),
+                                            padding: EdgeInsets.only(bottom: isDone ? 1.5 : 3),
+                                            child: ElevatedButton(
+                                              onPressed: () => startExercise(
+                                                id,
+                                                isDone,
+                                                displayName,
+                                                def,
+                                                streak,
+                                                lifetime,
+                                                unit,
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: isDone ? Colors.white : const Color(0xFFFFC72C),
+                                                foregroundColor: isDone ? Colors.black54 : Colors.black,
+                                                elevation: 0,
+                                                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              child: Text(
+                                                isDone ? 'do_again_btn'.tr().toUpperCase() : 'start_btn'.tr().toUpperCase(),
+                                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -406,11 +431,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   Widget listCard() {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
+                      color: isDone ? Colors.green.withValues(alpha: 0.05) : null,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: isDone
-                            ? const BorderSide(color: Colors.green, width: 2)
-                            : const BorderSide(color: Colors.black, width: 2),
+                        side: BorderSide.none,
                       ),
                       elevation: 2,
                       child: InkWell(
@@ -488,38 +512,63 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ? ElevatedButton(
                                       onPressed: null,
                                       style: ElevatedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
-                                      child: const Text('Added'),
+                                      child: const Text('ADDED', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                                     )
-                                  : ElevatedButton(
-                                      onPressed: () => _addExerciseToRoutine(id, idsToShow),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFFFFC72C),
-                                        foregroundColor: Colors.black,
-                                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  : Container(
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFD6A000),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
-                                      child: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
+                                      padding: const EdgeInsets.only(bottom: 4),
+                                      child: ElevatedButton(
+                                        onPressed: () => _addExerciseToRoutine(id, idsToShow),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFFFC72C),
+                                          foregroundColor: Colors.black,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                        child: const Text('ADD', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                      ),
                                     ),
                               ] else ...[
-                                ElevatedButton(
-                                  onPressed: () => startExercise(
-                                    id,
-                                    isDone,
-                                    displayName,
-                                    def,
-                                    streak,
-                                    lifetime,
-                                    unit,
+                                Container(
+                                  decoration: BoxDecoration(
+                                    color: isDone ? const Color(0xFFE5E5E5) : const Color(0xFFD6A000),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                  ),
-                                  child: Text(
-                                    isDone ? 'again_btn'.tr() : 'start_btn'.tr(),
+                                  padding: EdgeInsets.only(bottom: isDone ? 2 : 4),
+                                  child: ElevatedButton(
+                                    onPressed: () => startExercise(
+                                      id,
+                                      isDone,
+                                      displayName,
+                                      def,
+                                      streak,
+                                      lifetime,
+                                      unit,
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: isDone ? Colors.white : const Color(0xFFFFC72C),
+                                      foregroundColor: isDone ? Colors.black54 : Colors.black,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isDone ? 'again_btn'.tr().toUpperCase() : 'start_btn'.tr().toUpperCase(),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                                    ),
                                   ),
                                 ),
                                 IconButton(
@@ -645,9 +694,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     ),
                                     const SizedBox(height: 12),
                                     if (todoExercises.isNotEmpty) ...[
-                                      SizedBox(
+                                      Container(
                                         width: double.infinity,
-                                        height: 48,
+                                        height: 52,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFD6A000),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        padding: const EdgeInsets.only(bottom: 4),
                                         child: ElevatedButton(
                                           onPressed: () {
                                             final firstId = todoExercises.first;
@@ -668,16 +722,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: const Color(0xFFFFC72C),
                                             foregroundColor: Colors.black,
+                                            elevation: 0,
                                             shape: RoundedRectangleBorder(
                                               borderRadius: BorderRadius.circular(16),
                                             ),
-                                            elevation: 4,
                                           ),
                                           child: const Text(
-                                            'Start My Routine',
+                                            'START MY ROUTINE',
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.0,
                                             ),
                                           ),
                                         ),
