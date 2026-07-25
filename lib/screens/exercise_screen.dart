@@ -379,10 +379,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           child: Container(
                                             height: 36,
                                             decoration: BoxDecoration(
-                                              color: isDone ? const Color(0xFFE5E5E5) : const Color(0xFFD6A000),
+                                              color: const Color(0xFFD6A000),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
-                                            padding: EdgeInsets.only(bottom: isDone ? 1.5 : 3),
+                                            padding: const EdgeInsets.only(bottom: 3),
                                             child: ElevatedButton(
                                               onPressed: () => startExercise(
                                                 id,
@@ -394,8 +394,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 unit,
                                               ),
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: isDone ? Colors.white : const Color(0xFFFFC72C),
-                                                foregroundColor: isDone ? Colors.black54 : Colors.black,
+                                                backgroundColor: const Color(0xFFFFC72C),
+                                                foregroundColor: Colors.black,
                                                 elevation: 0,
                                                 padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 0),
                                                 minimumSize: Size.zero,
@@ -543,10 +543,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                  Container(
                                    height: 48,
                                    decoration: BoxDecoration(
-                                     color: isDone ? const Color(0xFFE5E5E5) : const Color(0xFFD6A000),
+                                     color: const Color(0xFFD6A000),
                                      borderRadius: BorderRadius.circular(12),
                                    ),
-                                   padding: EdgeInsets.only(bottom: isDone ? 2 : 4),
+                                   padding: const EdgeInsets.only(bottom: 4),
                                    child: ElevatedButton(
                                      onPressed: () => startExercise(
                                        id,
@@ -558,8 +558,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                        unit,
                                      ),
                                      style: ElevatedButton.styleFrom(
-                                       backgroundColor: isDone ? Colors.white : const Color(0xFFFFC72C),
-                                       foregroundColor: isDone ? Colors.black54 : Colors.black,
+                                       backgroundColor: const Color(0xFFFFC72C),
+                                       foregroundColor: Colors.black,
                                        elevation: 0,
                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                                        minimumSize: Size.zero,
@@ -807,15 +807,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   onPressed: () => _settings.setGridView(!_settings.isGridView),
                                 ),
                               ),
-                              buildSection(
-                                'completed_today_label'.tr(),
-                                doneExercises,
-                                true,
-                                Colors.green,
-                              ),
-                              
-
-                              
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -847,6 +838,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 false,
                                 Colors.transparent,
                                 isLibrary: true,
+                              ),
+                              
+                              buildSection(
+                                'completed_today_label'.tr(),
+                                doneExercises,
+                                true,
+                                Colors.green,
                               ),
                             ],
                           ),
