@@ -191,6 +191,12 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         reps: _reps,
       );
 
+      final isRoutineFinished = await StreakService.checkRoutineCompletion(user.uid);
+      if (isRoutineFinished) {
+        final routineResult = await StreakService.logRoutineCompletion(user.uid);
+        result['overallStreak'] = routineResult['overallStreak']!;
+      }
+
       if (!mounted) return;
 
       // Cancel the evening streak-saver notification — user worked out today!

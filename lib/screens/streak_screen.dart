@@ -7,6 +7,7 @@ import '../models/exercise_item.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../models/session_item.dart';
 import '../services/streak_service.dart';
+import '../widgets/month_calendar_widget.dart';
 import 'exercise_start_screen.dart';
 
 class StreakScreen extends StatefulWidget {
@@ -31,16 +32,6 @@ class _StreakScreenState extends State<StreakScreen> {
   String _todayKey() {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-  }
-
-  // Returns last 7 day keys (oldest → newest)
-  List<String> _last7Days() {
-    final days = <String>[];
-    for (int i = 6; i >= 0; i--) {
-      final d = DateTime.now().subtract(Duration(days: i));
-      days.add('${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}');
-    }
-    return days;
   }
 
   @override
@@ -68,7 +59,6 @@ class _StreakScreenState extends State<StreakScreen> {
         final activeDates = List<String>.from(data['activeDates'] ?? []);
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
         final today = _todayKey();
-        final last7 = _last7Days();
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').snapshots(),
@@ -113,6 +103,27 @@ class _StreakScreenState extends State<StreakScreen> {
             final totalRoutine = routineExercises.length;
             final completedRoutine = totalRoutine - todoExercises.length;
 
+            final userExercises = defs.entries.where((entry) {
+              final id = entry.key;
+              final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
+              final lastCompletedDate = exData['lastCompletedDate'] as String?;
+              return lastCompletedDate == today;
+            }).toList();
+
+            userExercises.sort((a, b) {
+              final aData = Map<String, dynamic>.from(exercisesMap[a.key] ?? {});
+              final bData = Map<String, dynamic>.from(exercisesMap[b.key] ?? {});
+              final aStreak = (aData['currentStreak'] ?? 0) as int;
+              final bStreak = (bData['currentStreak'] ?? 0) as int;
+              
+              if (aStreak > 0 && bStreak == 0) return -1;
+              if (bStreak > 0 && aStreak == 0) return 1;
+              
+              if (aStreak != bStreak) return bStreak.compareTo(aStreak);
+              
+              return a.value.name.compareTo(b.value.name);
+            });
+
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
               children: [
@@ -121,7 +132,6 @@ class _StreakScreenState extends State<StreakScreen> {
                   overallStreak: overallStreak,
                   lastDate: overallLastDate,
                   today: today,
-                  last7Days: last7,
                   activeDates: activeDates,
                   frozenDates: frozenDates,
                   freezesAvailable: freezesAvailable,
@@ -231,15 +241,15 @@ class _StreakScreenState extends State<StreakScreen> {
                 const SizedBox(height: 12),
 
                 // ── Per-exercise streak cards ─────────────────────────────────
-                if (defs.isEmpty)
+                if (userExercises.isEmpty)
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text('no_exercises_available'.tr()),
+                      child: Text('You haven\'t started any exercises yet.'),
                     ),
                   )
                 else
-                  ...defs.entries.map((entry) {
+                  ...userExercises.map((entry) {
                     final id = entry.key;
                     final def = entry.value;
                     final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
@@ -250,13 +260,11 @@ class _StreakScreenState extends State<StreakScreen> {
 
                     // Which of the last 7 days has this exercise been done?
                     // We only know today/yesterday with certainty from streak data.
-                    // Build a simplified dot row from streak count.
                     return _ExerciseStreakCard(
                       def: def,
                       streak: streak,
                       lifetime: lifetime,
                       doneToday: doneToday,
-                      last7Days: last7,
                       lastCompletedDate: lastDate,
                     );
                   }),
@@ -278,7 +286,6 @@ class _OverallStreakCard extends StatelessWidget {
   final int overallStreak;
   final String? lastDate;
   final String today;
-  final List<String> last7Days;
   final List<String> activeDates;
   final List<String> frozenDates;
   final int freezesAvailable;
@@ -290,7 +297,6 @@ class _OverallStreakCard extends StatelessWidget {
     required this.overallStreak,
     required this.lastDate,
     required this.today,
-    required this.last7Days,
     required this.activeDates,
     required this.frozenDates,
     required this.freezesAvailable,
@@ -298,72 +304,6 @@ class _OverallStreakCard extends StatelessWidget {
     required this.totalRoutine,
     required this.completedRoutine,
   });
-
-  String _timeUntilNextFreeze() {
-    if (freezesAvailable >= 2) return 'freezes_full'.tr();
-    if (freezeLastRefillDate == null) return 'next_freeze_soon'.tr();
-    final refillObj = DateTime.parse(freezeLastRefillDate!);
-    final todayObj = DateTime.parse(today);
-    final daysSince = todayObj.difference(refillObj).inDays;
-    final daysLeft = 7 - daysSince;
-    if (daysLeft <= 0) return 'next_freeze_today'.tr();
-    return daysLeft > 1 ? 'next_freeze_in_days'.tr(args: [daysLeft.toString()]) : 'next_freeze_in_day'.tr();
-  }
-
-  Widget _buildFreezeSection(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: Colors.blueAccent.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Two freeze shield slots
-          Row(
-            children: List.generate(2, (index) {
-              final isFilled = index < freezesAvailable;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: _FreezeShield(filled: isFilled),
-              );
-            }),
-          ),
-          const SizedBox(width: 12),
-          // Text info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'streak_freeze'.tr(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _timeUntilNextFreeze(),
-                  style: TextStyle(
-                    color: Colors.blueAccent.withValues(alpha: 0.8),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -464,131 +404,14 @@ class _OverallStreakCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
             ],
           ),
 
-          const SizedBox(height: 16),
-
-          // 7-day dot calendar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: last7Days.map((day) {
-              final isActive = activeDates.contains(day);
-              final isFrozen = frozenDates.contains(day);
-              final isToday = day == today;
-              return _DayDot(
-                label: _shortDay(context, day),
-                active: isActive,
-                isFrozen: isFrozen,
-                isToday: isToday,
-              );
-            }).toList(),
+          MonthCalendarWidget(
+            activeDates: activeDates,
+            frozenDates: frozenDates,
           ),
-
-          _buildFreezeSection(context),
         ],
-      ),
-    );
-  }
-
-  String _shortDay(BuildContext context, String key) {
-    final d = DateTime.parse(key);
-    return DateFormat.E(context.locale.languageCode).format(d);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Day dot widget (used in the 7-day mini calendar)
-// ─────────────────────────────────────────────────────────────────────────────
-class _DayDot extends StatelessWidget {
-  final String label;
-  final bool active;
-  final bool isFrozen;
-  final bool isToday;
-
-  const _DayDot({required this.label, required this.active, required this.isFrozen, required this.isToday});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? PCColors.yellow : (isFrozen ? Colors.blue.withValues(alpha: 0.15) : Colors.white12),
-            border: isToday
-                ? Border.all(color: PCColors.yellow, width: 2)
-                : (isFrozen ? Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 1) : null),
-          ),
-          child: active
-              ? const Center(
-                  child: Text('🔥', style: TextStyle(fontSize: 16)),
-                )
-              : isFrozen 
-                  ? const Center(
-                      child: Text('❄️', style: TextStyle(fontSize: 14)),
-                    )
-                  : isToday
-                      ? const Center(
-                          child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1)),
-                        )
-                      : null,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: active ? PCColors.yellow : (isFrozen ? Colors.blueAccent : Colors.white38),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FreezeShield extends StatelessWidget {
-  final bool filled;
-  const _FreezeShield({required this.filled});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 44,
-      height: 44,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: filled
-            ? Colors.blueAccent.withValues(alpha: 0.2)
-            : Colors.white.withValues(alpha: 0.05),
-        border: Border.all(
-          color: filled
-              ? Colors.blueAccent
-              : Colors.white24,
-          width: 2,
-        ),
-        boxShadow: filled
-            ? [
-                BoxShadow(
-                  color: Colors.blueAccent.withValues(alpha: 0.4),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Center(
-        child: Text(
-          filled ? '❄️' : '○',
-          style: TextStyle(
-            fontSize: filled ? 20 : 16,
-            color: filled ? null : Colors.white24,
-          ),
-        ),
       ),
     );
   }
@@ -602,7 +425,6 @@ class _ExerciseStreakCard extends StatelessWidget {
   final int streak;
   final int lifetime;
   final bool doneToday;
-  final List<String> last7Days;
   final String? lastCompletedDate;
 
   const _ExerciseStreakCard({
@@ -610,30 +432,11 @@ class _ExerciseStreakCard extends StatelessWidget {
     required this.streak,
     required this.lifetime,
     required this.doneToday,
-    required this.last7Days,
     required this.lastCompletedDate,
   });
 
-  // Build a simple set of active days based on the streak count.
-  // Since we only store lastCompletedDate (not full history), we reconstruct
-  // approximately: fill back `streak` consecutive days ending at lastCompletedDate.
-  Set<String> _estimatedActiveDays() {
-    if (lastCompletedDate == null || streak == 0) return {};
-    final active = <String>{};
-    final last = DateTime.parse(lastCompletedDate!);
-    for (int i = 0; i < streak && i < 7; i++) {
-      final d = last.subtract(Duration(days: i));
-      final key = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-      active.add(key);
-    }
-    return active;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final activeDays = _estimatedActiveDays();
-    final today = last7Days.last;
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -641,8 +444,8 @@ class _ExerciseStreakCard extends StatelessWidget {
         color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: doneToday ? PCColors.green : Theme.of(context).dividerColor,
-          width: doneToday ? 2 : 1.5,
+          color: Theme.of(context).dividerColor,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: Offset(0, 2)),
@@ -722,48 +525,8 @@ class _ExerciseStreakCard extends StatelessWidget {
               ),
             ],
           ),
-
-          // 7-day mini dots
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: last7Days.map((day) {
-              final isActive = activeDays.contains(day);
-              final isToday = day == today;
-              return _SmallDot(active: isActive, isToday: isToday);
-            }).toList(),
-          ),
         ],
       ),
-    );
-  }
-}
-
-class _SmallDot extends StatelessWidget {
-  final bool active;
-  final bool isToday;
-
-  const _SmallDot({required this.active, required this.isToday});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: active
-            ? PCColors.yellow
-            : isToday
-                ? PCColors.yellow.withValues(alpha: 0.15)
-                : Colors.grey.withValues(alpha: 0.12),
-        border: isToday && !active
-            ? Border.all(color: PCColors.yellow, width: 1.5)
-            : null,
-      ),
-      child: active
-          ? const Center(child: Text('🔥', style: TextStyle(fontSize: 13)))
-          : null,
     );
   }
 }
