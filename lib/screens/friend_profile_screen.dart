@@ -84,15 +84,11 @@ class FriendProfileScreen extends StatelessWidget {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 friend.displayName,
                                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: context.textPrimary),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                userData['email'] as String? ?? 'no_email_visible'.tr(),
-                                style: const TextStyle(fontSize: 14, color: Colors.grey),
                               ),
                             ],
                           ),

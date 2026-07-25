@@ -23,8 +23,12 @@ class SocialAuthService {
   /// Throws [FirebaseAuthException] on auth errors.
   /// Returns null if the user cancelled the sign-in sheet.
   static Future<UserCredential?> signInWithGoogle() async {
+    // Force the account picker to show every time by signing out first
+    final googleSignIn = GoogleSignIn();
+    await googleSignIn.signOut();
+    
     // Trigger the Google authentication flow
-    final googleUser = await GoogleSignIn().signIn();
+    final googleUser = await googleSignIn.signIn();
     if (googleUser == null) return null; // user cancelled
 
     // Obtain auth details
