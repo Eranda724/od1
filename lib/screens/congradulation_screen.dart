@@ -243,9 +243,12 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        isLast ? 'finish_and_summary'.tr() : 'next_exercise'.tr(),
-                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          isLast ? 'finish_and_summary'.tr() : 'next_exercise'.tr(),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Icon(isLast ? Icons.flag_rounded : Icons.list_rounded, size: 20),
