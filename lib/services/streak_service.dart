@@ -14,6 +14,7 @@ class StreakService {
   }
 
   /// Logs an exercise and returns a map of the updated stats.
+  /// Completing any single exercise counts as a valid day for the overall streak.
   /// Throws an exception if the transaction fails.
   static Future<Map<String, int>> logExercise({
     required String uid,
@@ -56,8 +57,6 @@ class StreakService {
 
       final newLifetime = prevLifetime + reps;
 
-
-
       tx.set(exRef, {
         'lifetimeTotal': newLifetime,
         'currentStreak': newStreak,
@@ -74,15 +73,91 @@ class StreakService {
         now: DateTime.now(),
       );
 
-      tx.set(userRef, {
-        'scores': newScores,
-      }, SetOptions(merge: true));
+      // ── Overall Streak Logic ──
+      // GUARD FIRST: if we already counted today, skip all streak calculation.
+      final overallLastDate = userData['overallLastDate'] as String?;
+      final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
+
+      int newOverallStreak = prevOverallStreak;
+      Map<String, dynamic> overallStreakUpdate = {'scores': newScores};
+
+      if (overallLastDate != today) {
+        // This is the first exercise completed today — count the day.
+        int freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
+        String? freezeLastRefillDate = userData['freezeLastRefillDate'] as String?;
+        List<String> frozenDates = List<String>.from(userData['frozenDates'] ?? []);
+        List<String> activeDates = List<String>.from(userData['activeDates'] ?? []);
+
+        final todayObj = DateTime.parse(today);
+
+        // Freeze refill: one freeze back every 7 days (max 2)
+        if (freezeLastRefillDate == null) {
+          freezeLastRefillDate = today;
+        } else {
+          final refillDateObj = DateTime.parse(freezeLastRefillDate);
+          if (todayObj.difference(refillDateObj).inDays >= 7) {
+            freezesAvailable = math.min(2, freezesAvailable + 1);
+            freezeLastRefillDate = today;
+          }
+        }
+
+        // Consecutive-day calculation
+        if (overallLastDate == null) {
+          newOverallStreak = 1;
+        } else {
+          final lastDateObj = DateTime.parse(overallLastDate);
+
+          if (overallLastDate == yesterday) {
+            // Perfect consecutive day
+            newOverallStreak = prevOverallStreak + 1;
+          } else {
+            // Gap detected — how many days were missed?
+            final daysMissed = todayObj.difference(lastDateObj).inDays - 1;
+
+            if (daysMissed > 0 && freezesAvailable >= daysMissed) {
+              // Enough freezes to cover the gap
+              freezesAvailable -= daysMissed;
+              newOverallStreak = prevOverallStreak + 1;
+
+              // Record each frozen (missed) day
+              for (int i = 1; i <= daysMissed; i++) {
+                final missingDay = lastDateObj.add(Duration(days: i));
+                final missingDayStr =
+                    '${missingDay.year}-${missingDay.month.toString().padLeft(2, '0')}-${missingDay.day.toString().padLeft(2, '0')}';
+                if (!frozenDates.contains(missingDayStr)) {
+                  frozenDates.add(missingDayStr);
+                }
+              }
+            } else {
+              // Streak broken — not enough freezes
+              newOverallStreak = 1;
+            }
+          }
+        }
+
+        // Record today as an active date
+        if (!activeDates.contains(today)) {
+          activeDates.add(today);
+        }
+
+        overallStreakUpdate = {
+          'scores': newScores,
+          'overallStreak': newOverallStreak,
+          'overallLastDate': today,
+          'freezesAvailable': freezesAvailable,
+          'freezeLastRefillDate': freezeLastRefillDate,
+          'activeDates': activeDates,
+          'frozenDates': frozenDates,
+        };
+      }
+
+      tx.set(userRef, overallStreakUpdate, SetOptions(merge: true));
 
       return {
         'lifetimeTotal': newLifetime,
         'currentStreak': newStreak,
         'todayReps': newTodayReps,
-        'overallStreak': (userData['overallStreak'] ?? 0) as int, // Temporarily return current
+        'overallStreak': newOverallStreak,
       };
     });
   }

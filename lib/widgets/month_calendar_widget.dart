@@ -5,11 +5,13 @@ import '../app_settings.dart';
 class MonthCalendarWidget extends StatefulWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
+  final String? userStartDate; // first day the user ever logged an exercise
 
   const MonthCalendarWidget({
     super.key,
     required this.activeDates,
     required this.frozenDates,
+    this.userStartDate,
   });
 
   @override
@@ -18,6 +20,7 @@ class MonthCalendarWidget extends StatefulWidget {
 
 class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
   late DateTime _currentMonth;
+  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -47,147 +50,146 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
   }
 
   Widget _buildDayCell(DateTime? date, bool isNextActive, bool isPrevActive) {
-    if (date == null) {
-      return const SizedBox(); // Empty cell for padding days
-    }
+    if (date == null) return const SizedBox();
 
     final key = _formatDateKey(date);
     final isActive = widget.activeDates.contains(key);
     final isFrozen = widget.frozenDates.contains(key);
-    
+
     final now = DateTime.now();
-    final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
     final isFuture = date.isAfter(now) && !isToday;
 
-    Widget cellContent;
-    BoxDecoration? innerDecoration;
-    BoxDecoration? outerDecoration;
+    // Days before the user started the app are neutral — not "missed"
+    final bool isBeforeStart =
+        widget.userStartDate != null &&
+        key.compareTo(widget.userStartDate!) < 0;
 
-    if (isToday && !isActive) {
-      // Today (not yet exercised) -> Blue circle with potato icon 🥔
-      cellContent = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${date.day}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, height: 1),
+    // ── Future or pre-start day ──
+    if (isFuture || isBeforeStart) {
+      return Container(
+        margin: const EdgeInsets.all(2),
+        child: Center(
+          child: Transform.translate(
+            offset: const Offset(0, 1),
+            child: Text(
+              '${date.day}',
+              style: TextStyle(
+                color: isFuture ? Colors.white24 : Colors.white30,
+                fontSize: 13,
+              ),
+            ),
           ),
-          const SizedBox(height: 2),
-          const Text('🥔', style: TextStyle(fontSize: 10, height: 1)),
-        ],
-      );
-      innerDecoration = const BoxDecoration(
-        color: Colors.blueAccent,
-        shape: BoxShape.circle,
-      );
-    } else if (isToday && isActive) {
-      // Today (exercised) -> Bright yellow circle with flame inside the continuous streak pill
-      cellContent = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${date.day}',
-            style: const TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold, fontSize: 13, height: 1),
-          ),
-          const SizedBox(height: 2),
-          const Text('🔥', style: TextStyle(fontSize: 10, height: 1)),
-        ],
-      );
-      innerDecoration = const BoxDecoration(
-        color: PCColors.yellow,
-        shape: BoxShape.circle,
-      );
-      
-      const borderSide = BorderSide(color: PCColors.yellow, width: 2);
-      outerDecoration = BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.orange, Colors.deepOrange],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: Border(
-          top: borderSide,
-          bottom: borderSide,
-          left: isPrevActive ? BorderSide.none : borderSide,
-          right: isNextActive ? BorderSide.none : borderSide,
-        ),
-        borderRadius: BorderRadius.horizontal(
-          left: isPrevActive ? Radius.zero : const Radius.circular(20),
-          right: isNextActive ? Radius.zero : const Radius.circular(20),
-        ),
-      );
-    } else if (isActive) {
-      // Past active days -> Continuous gradient bar with yellow border
-      cellContent = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${date.day}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, height: 1),
-          ),
-          const SizedBox(height: 2),
-          const Text('🔥', style: TextStyle(fontSize: 10, height: 1)),
-        ],
-      );
-      
-      const borderSide = BorderSide(color: PCColors.yellow, width: 2);
-      outerDecoration = BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.orange, Colors.deepOrange],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        border: Border(
-          top: borderSide,
-          bottom: borderSide,
-          left: isPrevActive ? BorderSide.none : borderSide,
-          right: isNextActive ? BorderSide.none : borderSide,
-        ),
-        borderRadius: BorderRadius.horizontal(
-          left: isPrevActive ? Radius.zero : const Radius.circular(20),
-          right: isNextActive ? Radius.zero : const Radius.circular(20),
-        ),
-      );
-      innerDecoration = null;
-    } else if (isFrozen) {
-      // Freeze used day -> Light blue tint with snowflake
-      cellContent = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '${date.day}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13, height: 1),
-          ),
-          const SizedBox(height: 2),
-          const Text('❄️', style: TextStyle(fontSize: 10, height: 1)),
-        ],
-      );
-      innerDecoration = BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.3),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.5), width: 1),
-      );
-    } else {
-      // Past missed or Future days
-      cellContent = Text(
-        '${date.day}',
-        style: TextStyle(
-          color: isFuture ? Colors.white38 : Colors.white60,
-          fontWeight: FontWeight.normal,
         ),
       );
     }
 
-    return Container(
-      decoration: outerDecoration,
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: Center(
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: innerDecoration,
+    // ── Today ──
+    if (isToday) {
+      return Container(
+        margin: const EdgeInsets.all(2),
+        child: Center(
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: const BoxDecoration(
+              color: PCColors.yellow,
+              shape: BoxShape.circle,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 2),
+                Text(
+                  '${date.day}',
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+                if (isActive) ...[
+                  const SizedBox(height: 1),
+                  const Text('🔥', style: TextStyle(fontSize: 10, height: 1.0)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Active day (🔥 as background) ──
+    if (isActive) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 3),
+        child: Stack(
           alignment: Alignment.center,
-          child: cellContent,
+          children: [
+            Transform.translate(
+              offset: const Offset(0, -4), // Move fire emoji slightly up
+              child: const Text('🔥', style: TextStyle(fontSize: 34)),
+            ),
+            // Date number on top (shifted slightly down towards the fire's base)
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Text(
+                '${date.day}',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize:
+                      14, // Increased size to make the w900 weight look bolder
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Frozen day (🧊 as background) ──
+    if (isFrozen) {
+      return Container(
+        margin: const EdgeInsets.all(2),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Transform.translate(
+              offset: const Offset(0, 0), // Center the ice cube emoji
+              child: const Text(
+                '🧊',
+                style: TextStyle(fontSize: 34),
+              ), // Same size as fire, full opacity
+            ),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Text(
+                '${date.day}',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // ── Past missed day (Broken streak, no freeze available) ──
+    return Container(
+      margin: const EdgeInsets.all(2),
+      child: Center(
+        child: Transform.translate(
+          offset: const Offset(0, 1),
+          child: Text(
+            '${date.day}',
+            style: const TextStyle(color: Colors.white30, fontSize: 13),
+          ),
         ),
       ),
     );
@@ -195,35 +197,58 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine days in month
-    final daysInMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0).day;
-    
-    // Determine weekday of 1st day (1 = Monday, 7 = Sunday)
-    final firstDayWeekday = DateTime(_currentMonth.year, _currentMonth.month, 1).weekday;
+    final now = DateTime.now();
+    final isCurrentMonth =
+        _currentMonth.year == now.year && _currentMonth.month == now.month;
 
     // Create the grid list
     final List<DateTime?> gridDays = [];
-    
-    // Add empty padding for days before the 1st
-    for (int i = 1; i < firstDayWeekday; i++) {
-      gridDays.add(null);
-    }
-    
-    // Add all days of the month
-    for (int i = 1; i <= daysInMonth; i++) {
-      gridDays.add(DateTime(_currentMonth.year, _currentMonth.month, i));
+
+    if (_isExpanded) {
+      // Determine days in month
+      final daysInMonth = DateTime(
+        _currentMonth.year,
+        _currentMonth.month + 1,
+        0,
+      ).day;
+
+      // Determine weekday of 1st day (1 = Monday, 7 = Sunday)
+      final firstDayWeekday = DateTime(
+        _currentMonth.year,
+        _currentMonth.month,
+        1,
+      ).weekday;
+
+      // Add empty padding for days before the 1st
+      for (int i = 1; i < firstDayWeekday; i++) {
+        gridDays.add(null);
+      }
+
+      // Add all days of the month
+      for (int i = 1; i <= daysInMonth; i++) {
+        gridDays.add(DateTime(_currentMonth.year, _currentMonth.month, i));
+      }
+    } else {
+      // Collapsed: Rolling 7-day window containing today (Monday to Sunday)
+      final today = DateTime(now.year, now.month, now.day);
+      final currentWeekday = today.weekday; // 1 = Monday, 7 = Sunday
+      final startOfWeek = today.subtract(Duration(days: currentWeekday - 1));
+      for (int i = 0; i < 7; i++) {
+        gridDays.add(startOfWeek.add(Duration(days: i)));
+      }
     }
 
-    final monthName = DateFormat.yMMMM(context.locale.languageCode).format(_currentMonth);
-    
-    // Using simple letters for weekday headers as requested (L M M J V S D style based on locale, or standard localized short weekday)
+    // When collapsed, the month name always shows the current month
+    final displayMonth = _isExpanded ? _currentMonth : now;
+    final monthName = DateFormat.yMMMM(
+      context.locale.languageCode,
+    ).format(displayMonth);
+
+    // Using simple letters for weekday headers as requested
     final weekDays = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
-    final now = DateTime.now();
-    final isCurrentMonth = _currentMonth.year == now.year && _currentMonth.month == now.month;
-
     return Container(
-      margin: const EdgeInsets.only(top: 24),
+      margin: const EdgeInsets.only(top: 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -231,12 +256,16 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left, color: Colors.white),
-                onPressed: _previousMonth,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+              if (_isExpanded)
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                  onPressed: _previousMonth,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                )
+              else
+                const SizedBox(width: 24), // Maintain spacing
+
               Text(
                 monthName,
                 style: const TextStyle(
@@ -245,19 +274,23 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                   color: PCColors.yellow,
                 ),
               ),
-              IconButton(
-                icon: Icon(
-                  Icons.chevron_right, 
-                  color: isCurrentMonth ? Colors.white24 : Colors.white,
-                ),
-                onPressed: isCurrentMonth ? null : _nextMonth,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
+
+              if (_isExpanded)
+                IconButton(
+                  icon: Icon(
+                    Icons.chevron_right,
+                    color: isCurrentMonth ? Colors.white24 : Colors.white,
+                  ),
+                  onPressed: isCurrentMonth ? null : _nextMonth,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                )
+              else
+                const SizedBox(width: 24), // Maintain spacing
             ],
           ),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           
           // Weekday Headers
           Row(
@@ -265,7 +298,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               return Expanded(
                 child: Center(
                   child: Text(
-                    dayKey.tr().toUpperCase().substring(0, 1), 
+                    dayKey.tr().toUpperCase().substring(0, 1),
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -276,43 +309,75 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               );
             }).toList(),
           ),
-          
-          const SizedBox(height: 8),
-          
-          // Calendar Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: gridDays.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              childAspectRatio: 1,
-              mainAxisSpacing: 0,
-              crossAxisSpacing: 0,
+
+          const SizedBox(height: 4),
+
+          // Grid
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1.0,
+                crossAxisSpacing: 2,
+                mainAxisSpacing: 2,
+              ),
+              itemCount: gridDays.length,
+              itemBuilder: (context, index) {
+                final date = gridDays[index];
+
+                // Determine if next/prev days are active for styling the streak line
+                bool isNextActive = false;
+                bool isPrevActive = false;
+
+                if (date != null) {
+                  final dateKey = _formatDateKey(date);
+                  if (widget.activeDates.contains(dateKey)) {
+                    // Check prev day
+                    final prevDate = date.subtract(const Duration(days: 1));
+                    final prevKey = _formatDateKey(prevDate);
+                    isPrevActive = widget.activeDates.contains(prevKey);
+
+                    // Check next day
+                    final nextDate = date.add(const Duration(days: 1));
+                    final nextKey = _formatDateKey(nextDate);
+                    isNextActive = widget.activeDates.contains(nextKey);
+                  }
+                }
+
+                return _buildDayCell(date, isNextActive, isPrevActive);
+              },
             ),
-            itemBuilder: (context, index) {
-              final date = gridDays[index];
-              if (date == null) {
-                return _buildDayCell(null, false, false);
-              }
+          ),
 
-              // Check if previous/next day in the same row (week) is active
-              // for continuous highlighting
-              bool isPrevActive = false;
-              bool isNextActive = false;
-
-              if (index % 7 != 0 && index > 0 && gridDays[index - 1] != null) {
-                final prevDate = gridDays[index - 1]!;
-                isPrevActive = widget.activeDates.contains(_formatDateKey(prevDate));
-              }
-              
-              if (index % 7 != 6 && index < gridDays.length - 1 && gridDays[index + 1] != null) {
-                final nextDate = gridDays[index + 1]!;
-                isNextActive = widget.activeDates.contains(_formatDateKey(nextDate));
-              }
-
-              return _buildDayCell(date, isNextActive, isPrevActive);
+          // Expand/Collapse Toggle
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+                if (!_isExpanded && !isCurrentMonth) {
+                  // Snap back to current month when collapsed
+                  _currentMonth = DateTime(now.year, now.month, 1);
+                }
+              });
             },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              width: double.infinity,
+              color: Colors.transparent, // Ensures the whole row is clickable
+              child: Icon(
+                _isExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: Colors.white54,
+                size: 28,
+              ),
+            ),
           ),
         ],
       ),

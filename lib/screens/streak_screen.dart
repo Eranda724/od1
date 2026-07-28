@@ -60,6 +60,11 @@ class _StreakScreenState extends State<StreakScreen> {
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
         final today = _todayKey();
 
+        // Earliest active date = first day the user ever logged an exercise
+        final String? userStartDate = activeDates.isNotEmpty
+            ? (List<String>.from(activeDates)..sort()).first
+            : null;
+
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').snapshots(),
           builder: (context, userExSnap) {
@@ -138,6 +143,7 @@ class _StreakScreenState extends State<StreakScreen> {
                   freezeLastRefillDate: freezeLastRefillDate,
                   totalRoutine: totalRoutine,
                   completedRoutine: completedRoutine,
+                  userStartDate: userStartDate,
                 ),
 
                 const SizedBox(height: 16),
@@ -163,48 +169,6 @@ class _StreakScreenState extends State<StreakScreen> {
                           if (widget.onStartRoutine != null) {
                             widget.onStartRoutine!();
                           }
-                          
-                          if (idsToShow.isEmpty || defs.isEmpty) return;
-                          
-                          final targetList = todoExercises.isNotEmpty ? todoExercises : idsToShow;
-                          List<SessionItem> queue = [];
-                          for (final nextId in targetList) {
-                            if (!defs.containsKey(nextId)) continue;
-                            final exData = Map<String, dynamic>.from(exercisesMap[nextId] ?? {});
-                            final tDef = defs[nextId]!;
-                            queue.add(SessionItem(
-                              exerciseId: nextId,
-                              exerciseName: tDef.name,
-                              streak: (exData['currentStreak'] ?? 0) as int,
-                              lifetimeTotal: (exData['lifetimeTotal'] ?? 0) as int,
-                              defaultReps: tDef.defaultReps,
-                              defaultTimer: tDef.defaultTimer,
-                              unit: tDef.unit,
-                              exerciseDef: tDef,
-                            ));
-                          }
-                          
-                          if (queue.isEmpty) return;
-                          
-                          final first = queue.first;
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ExerciseStartScreen(
-                                exerciseId: first.exerciseId,
-                                exerciseName: first.exerciseName,
-                                streak: first.streak,
-                                lifetimeTotal: first.lifetimeTotal,
-                                defaultReps: first.defaultReps,
-                                defaultTimer: first.defaultTimer,
-                                unit: first.unit,
-                                exerciseDef: first.exerciseDef,
-                                sessionQueue: queue,
-                                exerciseIndex: 1,
-                                totalExercises: queue.length,
-                              ),
-                            ),
-                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: PCColors.green,
@@ -214,11 +178,14 @@ class _StreakScreenState extends State<StreakScreen> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: Text(
-                          'start_my_routine'.tr().toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'start_my_routine'.tr().toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
                       ),
@@ -292,6 +259,7 @@ class _OverallStreakCard extends StatelessWidget {
   final String? freezeLastRefillDate;
   final int totalRoutine;
   final int completedRoutine;
+  final String? userStartDate;
 
   const _OverallStreakCard({
     required this.overallStreak,
@@ -303,6 +271,7 @@ class _OverallStreakCard extends StatelessWidget {
     required this.freezeLastRefillDate,
     required this.totalRoutine,
     required this.completedRoutine,
+    this.userStartDate,
   });
 
   @override
@@ -365,7 +334,7 @@ class _OverallStreakCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    completedRoutine == totalRoutine ? '✓ ${'today_label'.tr()}' : '$completedRoutine/$totalRoutine',
+                    completedRoutine == totalRoutine ? '✓ ${'today_label'.tr()}' : 'Exercises $completedRoutine/$totalRoutine',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -410,6 +379,7 @@ class _OverallStreakCard extends StatelessWidget {
           MonthCalendarWidget(
             activeDates: activeDates,
             frozenDates: frozenDates,
+            userStartDate: userStartDate,
           ),
         ],
       ),
