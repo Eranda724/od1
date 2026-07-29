@@ -6,6 +6,7 @@ import '../models/exercise_icons.dart';
 import '../models/exercise_item.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/month_calendar_widget.dart';
+import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
 import 'exercise_start_screen.dart';
 
@@ -234,10 +235,12 @@ class _StreakScreenState extends State<StreakScreen> {
                     // ── Section title ────────────────────────────────────────────
                     Text(
                       'streaks_tab'.tr().toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: PCColors.yellow,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? PCColors.yellow
+                            : Colors.black87,
                         letterSpacing: 1.4,
                       ),
                     ),
@@ -287,7 +290,7 @@ class _StreakScreenState extends State<StreakScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Overall Streak Hero Card
 // ─────────────────────────────────────────────────────────────────────────────
-class _OverallStreakCard extends StatelessWidget {
+class _OverallStreakCard extends StatefulWidget {
   final int overallStreak;
   final String? lastDate;
   final String today;
@@ -311,8 +314,26 @@ class _OverallStreakCard extends StatelessWidget {
   });
 
   @override
+  State<_OverallStreakCard> createState() => _OverallStreakCardState();
+}
+
+class _OverallStreakCardState extends State<_OverallStreakCard> {
+  bool _isExpanded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // TickerMode is disabled when the tab is off-screen.
+    // Reset to collapsed view so it's always default when they return.
+    final isVisible = TickerMode.of(context);
+    if (!isVisible && _isExpanded) {
+      _isExpanded = false;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isActiveToday = lastDate == today;
+    final isActiveToday = widget.lastDate == widget.today;
     // isActiveToday is available for future use
 
     return Container(
@@ -368,7 +389,7 @@ class _OverallStreakCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(2, (index) {
-                      final hasFreeze = index < freezesAvailable;
+                      final hasFreeze = index < widget.freezesAvailable;
                       return Container(
                         margin: EdgeInsets.only(left: index == 0 ? 0 : 4),
                         width: 36,
@@ -407,7 +428,7 @@ class _OverallStreakCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '$overallStreak',
+                '${widget.overallStreak}',
                 style: const TextStyle(
                   fontSize: 64,
                   fontWeight: FontWeight.w900,
@@ -431,10 +452,50 @@ class _OverallStreakCard extends StatelessWidget {
             ],
           ),
 
-          MonthCalendarWidget(
-            activeDates: activeDates,
-            frozenDates: frozenDates,
-            userStartDate: userStartDate,
+          const SizedBox(height: 24),
+
+          // Toggle Calendar View
+          GestureDetector(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedCrossFade(
+              duration: const Duration(milliseconds: 300),
+              crossFadeState: _isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: WeekStreakRow(
+                activeDates: widget.activeDates,
+                frozenDates: widget.frozenDates,
+                today: DateTime.now(),
+              ),
+              secondChild: MonthCalendarWidget(
+                activeDates: widget.activeDates,
+                frozenDates: widget.frozenDates,
+                userStartDate: widget.userStartDate,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 8),
+
+          Center(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              child: Icon(
+                _isExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
+                color: Colors.white30,
+              ),
+            ),
           ),
         ],
       ),
@@ -535,7 +596,11 @@ class _ExerciseStreakCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
+                      const Icon(
+                        Icons.local_fire_department,
+                        color: Colors.orange,
+                        size: 20,
+                      ),
                       const SizedBox(width: 2),
                       Text(
                         '$streak',

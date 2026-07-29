@@ -20,7 +20,6 @@ class MonthCalendarWidget extends StatefulWidget {
 
 class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
   late DateTime _currentMonth;
-  bool _isExpanded = false;
 
   @override
   void initState() {
@@ -204,42 +203,32 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
     // Create the grid list
     final List<DateTime?> gridDays = [];
 
-    if (_isExpanded) {
-      // Determine days in month
-      final daysInMonth = DateTime(
-        _currentMonth.year,
-        _currentMonth.month + 1,
-        0,
-      ).day;
+    // Determine days in month
+    final daysInMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month + 1,
+      0,
+    ).day;
 
-      // Determine weekday of 1st day (1 = Monday, 7 = Sunday)
-      final firstDayWeekday = DateTime(
-        _currentMonth.year,
-        _currentMonth.month,
-        1,
-      ).weekday;
+    // Determine weekday of 1st day (1 = Monday, 7 = Sunday)
+    final firstDayWeekday = DateTime(
+      _currentMonth.year,
+      _currentMonth.month,
+      1,
+    ).weekday;
 
-      // Add empty padding for days before the 1st
-      for (int i = 1; i < firstDayWeekday; i++) {
-        gridDays.add(null);
-      }
-
-      // Add all days of the month
-      for (int i = 1; i <= daysInMonth; i++) {
-        gridDays.add(DateTime(_currentMonth.year, _currentMonth.month, i));
-      }
-    } else {
-      // Collapsed: Rolling 7-day window containing today (Monday to Sunday)
-      final today = DateTime(now.year, now.month, now.day);
-      final currentWeekday = today.weekday; // 1 = Monday, 7 = Sunday
-      final startOfWeek = today.subtract(Duration(days: currentWeekday - 1));
-      for (int i = 0; i < 7; i++) {
-        gridDays.add(startOfWeek.add(Duration(days: i)));
-      }
+    // Add empty padding for days before the 1st
+    for (int i = 1; i < firstDayWeekday; i++) {
+      gridDays.add(null);
     }
 
-    // When collapsed, the month name always shows the current month
-    final displayMonth = _isExpanded ? _currentMonth : now;
+    // Add all days of the month
+    for (int i = 1; i <= daysInMonth; i++) {
+      gridDays.add(DateTime(_currentMonth.year, _currentMonth.month, i));
+    }
+
+    // The month name always shows the current month
+    final displayMonth = _currentMonth;
     final monthName = DateFormat.yMMMM(
       context.locale.languageCode,
     ).format(displayMonth);
@@ -256,15 +245,12 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              if (_isExpanded)
-                IconButton(
-                  icon: const Icon(Icons.chevron_left, color: Colors.white),
-                  onPressed: _previousMonth,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                )
-              else
-                const SizedBox(width: 24), // Maintain spacing
+              IconButton(
+                icon: const Icon(Icons.chevron_left, color: Colors.white),
+                onPressed: _previousMonth,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
 
               Text(
                 monthName,
@@ -275,18 +261,15 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                 ),
               ),
 
-              if (_isExpanded)
-                IconButton(
-                  icon: Icon(
-                    Icons.chevron_right,
-                    color: isCurrentMonth ? Colors.white24 : Colors.white,
-                  ),
-                  onPressed: isCurrentMonth ? null : _nextMonth,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                )
-              else
-                const SizedBox(width: 24), // Maintain spacing
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_right,
+                  color: isCurrentMonth ? Colors.white24 : Colors.white,
+                ),
+                onPressed: isCurrentMonth ? null : _nextMonth,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
           
@@ -352,31 +335,6 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
 
                 return _buildDayCell(date, isNextActive, isPrevActive);
               },
-            ),
-          ),
-
-          // Expand/Collapse Toggle
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isExpanded = !_isExpanded;
-                if (!_isExpanded && !isCurrentMonth) {
-                  // Snap back to current month when collapsed
-                  _currentMonth = DateTime(now.year, now.month, 1);
-                }
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              width: double.infinity,
-              color: Colors.transparent, // Ensures the whole row is clickable
-              child: Icon(
-                _isExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: Colors.white54,
-                size: 28,
-              ),
             ),
           ),
         ],
