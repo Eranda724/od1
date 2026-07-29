@@ -59,11 +59,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour >= 0 && hour < 12) {
-      return 'Good Morning';
+      return 'good_morning'.tr();
     } else if (hour >= 12 && hour < 18) {
-      return 'Good Evening';
+      return 'good_evening'.tr();
     } else {
-      return 'Good Night';
+      return 'good_night'.tr();
     }
   }
 
@@ -208,7 +208,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             exerciseName: nDef?.name ?? _fallbackName(nextId),
                             description: (nDef?.description?.isNotEmpty == true)
                                 ? nDef!.description
-                                : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                                : 'default_exercise_description'.tr(),
                             streak: nEx['currentStreak'] ?? 0,
                             lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
                             defaultReps: nDef?.defaultReps ?? 0,
@@ -230,7 +230,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         description:
                             (targetDef?.description?.isNotEmpty == true)
                             ? targetDef!.description
-                            : 'Hold the position steadily and keep your core tight. Breathe naturally throughout the exercise.',
+                            : 'default_exercise_description'.tr(),
                         streak: targetStreak,
                         lifetimeTotal: targetLifetime,
                         defaultReps: targetDef?.defaultReps ?? 0,
@@ -348,7 +348,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                               elevation: 0,
                                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                             ),
-                                            child: const Text('ADDED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
+                                            child: Text('added_btn'.tr(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900)),
                                           )
                                         : Container(
                                             height: 36,
@@ -368,7 +368,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 elevation: 0,
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                               ),
-                                              child: const Text('ADD', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                                              child: Text('add_btn'.tr(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
                                             ),
                                           ),
                                     ),
@@ -516,7 +516,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         elevation: 0,
                                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                       ),
-                                      child: const Text('ADDED', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                      child: Text('added_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                                     )
                                   : Container(
                                       height: 48,
@@ -536,7 +536,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                         ),
-                                        child: const Text('ADD', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                                        child: Text('add_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                                       ),
                                     ),
                               ] else ...[
@@ -684,16 +684,16 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 2),
-                                    const Text(
-                                      "Today's Routine",
-                                      style: TextStyle(
+                                    Text(
+                                      'todays_routine_title'.tr(),
+                                      style: const TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w900,
                                       ),
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      ' ${todoExercises.length + doneExercises.length} Exercises',
+                                      ' ${'exercises_count'.tr(args: [(todoExercises.length + doneExercises.length).toString()])}',
                                       style: const TextStyle(
                                         fontSize: 13,
                                         color: Colors.green,
@@ -753,9 +753,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 12),
-                                      const Text(
-                                        "Tap to finish your daily routine",
-                                        style: TextStyle(
+                                      Text(
+                                        'tap_to_finish_routine'.tr(),
+                                        style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.grey,
                                           fontStyle: FontStyle.italic,
@@ -771,10 +771,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           borderRadius: BorderRadius.circular(16),
                                           border: Border.all(color: Colors.green),
                                         ),
-                                        child: const Text(
-                                          'Routine Completed for Today! 🎉',
+                                        child: Text(
+                                          'routine_completed_today'.tr(),
                                           textAlign: TextAlign.center,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             color: Colors.green,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 14,
@@ -787,12 +787,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               ),
                               
                               if (isEmpty)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 24.0),
                                   child: Center(
                                     child: Text(
-                                      "Choose your first 60-second exercise below. Add more anytime!",
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey),
+                                      'choose_first_exercise'.tr(),
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey),
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
@@ -819,9 +819,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
-                                    child: const Text(
-                                      "Exercises",
-                                      style: TextStyle(
+                                    child: Text(
+                                      'exercises_title'.tr(),
+                                      style: const TextStyle(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w900,
                                       ),

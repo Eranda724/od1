@@ -281,9 +281,9 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             
             const SizedBox(height: 32),
             
-            const Text(
-              'Appearance',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            Text(
+              'admin_appearance'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 16),
 
@@ -294,8 +294,8 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 leading: const Text('🖼️', style: TextStyle(fontSize: 28)),
-                title: const Text('Image & Tips Bank', style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('Manage dynamic session images and tips', style: TextStyle(fontSize: 13)),
+                title: Text('admin_image_tips_bank'.tr(), style: const TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: Text('admin_manage_dynamic_session'.tr(), style: const TextStyle(fontSize: 13)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => Navigator.push(
                   context,

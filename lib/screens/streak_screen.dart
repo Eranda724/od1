@@ -41,13 +41,20 @@ class _StreakScreenState extends State<StreakScreen> {
     }
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .snapshots(),
       builder: (context, userSnap) {
         if (userSnap.hasError) {
-          return Center(child: Text('error_loading'.tr(args: [userSnap.error.toString()])));
+          return Center(
+            child: Text('error_loading'.tr(args: [userSnap.error.toString()])),
+          );
         }
         if (!userSnap.hasData) {
-          return const Center(child: CircularProgressIndicator(color: PCColors.yellow));
+          return const Center(
+            child: CircularProgressIndicator(color: PCColors.yellow),
+          );
         }
 
         final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
@@ -64,10 +71,18 @@ class _StreakScreenState extends State<StreakScreen> {
             : null;
 
         return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('exercises')
+              .snapshots(),
           builder: (context, userExSnap) {
             if (userExSnap.hasError) {
-              return Center(child: Text('error_loading'.tr(args: [userExSnap.error.toString()])));
+              return Center(
+                child: Text(
+                  'error_loading'.tr(args: [userExSnap.error.toString()]),
+                ),
+              );
             }
             final exercisesMap = <String, dynamic>{};
             if (userExSnap.hasData) {
@@ -76,166 +91,192 @@ class _StreakScreenState extends State<StreakScreen> {
               }
             }
 
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
-          builder: (context, exSnap) {
-            if (exSnap.hasError) {
-              return Center(child: Text('error_loading'.tr(args: [exSnap.error.toString()])));
-            }
-            final defs = <String, ExerciseItem>{};
-            if (exSnap.hasData) {
-              for (final doc in exSnap.data!.docs) {
-                defs[doc.id] = ExerciseItem.fromMap(doc.id, doc.data() as Map<String, dynamic>);
-              }
-            }
+            return StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('exercises')
+                  .snapshots(),
+              builder: (context, exSnap) {
+                if (exSnap.hasError) {
+                  return Center(
+                    child: Text(
+                      'error_loading'.tr(args: [exSnap.error.toString()]),
+                    ),
+                  );
+                }
+                final defs = <String, ExerciseItem>{};
+                if (exSnap.hasData) {
+                  for (final doc in exSnap.data!.docs) {
+                    defs[doc.id] = ExerciseItem.fromMap(
+                      doc.id,
+                      doc.data() as Map<String, dynamic>,
+                    );
+                  }
+                }
 
-            final neverConfigured = data['selectedExercises'] == null;
-            final selectedExercises = (data['selectedExercises'] as List<dynamic>?)?.map((e) => e.toString()).toList();
-            final idsToShow = neverConfigured ? defs.keys.toList() : (selectedExercises ?? []);
-            
-            final todoExercises = <String>[];
-            for (final id in idsToShow) {
-              if (!defs.containsKey(id)) continue;
-              final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
-              if (exData['lastCompletedDate'] != today) {
-                todoExercises.add(id);
-              }
-            }
+                final neverConfigured = data['selectedExercises'] == null;
+                final selectedExercises =
+                    (data['selectedExercises'] as List<dynamic>?)
+                        ?.map((e) => e.toString())
+                        .toList();
+                final idsToShow = neverConfigured
+                    ? defs.keys.toList()
+                    : (selectedExercises ?? []);
 
-            final routineExercises = idsToShow.where((id) => defs.containsKey(id)).toList();
-            final totalRoutine = routineExercises.length;
-            final completedRoutine = totalRoutine - todoExercises.length;
+                final todoExercises = <String>[];
+                for (final id in idsToShow) {
+                  if (!defs.containsKey(id)) continue;
+                  final exData = Map<String, dynamic>.from(
+                    exercisesMap[id] ?? {},
+                  );
+                  if (exData['lastCompletedDate'] != today) {
+                    todoExercises.add(id);
+                  }
+                }
 
-            final userExercises = defs.entries.where((entry) {
-              final id = entry.key;
-              final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
-              final lastCompletedDate = exData['lastCompletedDate'] as String?;
-              return lastCompletedDate == today;
-            }).toList();
+                final routineExercises = idsToShow
+                    .where((id) => defs.containsKey(id))
+                    .toList();
+                final totalRoutine = routineExercises.length;
+                final completedRoutine = totalRoutine - todoExercises.length;
 
-            userExercises.sort((a, b) {
-              final aData = Map<String, dynamic>.from(exercisesMap[a.key] ?? {});
-              final bData = Map<String, dynamic>.from(exercisesMap[b.key] ?? {});
-              final aStreak = (aData['currentStreak'] ?? 0) as int;
-              final bStreak = (bData['currentStreak'] ?? 0) as int;
-              
-              if (aStreak > 0 && bStreak == 0) return -1;
-              if (bStreak > 0 && aStreak == 0) return 1;
-              
-              if (aStreak != bStreak) return bStreak.compareTo(aStreak);
-              
-              return a.value.name.compareTo(b.value.name);
-            });
+                final userExercises = defs.entries.where((entry) {
+                  final id = entry.key;
+                  final exData = Map<String, dynamic>.from(
+                    exercisesMap[id] ?? {},
+                  );
+                  final lastCompletedDate =
+                      exData['lastCompletedDate'] as String?;
+                  return lastCompletedDate == today;
+                }).toList();
 
-            return ListView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-              children: [
-                // ── Overall streak hero card ────────────────────────────────
-                _OverallStreakCard(
-                  overallStreak: overallStreak,
-                  lastDate: overallLastDate,
-                  today: today,
-                  activeDates: activeDates,
-                  frozenDates: frozenDates,
-                  freezesAvailable: freezesAvailable,
-                  totalRoutine: totalRoutine,
-                  completedRoutine: completedRoutine,
-                  userStartDate: userStartDate,
-                ),
+                userExercises.sort((a, b) {
+                  final aData = Map<String, dynamic>.from(
+                    exercisesMap[a.key] ?? {},
+                  );
+                  final bData = Map<String, dynamic>.from(
+                    exercisesMap[b.key] ?? {},
+                  );
+                  final aStreak = (aData['currentStreak'] ?? 0) as int;
+                  final bStreak = (bData['currentStreak'] ?? 0) as int;
 
-                const SizedBox(height: 16),
+                  if (aStreak > 0 && bStreak == 0) return -1;
+                  if (bStreak > 0 && aStreak == 0) return 1;
 
-                // ── Start My Routine button ────────────────────────────
-                Builder(
-                  builder: (context) {
+                  if (aStreak != bStreak) return bStreak.compareTo(aStreak);
 
-                    return Container(
-                      width: double.infinity,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: const Border(
-                          bottom: BorderSide(
-                            color: PCColors.greenDark,
-                            width: 4,
-                          ),
-                        ),
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (widget.onStartRoutine != null) {
-                            widget.onStartRoutine!();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: PCColors.green,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
+                  return a.value.name.compareTo(b.value.name);
+                });
+
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                  children: [
+                    // ── Overall streak hero card ────────────────────────────────
+                    _OverallStreakCard(
+                      overallStreak: overallStreak,
+                      lastDate: overallLastDate,
+                      today: today,
+                      activeDates: activeDates,
+                      frozenDates: frozenDates,
+                      freezesAvailable: freezesAvailable,
+                      totalRoutine: totalRoutine,
+                      completedRoutine: completedRoutine,
+                      userStartDate: userStartDate,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Start My Routine button ────────────────────────────
+                    Builder(
+                      builder: (context) {
+                        return Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'start_my_routine'.tr().toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
+                            border: const Border(
+                              bottom: BorderSide(
+                                color: PCColors.greenDark,
+                                width: 4,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Section title ────────────────────────────────────────────
-                Text(
-                  'streaks_tab'.tr().toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: PCColors.yellow,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // ── Per-exercise streak cards ─────────────────────────────────
-                if (userExercises.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text('You haven\'t started any exercises yet.'),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              if (widget.onStartRoutine != null) {
+                                widget.onStartRoutine!();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: PCColors.green,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'start_my_routine'.tr().toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  )
-                else
-                  ...userExercises.map((entry) {
-                    final id = entry.key;
-                    final def = entry.value;
-                    final exData = Map<String, dynamic>.from(exercisesMap[id] ?? {});
-                    final streak = (exData['currentStreak'] ?? 0) as int;
-                    final lifetime = (exData['lifetimeTotal'] ?? 0) as int;
-                    final lastDate = exData['lastCompletedDate'] as String?;
-                    final doneToday = lastDate == today;
 
-                    // Which of the last 7 days has this exercise been done?
-                    // We only know today/yesterday with certainty from streak data.
-                    return _ExerciseStreakCard(
-                      def: def,
-                      streak: streak,
-                      lifetime: lifetime,
-                      doneToday: doneToday,
-                      lastCompletedDate: lastDate,
-                    );
-                  }),
-              ],
+                    const SizedBox(height: 24),
+
+                    // ── Section title ────────────────────────────────────────────
+                    Text(
+                      'streaks_tab'.tr().toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: PCColors.yellow,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ── Per-exercise streak cards ─────────────────────────────────
+                    if (userExercises.isEmpty)
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Text('no_exercises_started_yet'.tr()),
+                        ),
+                      )
+                    else
+                      ...userExercises.map((entry) {
+                        final id = entry.key;
+                        final def = entry.value;
+                        final exData = Map<String, dynamic>.from(
+                          exercisesMap[id] ?? {},
+                        );
+                        final streak = (exData['currentStreak'] ?? 0) as int;
+                        final lifetime = (exData['lifetimeTotal'] ?? 0) as int;
+                        final lastDate = exData['lastCompletedDate'] as String?;
+                        final doneToday = lastDate == today;
+
+                        // Which of the last 7 days has this exercise been done?
+                        // We only know today/yesterday with certainty from streak data.
+                        return _ExerciseStreakCard(
+                          def: def,
+                          streak: streak,
+                          lifetime: lifetime,
+                          doneToday: doneToday,
+                          lastCompletedDate: lastDate,
+                        );
+                      }),
+                  ],
+                );
+              },
             );
-          },
-        );
           },
         );
       },
@@ -285,7 +326,11 @@ class _OverallStreakCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -311,7 +356,7 @@ class _OverallStreakCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
-                    'freezes'.tr().toUpperCase(),
+                    'freezes_label'.tr().toUpperCase(),
                     style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
@@ -332,9 +377,15 @@ class _OverallStreakCard extends StatelessWidget {
                           color: Colors.black38,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(color: Colors.white12, width: 1.5),
-                          boxShadow: hasFreeze ? [
-                            const BoxShadow(color: Colors.blueAccent, blurRadius: 6, spreadRadius: -3)
-                          ] : null,
+                          boxShadow: hasFreeze
+                              ? [
+                                  const BoxShadow(
+                                    color: Colors.blueAccent,
+                                    blurRadius: 6,
+                                    spreadRadius: -3,
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Center(
                           child: hasFreeze
@@ -417,12 +468,13 @@ class _ExerciseStreakCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).dividerColor,
-          width: 1.5,
-        ),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1.5),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4, offset: Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
@@ -438,7 +490,11 @@ class _ExerciseStreakCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
-                  child: buildExerciseIconWidget(def.icon, size: 24, iconColor: PCColors.brownDark),
+                  child: buildExerciseIconWidget(
+                    def.icon,
+                    size: 24,
+                    iconColor: PCColors.brownDark,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -458,10 +514,14 @@ class _ExerciseStreakCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'total_streak_lifetime'.tr(args: [lifetime.toString(), def.unit]),
+                      'total_streak_lifetime'.tr(
+                        args: [lifetime.toString(), def.unit],
+                      ),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -491,7 +551,9 @@ class _ExerciseStreakCard extends StatelessWidget {
                     streak == 1 ? 'day_unit'.tr() : 'days_unit'.tr(),
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
