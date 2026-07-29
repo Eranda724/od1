@@ -340,7 +340,7 @@ class _OverallStreakCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 20)),
+              const Icon(Icons.emoji_events, color: PCColors.yellow, size: 22),
               const SizedBox(width: 8),
               Text(
                 'overall_streak'.tr().toUpperCase(),
@@ -389,7 +389,7 @@ class _OverallStreakCard extends StatelessWidget {
                         ),
                         child: Center(
                           child: hasFreeze
-                              ? const Text('🧊', style: TextStyle(fontSize: 26))
+                              ? const Icon(Icons.ac_unit, color: Colors.blueAccent, size: 22)
                               : const SizedBox(),
                         ),
                       );
@@ -535,7 +535,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Text('🔥', style: TextStyle(fontSize: 18)),
+                      const Icon(Icons.local_fire_department, color: Colors.orange, size: 20),
                       const SizedBox(width: 2),
                       Text(
                         '$streak',

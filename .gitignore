@@ -58,3 +58,5 @@ firebase.json
 # Environment variables
 .env
 .env.*
+node_modules/
+firebase-debug.log  

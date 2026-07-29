@@ -201,11 +201,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
       // Trigger Social/Friend updates asynchronously
       FriendsService.instance.recordExerciseDone(user.uid);
-      FriendsService.instance.maybeSendFriendActivityNotification(
-        currentUid: user.uid,
-        exerciseName: widget.exerciseName,
-        detail: 'completed_exercise_today'.tr(args: [widget.exerciseName]),
-      );
+
 
       if (!mounted) return;
 

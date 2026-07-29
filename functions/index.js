@@ -1,67 +1,11 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// Helper to update all users in batches
-async function resetScoresForField(fieldPath) {
-  const usersRef = db.collection("users");
-  const snapshot = await usersRef.get();
-  
-  if (snapshot.empty) return;
-  
-  let batch = db.batch();
-  let operationCount = 0;
-  
-  for (const doc of snapshot.docs) {
-    batch.update(doc.ref, { [fieldPath]: 0 });
-    operationCount++;
-    
-    // Firestore batch limit is 500
-    if (operationCount === 490) {
-      await batch.commit();
-      batch = db.batch();
-      operationCount = 0;
-    }
-  }
-  
-  if (operationCount > 0) {
-    await batch.commit();
-  }
-  
-  console.log(`Successfully reset ${fieldPath} for all users.`);
-}
-
-// Define the timezone for resets (e.g., 'UTC', 'America/New_York', 'Asia/Kolkata')
-const TIMEZONE = 'UTC';
-
-// 1. Reset Daily Scores - Runs every day at 00:00 (Midnight)
-exports.resetDailyLeaderboard = onSchedule({
-  schedule: "0 0 * * *",
-  timeZone: TIMEZONE
-}, async (event) => {
-  await resetScoresForField("scores.daily");
-});
-
-// 2. Reset Weekly Scores - Runs every Monday at 00:00
-exports.resetWeeklyLeaderboard = onSchedule({
-  schedule: "0 0 * * 1",
-  timeZone: TIMEZONE
-}, async (event) => {
-  await resetScoresForField("scores.weekly");
-});
-
-// 3. Reset Monthly Scores - Runs on the 1st of every month at 00:00
-exports.resetMonthlyLeaderboard = onSchedule({
-  schedule: "0 0 1 * *",
-  timeZone: TIMEZONE
-}, async (event) => {
-  await resetScoresForField("scores.monthly");
-});
-
-// 4. Friend Request Notifications
+// 1. Friend Request Notification (Created)
 exports.sendFriendRequestNotification = onDocumentCreated("friendRequests/{requestId}", async (event) => {
   const requestData = event.data.data();
   if (!requestData || requestData.status !== "pending") return;
@@ -94,5 +38,105 @@ exports.sendFriendRequestNotification = onDocumentCreated("friendRequests/{reque
     console.log(`Successfully sent friend request push to ${toUid}`);
   } catch (error) {
     console.error(`Error sending push to ${toUid}:`, error);
+  }
+});
+
+// 2. Friend Activity Notification (Workout Completed)
+exports.sendFriendActivityNotification = onDocumentUpdated("users/{uid}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+
+  const beforeDate = before ? before.overallLastDate : null;
+  const afterDate = after ? after.overallLastDate : null;
+
+  // Strict check: Only fire exactly when the overall last active date changes
+  if (beforeDate === afterDate) return;
+
+  const uid = event.params.uid;
+  
+  const displayName = after.displayName || "A friend";
+
+  // Fetch all friend pairs for this user
+  const pairsSnap = await db.collection("friendPairs")
+    .where("uids", "array-contains", uid)
+    .get();
+
+  if (pairsSnap.empty) return;
+
+  // Extract all friend UIDs
+  const friendUids = [];
+  pairsSnap.docs.forEach(doc => {
+    const uids = doc.data().uids || [];
+    const friendUid = uids.find(id => id !== uid);
+    if (friendUid) friendUids.push(friendUid);
+  });
+
+  if (friendUids.length === 0) return;
+
+  // EFFICIENT BATCH READ: Fetch all friend user documents in a single network request
+  const friendRefs = friendUids.map(fUid => db.collection("users").doc(fUid));
+  const friendDocs = await db.getAll(...friendRefs);
+
+  const tokens = [];
+  friendDocs.forEach(doc => {
+    if (doc.exists && doc.data().fcmToken) {
+      tokens.push(doc.data().fcmToken);
+    }
+  });
+
+  if (tokens.length === 0) return;
+
+  const message = {
+    notification: {
+      title: "💪 Friend Activity",
+      body: `${displayName} completed a workout today!`,
+    },
+    tokens: tokens,
+  };
+
+  try {
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log(`Sent friend activity push to ${response.successCount} devices.`);
+  } catch (err) {
+    console.error("Error sending friend activity push:", err);
+  }
+});
+
+// 3. Friend Request Accepted Notification
+exports.sendFriendAcceptedNotification = onDocumentUpdated("friendRequests/{requestId}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+
+  if (!before || !after) return;
+
+  // Strict check: Only fire when status transitions EXACTLY from pending to accepted
+  if (before.status === after.status || after.status !== "accepted") {
+    return;
+  }
+
+  const senderUid = after.fromUid; 
+
+  const [senderDoc, receiverDoc] = await db.getAll(
+    db.collection("users").doc(senderUid),
+    db.collection("users").doc(after.toUid)
+  );
+
+  if (!senderDoc.exists || !senderDoc.data().fcmToken) return;
+  
+  const receiverName = receiverDoc.exists ? (receiverDoc.data().displayName || "Someone") : "Someone";
+
+  const message = {
+    notification: {
+      title: "✅ Request Accepted",
+      body: `${receiverName} accepted your friend request!`,
+    },
+    token: senderDoc.data().fcmToken,
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`Successfully sent friend accepted push to ${senderUid}`);
+  } catch (error) {
+    console.error("Error sending accepted push:", error);
   }
 });
