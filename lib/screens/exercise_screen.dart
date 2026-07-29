@@ -409,13 +409,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             ),
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
-                                        IconButton(
-                                          icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
-                                        ),
+                                        if (!isDone) ...[
+                                          const SizedBox(width: 4),
+                                          IconButton(
+                                            icon: const Icon(Icons.remove_circle_outline, color: Colors.red, size: 20),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ],
@@ -574,10 +576,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                                  onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
-                                ),
+                                if (!isDone)
+                                  IconButton(
+                                    icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                                    onPressed: () => _removeExerciseFromRoutine(id, idsToShow),
+                                  ),
                               ],
                             ],
                           ),
