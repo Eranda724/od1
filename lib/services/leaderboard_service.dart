@@ -49,11 +49,11 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
     final now = DateTime.now();
     switch (this) {
       case LeaderboardPeriod.daily:
-        return 'scores.daily_scores.${LeaderboardService.utcDailyKey(now)}';
+        return 'scores.daily_scores.${LeaderboardService.localDailyKey(now)}';
       case LeaderboardPeriod.weekly:
-        return 'scores.weekly_scores.${LeaderboardService.utcWeekKey(now)}';
+        return 'scores.weekly_scores.${LeaderboardService.localWeekKey(now)}';
       case LeaderboardPeriod.monthly:
-        return 'scores.monthly_scores.${LeaderboardService.utcMonthKey(now)}';
+        return 'scores.monthly_scores.${LeaderboardService.localMonthKey(now)}';
     }
   }
 
@@ -72,28 +72,25 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
 class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
 
-  // ── UTC Date Key Helpers ─────────────────────────────────────────────────────
+  // ── Local Date Key Helpers ─────────────────────────────────────────────────────
 
-  static String utcDailyKey(DateTime d) {
-    final utc = d.toUtc();
-    return '${utc.year}-${utc.month.toString().padLeft(2, '0')}-${utc.day.toString().padLeft(2, '0')}';
+  static String localDailyKey(DateTime d) {
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
-  static String utcMonthKey(DateTime d) {
-    final utc = d.toUtc();
-    return '${utc.year}-${utc.month.toString().padLeft(2, '0')}';
+  static String localMonthKey(DateTime d) {
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}';
   }
 
-  static String utcWeekKey(DateTime d) {
-    final utc = d.toUtc();
+  static String localWeekKey(DateTime d) {
     // Shift to Thursday of the same week to determine the ISO week year.
     // weekday is 1 for Monday, 7 for Sunday. Thursday is 4.
-    final thursday = utc.add(Duration(days: 4 - utc.weekday));
+    final thursday = d.add(Duration(days: 4 - d.weekday));
     // The ISO week year is the year of this Thursday.
     final isoYear = thursday.year;
     // Week number is calculated by days from the Thursday in the first week of the year.
     // The first week of the year is the week containing Jan 4th.
-    final jan4 = DateTime.utc(isoYear, 1, 4);
+    final jan4 = DateTime(isoYear, 1, 4);
     final jan4Thursday = jan4.add(Duration(days: 4 - jan4.weekday));
     final weekNumber = 1 + (thursday.difference(jan4Thursday).inDays / 7).round();
     
@@ -126,9 +123,9 @@ class LeaderboardService {
       int rank = 0;
       
       final now = DateTime.now();
-      final dKey = utcDailyKey(now);
-      final wKey = utcWeekKey(now);
-      final mKey = utcMonthKey(now);
+      final dKey = localDailyKey(now);
+      final wKey = localWeekKey(now);
+      final mKey = localMonthKey(now);
 
       for (final doc in snap.docs) {
         rank++;
@@ -198,9 +195,9 @@ class LeaderboardService {
   }) {
     final newScores = Map<String, dynamic>.from(existing);
     
-    final dKey = utcDailyKey(now);
-    final wKey = utcWeekKey(now);
-    final mKey = utcMonthKey(now);
+    final dKey = localDailyKey(now);
+    final wKey = localWeekKey(now);
+    final mKey = localMonthKey(now);
 
     final dMap = Map<String, dynamic>.from(newScores['daily_scores'] as Map? ?? {});
     final wMap = Map<String, dynamic>.from(newScores['weekly_scores'] as Map? ?? {});
