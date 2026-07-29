@@ -389,7 +389,7 @@ class _OverallStreakCard extends StatelessWidget {
                         ),
                         child: Center(
                           child: hasFreeze
-                              ? const Icon(Icons.ac_unit, color: Colors.blueAccent, size: 22)
+                              ? const Text('🧊', style: TextStyle(fontSize: 20))
                               : const SizedBox(),
                         ),
                       );
