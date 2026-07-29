@@ -461,21 +461,29 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.hourglass_top_rounded,
-                size: 20,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-              const SizedBox(width: _PCSpacing.xs),
-              Text(
-                'ready_time_label'.tr(),
-                style: _PCTextStyles.sectionLabel(
-                  context,
-                ).copyWith(fontSize: 16),
-              ),
-            ],
+          Expanded(
+            child: Row(
+              children: [
+                Icon(
+                  Icons.hourglass_top_rounded,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+                const SizedBox(width: _PCSpacing.xs),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'ready_time_label'.tr(),
+                      style: _PCTextStyles.sectionLabel(
+                        context,
+                      ).copyWith(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -798,16 +806,22 @@ class _TimerOption extends StatelessWidget {
               : Theme.of(context).colorScheme.onSurface,
         ),
         const SizedBox(width: _PCSpacing.md),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-            color: selected
-                ? Theme.of(context).colorScheme.onSurface
-                : Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                color: selected
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
           ),
         ),
         if (selected) ...[

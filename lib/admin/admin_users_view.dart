@@ -100,7 +100,7 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                   final displayName = data['displayName'] ?? data['username'] ?? 'no_name'.tr();
                   final email = data['email'] ?? 'no_email'.tr();
                   final overallStreak = data['overallStreak'] ?? 0;
-                  final freezes = data['freezesAvailable'] ?? 0;
+                  final freezes = data['freezesAvailable'] ?? 2;
                   
                   return Card(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

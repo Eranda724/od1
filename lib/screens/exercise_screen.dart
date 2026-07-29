@@ -734,12 +734,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                               borderRadius: BorderRadius.circular(16),
                                             ),
                                           ),
-                                          child: Text(
-                                            'start_my_routine'.tr().toUpperCase(),
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1.0,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              'start_my_routine'.tr().toUpperCase(),
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w900,
+                                                letterSpacing: 1.0,
+                                              ),
                                             ),
                                           ),
                                         ),

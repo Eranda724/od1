@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart'; // add share_plus to pubspec.yaml if not already present
+import 'package:audioplayers/audioplayers.dart';
+import 'package:confetti/confetti.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -23,7 +25,7 @@ class ExerciseDaySummary {
   });
 }
 
-class DailySummaryScreen extends StatelessWidget {
+class DailySummaryScreen extends StatefulWidget {
   final List<ExerciseDaySummary> completedExercises;
   final int overallStreak;  // NEW: consecutive days any exercise was done
 
@@ -36,19 +38,44 @@ class DailySummaryScreen extends StatelessWidget {
     this.overallStreak = 0,
   });
 
+  @override
+  State<DailySummaryScreen> createState() => _DailySummaryScreenState();
+}
+
+class _DailySummaryScreenState extends State<DailySummaryScreen> {
+  late ConfettiController _confettiController;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    
+    // Play the full routine finish sound and start confetti
+    _audioPlayer.play(AssetSource('sounds/routin-finish.mp3'));
+    _confettiController.play();
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
   int get _totalRepsToday =>
-      completedExercises.fold(0, (sum, e) => sum + e.todayReps);
+      widget.completedExercises.fold(0, (sum, e) => sum + e.todayReps);
 
   String _todayLabel(BuildContext context) {
     return DateFormat.yMMMd(context.locale.languageCode).format(DateTime.now());
   }
 
   void _shareSummary(BuildContext context) {
-    final lines = completedExercises
+    final lines = widget.completedExercises
         .map((e) => '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (' + 'day_streak_count'.tr(args: [e.currentStreak.toString()]) + ')')
         .join('\n');
 
-    final text = 'share_summary_text'.tr(args: [lines, _totalRepsToday.toString(), appLink]);
+    final text = 'share_summary_text'.tr(args: [lines, _totalRepsToday.toString(), DailySummaryScreen.appLink]);
 
     // ignore: deprecated_member_use
     Share.share(text);
@@ -73,8 +100,10 @@ class DailySummaryScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(
-        child: Column(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
           children: [
             const SizedBox(height: 8),
             Text(
@@ -89,7 +118,7 @@ class DailySummaryScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Overall streak hero badge ────────────────────────────────
-            if (overallStreak > 0)
+            if (widget.overallStreak > 0)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
@@ -118,7 +147,7 @@ class DailySummaryScreen extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            'days_count'.tr(args: [overallStreak.toString()]),
+                            'days_count'.tr(args: [widget.overallStreak.toString()]),
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w900,
@@ -182,7 +211,7 @@ class DailySummaryScreen extends StatelessWidget {
 
             // ── Per-exercise list ─────────────────────────────────────────
             Expanded(
-              child: completedExercises.isEmpty
+              child: widget.completedExercises.isEmpty
                   ? Center(
                       child: Text(
                         'no_exercises_completed'.tr(),
@@ -191,9 +220,9 @@ class DailySummaryScreen extends StatelessWidget {
                     )
                   : ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: completedExercises.length,
+                      itemCount: widget.completedExercises.length,
                       separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, i) => _ExerciseSummaryCard(item: completedExercises[i]),
+                      itemBuilder: (context, i) => _ExerciseSummaryCard(item: widget.completedExercises[i]),
                     ),
             ),
 
@@ -208,7 +237,10 @@ class DailySummaryScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: () => _shareSummary(context),
                       icon: const Icon(Icons.ios_share_rounded, size: 20),
-                      label: Text('share_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('share_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: PCColors.green,
                         foregroundColor: Colors.white,
@@ -224,12 +256,15 @@ class DailySummaryScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   TextButton(
                     onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-                    child: Text(
-                      'done_btn'.tr(),
-                      style: TextStyle(
-                        color: PCColors.brown,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'done_btn'.tr(),
+                        style: TextStyle(
+                          color: PCColors.brown,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
                       ),
                     ),
                   ),
@@ -239,8 +274,27 @@ class DailySummaryScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
+      
+      // Confetti overlay
+      Align(
+        alignment: Alignment.bottomCenter,
+        child: ConfettiWidget(
+          confettiController: _confettiController,
+          blastDirectionality: BlastDirectionality.directional,
+          blastDirection: -1.5708, // straight up
+          emissionFrequency: 0.05,
+          numberOfParticles: 20,
+          maxBlastForce: 100,
+          minBlastForce: 80,
+          gravity: 0.2,
+          shouldLoop: false,
+          colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+        ),
+      ),
+    ],
+  ),
+);
+}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

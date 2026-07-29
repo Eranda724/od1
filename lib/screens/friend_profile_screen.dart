@@ -52,7 +52,7 @@ class FriendProfileScreen extends StatelessWidget {
           }
           final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
           final overallStreak = (userData['overallStreak'] ?? friend.overallStreak) as int;
-          final freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
+          final freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
 
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance.collection('users').doc(friend.uid).collection('exercises').snapshots(),
