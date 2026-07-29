@@ -608,15 +608,20 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               if (title.isNotEmpty)
-                                Text(
-                                  title,
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: titleColor,
+                                Expanded(
+                                  child: Text(
+                                    title,
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: titleColor,
+                                    ),
                                   ),
                                 ),
-                              if (trailing != null) trailing,
+                              if (trailing != null) ...[
+                                const SizedBox(width: 8),
+                                trailing,
+                              ],
                             ],
                           ),
                         ),
@@ -813,14 +818,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Text(
-                                    "Exercises",
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w900,
+                                  Expanded(
+                                    child: const Text(
+                                      "Exercises",
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w900,
+                                      ),
                                     ),
                                   ),
-                                  if (todoExercises.isEmpty)
+                                  if (todoExercises.isEmpty) ...[
+                                    const SizedBox(width: 8),
                                     IconButton(
                                       tooltip: _settings.isGridView
                                           ? 'switch_list_view'.tr()
@@ -832,6 +840,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ),
                                       onPressed: () => _settings.setGridView(!_settings.isGridView),
                                     ),
+                                  ],
                                 ],
                               ),
                               const SizedBox(height: 0),

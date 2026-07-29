@@ -462,13 +462,19 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: Text(
-                        'stop_btn'.tr(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'stop_btn'.tr(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
                         ),
                       ),
                     ),

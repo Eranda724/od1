@@ -485,6 +485,13 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               ],
             ),
           ),
+          const SizedBox(width: _PCSpacing.md),
+          Container(
+            width: 1.5,
+            height: 24,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+          const SizedBox(width: _PCSpacing.md),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -500,7 +507,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                         ).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
               ),
-              const SizedBox(width: _PCSpacing.sm),
+              const SizedBox(width: 2),
               Checkbox(
                 value: _wantsReadyTime,
                 activeColor: PCColors.green,
@@ -600,20 +607,26 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     ),
                   ],
                 )
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'start_now'.tr(),
-                      textAlign: TextAlign.center,
-                      style: _PCTextStyles.startButton,
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'start_now'.tr(),
+                          textAlign: TextAlign.center,
+                          style: _PCTextStyles.startButton,
+                        ),
+                        const Icon(
+                          Icons.play_arrow_rounded,
+                          size: 48,
+                          color: Colors.white,
+                        ),
+                      ],
                     ),
-                    const Icon(
-                      Icons.play_arrow_rounded,
-                      size: 48,
-                      color: Colors.white,
-                    ),
-                  ],
+                  ),
                 ),
         ),
       ),
