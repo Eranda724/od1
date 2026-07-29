@@ -5,9 +5,8 @@ import '../app_settings.dart';
 import '../models/exercise_icons.dart';
 import '../models/exercise_item.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../models/session_item.dart';
-import '../services/streak_service.dart';
 import '../widgets/month_calendar_widget.dart';
+import '../services/streak_service.dart';
 import 'exercise_start_screen.dart';
 
 class StreakScreen extends StatefulWidget {
@@ -54,8 +53,7 @@ class _StreakScreenState extends State<StreakScreen> {
         final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
         final overallStreak = (data['overallStreak'] ?? 0) as int;
         final overallLastDate = data['overallLastDate'] as String?;
-        final freezesAvailable = (data['freezesAvailable'] ?? 0) as int;
-        final freezeLastRefillDate = data['freezeLastRefillDate'] as String?;
+        final freezesAvailable = (data['freezesAvailable'] ?? 2) as int;
         final activeDates = List<String>.from(data['activeDates'] ?? []);
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
         final today = _todayKey();
@@ -140,7 +138,6 @@ class _StreakScreenState extends State<StreakScreen> {
                   activeDates: activeDates,
                   frozenDates: frozenDates,
                   freezesAvailable: freezesAvailable,
-                  freezeLastRefillDate: freezeLastRefillDate,
                   totalRoutine: totalRoutine,
                   completedRoutine: completedRoutine,
                   userStartDate: userStartDate,
@@ -256,7 +253,6 @@ class _OverallStreakCard extends StatelessWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
   final int freezesAvailable;
-  final String? freezeLastRefillDate;
   final int totalRoutine;
   final int completedRoutine;
   final String? userStartDate;
@@ -268,7 +264,6 @@ class _OverallStreakCard extends StatelessWidget {
     required this.activeDates,
     required this.frozenDates,
     required this.freezesAvailable,
-    required this.freezeLastRefillDate,
     required this.totalRoutine,
     required this.completedRoutine,
     this.userStartDate,
@@ -277,6 +272,7 @@ class _OverallStreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActiveToday = lastDate == today;
+    // isActiveToday is available for future use
 
     return Container(
       width: double.infinity,
@@ -297,6 +293,7 @@ class _OverallStreakCard extends StatelessWidget {
         children: [
           // Title row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('🏆', style: TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
@@ -310,38 +307,45 @@ class _OverallStreakCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (totalRoutine == 0 && isActiveToday)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: PCColors.green,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '✓ ${'today_label'.tr()}',
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'freezes'.tr().toUpperCase(),
                     style: const TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: Colors.blueAccent,
+                      letterSpacing: 1.5,
                     ),
                   ),
-                )
-              else if (totalRoutine > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: completedRoutine == totalRoutine ? PCColors.green : Colors.white24,
-                    borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(2, (index) {
+                      final hasFreeze = index < freezesAvailable;
+                      return Container(
+                        margin: EdgeInsets.only(left: index == 0 ? 0 : 4),
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.black38,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.white12, width: 1.5),
+                          boxShadow: hasFreeze ? [
+                            const BoxShadow(color: Colors.blueAccent, blurRadius: 6, spreadRadius: -3)
+                          ] : null,
+                        ),
+                        child: Center(
+                          child: hasFreeze
+                              ? const Text('🧊', style: TextStyle(fontSize: 26))
+                              : const SizedBox(),
+                        ),
+                      );
+                    }),
                   ),
-                  child: Text(
-                    completedRoutine == totalRoutine ? '✓ ${'today_label'.tr()}' : 'Exercises $completedRoutine/$totalRoutine',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: completedRoutine == totalRoutine ? Colors.white : Colors.white70,
-                    ),
-                  ),
-                ),
+                ],
+              ),
             ],
           ),
 

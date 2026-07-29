@@ -1,17 +1,54 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math' as math;
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'leaderboard_service.dart';
 
 class StreakService {
-  static String _todayKey() {
-    final now = DateTime.now();
-    return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+  // ─── Date helpers ───────────────────────────────────────────────────────────
+
+  static String _dateKey(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  static String _todayKey() => _dateKey(DateTime.now());
+
+  static String _yesterdayKey() =>
+      _dateKey(DateTime.now().subtract(const Duration(days: 1)));
+
+  // ─── Core freeze helper ─────────────────────────────────────────────────────
+
+  /// Evaluates missed days between [fromDate] (exclusive) and [toDate] (exclusive).
+  /// For each missed day: deducts 1 freeze if available, otherwise marks streak broken.
+  static ({int freezesAvailable, List<String> frozenDates, bool streakBroken})
+      _applyMissedDays({
+    required DateTime fromDate,
+    required DateTime toDate,
+    required int freezesAvailable,
+    required List<String> frozenDates,
+  }) {
+    bool streakBroken = false;
+    final missedDayCount = toDate.difference(fromDate).inDays - 1;
+
+    for (int i = 1; i <= missedDayCount; i++) {
+      final missedDay = fromDate.add(Duration(days: i));
+      final missedKey = _dateKey(missedDay);
+
+      if (freezesAvailable > 0) {
+        freezesAvailable -= 1;
+        if (!frozenDates.contains(missedKey)) {
+          frozenDates.add(missedKey);
+        }
+      } else {
+        streakBroken = true;
+        break;
+      }
+    }
+
+    return (
+      freezesAvailable: freezesAvailable,
+      frozenDates: frozenDates,
+      streakBroken: streakBroken,
+    );
   }
 
-  static String _yesterdayKey() {
-    final y = DateTime.now().subtract(const Duration(days: 1));
-    return '${y.year}-${y.month.toString().padLeft(2, '0')}-${y.day.toString().padLeft(2, '0')}';
-  }
+  // ─── Log Exercise ────────────────────────────────────────────────────────────
 
   /// Logs an exercise and returns a map of the updated stats.
   /// Completing any single exercise counts as a valid day for the overall streak.
@@ -26,7 +63,6 @@ class StreakService {
     final exRef = userRef.collection('exercises').doc(exerciseId);
 
     final today = _todayKey();
-    final yesterday = _yesterdayKey();
 
     return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
       final userSnap = await tx.get(userRef);
@@ -35,11 +71,12 @@ class StreakService {
       final exSnap = await tx.get(exRef);
       final exerciseData = exSnap.data() ?? {};
 
-      // ── Exercise specific stats ──
+      // ── Exercise-specific stats ──
       final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
       final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
       final lastDate = exerciseData['lastCompletedDate'] as String?;
       final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
+      final yesterday = _yesterdayKey();
 
       int newStreak;
       int newTodayReps;
@@ -68,74 +105,49 @@ class StreakService {
 
       // ── Leaderboard Scores ──
       final newScores = LeaderboardService.calculateNewScores(
-        existing: Map<String, dynamic>.from(userData['scores'] as Map<String, dynamic>? ?? {}),
+        existing: Map<String, dynamic>.from(
+          userData['scores'] as Map<String, dynamic>? ?? {},
+        ),
         points: reps,
         now: DateTime.now(),
       );
 
       // ── Overall Streak Logic ──
-      // GUARD FIRST: if we already counted today, skip all streak calculation.
       final overallLastDate = userData['overallLastDate'] as String?;
       final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
 
       int newOverallStreak = prevOverallStreak;
+      // Default: same-day exercise — only update scores, no streak/freeze changes
       Map<String, dynamic> overallStreakUpdate = {'scores': newScores};
 
       if (overallLastDate != today) {
-        // This is the first exercise completed today — count the day.
-        int freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
-        String? freezeLastRefillDate = userData['freezeLastRefillDate'] as String?;
+        // First exercise today — process any missed days since last evaluation
+        final lastEvaluatedDate =
+            (userData['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
+
+        int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
         List<String> frozenDates = List<String>.from(userData['frozenDates'] ?? []);
         List<String> activeDates = List<String>.from(userData['activeDates'] ?? []);
 
         final todayObj = DateTime.parse(today);
 
-        // Freeze refill: one freeze back every 7 days (max 2)
-        if (freezeLastRefillDate == null) {
-          freezeLastRefillDate = today;
-        } else {
-          final refillDateObj = DateTime.parse(freezeLastRefillDate);
-          if (todayObj.difference(refillDateObj).inDays >= 7) {
-            freezesAvailable = math.min(2, freezesAvailable + 1);
-            freezeLastRefillDate = today;
-          }
-        }
-
-        // Consecutive-day calculation
         if (overallLastDate == null) {
+          // First ever exercise
           newOverallStreak = 1;
         } else {
-          final lastDateObj = DateTime.parse(overallLastDate);
-
-          if (overallLastDate == yesterday) {
-            // Perfect consecutive day
-            newOverallStreak = prevOverallStreak + 1;
-          } else {
-            // Gap detected — how many days were missed?
-            final daysMissed = todayObj.difference(lastDateObj).inDays - 1;
-
-            if (daysMissed > 0 && freezesAvailable >= daysMissed) {
-              // Enough freezes to cover the gap
-              freezesAvailable -= daysMissed;
-              newOverallStreak = prevOverallStreak + 1;
-
-              // Record each frozen (missed) day
-              for (int i = 1; i <= daysMissed; i++) {
-                final missingDay = lastDateObj.add(Duration(days: i));
-                final missingDayStr =
-                    '${missingDay.year}-${missingDay.month.toString().padLeft(2, '0')}-${missingDay.day.toString().padLeft(2, '0')}';
-                if (!frozenDates.contains(missingDayStr)) {
-                  frozenDates.add(missingDayStr);
-                }
-              }
-            } else {
-              // Streak broken — not enough freezes
-              newOverallStreak = 1;
-            }
-          }
+          // Sequential freeze evaluation — unified path, no special cases
+          final fromDate = DateTime.parse(lastEvaluatedDate!);
+          final result = _applyMissedDays(
+            fromDate: fromDate,
+            toDate: todayObj,
+            freezesAvailable: freezesAvailable,
+            frozenDates: frozenDates,
+          );
+          freezesAvailable = result.freezesAvailable;
+          frozenDates = result.frozenDates;
+          newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
         }
 
-        // Record today as an active date
         if (!activeDates.contains(today)) {
           activeDates.add(today);
         }
@@ -144,8 +156,8 @@ class StreakService {
           'scores': newScores,
           'overallStreak': newOverallStreak,
           'overallLastDate': today,
-          'freezesAvailable': freezesAvailable,
-          'freezeLastRefillDate': freezeLastRefillDate,
+          'overallLastEvaluatedDate': today,
+          'freezesAvailable': 2,
           'activeDates': activeDates,
           'frozenDates': frozenDates,
         };
@@ -162,9 +174,14 @@ class StreakService {
     });
   }
 
+  // ─── Check Routine Completion ────────────────────────────────────────────────
+
   /// Checks if the user has completed their configured routine today.
   static Future<bool> checkRoutineCompletion(String uid) async {
-    final userSnap = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final userSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
     if (!userSnap.exists) return false;
     final userData = userSnap.data() ?? {};
 
@@ -173,7 +190,8 @@ class StreakService {
 
     List<String> idsToShow;
     if (neverConfigured) {
-      final defsSnap = await FirebaseFirestore.instance.collection('exercises').get();
+      final defsSnap =
+          await FirebaseFirestore.instance.collection('exercises').get();
       idsToShow = defsSnap.docs.map((d) => d.id).toList();
     } else {
       idsToShow = List<String>.from(rawSelected);
@@ -181,7 +199,11 @@ class StreakService {
 
     if (idsToShow.isEmpty) return false;
 
-    final userExSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').get();
+    final userExSnap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('exercises')
+        .get();
     final userExData = <String, Map<String, dynamic>>{};
     for (final doc in userExSnap.docs) {
       userExData[doc.id] = doc.data();
@@ -198,70 +220,47 @@ class StreakService {
     return completed == idsToShow.length;
   }
 
+  // ─── Log Routine Completion ──────────────────────────────────────────────────
+
   /// Logs the completion of the full routine and updates the overall streak.
   static Future<Map<String, int>> logRoutineCompletion(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     final today = _todayKey();
-    final yesterday = _yesterdayKey();
 
     return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((tx) async {
       final userSnap = await tx.get(userRef);
       final userData = userSnap.data() ?? {};
-      
+
       final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
       final overallLastDate = userData['overallLastDate'] as String?;
-      
+
       if (overallLastDate == today) {
-        // Already logged today
         return {'overallStreak': prevOverallStreak};
       }
 
-      int freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
-      String? freezeLastRefillDate = userData['freezeLastRefillDate'] as String?;
+      final lastEvaluatedDate =
+          (userData['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
+
+      int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
       List<String> frozenDates = List<String>.from(userData['frozenDates'] ?? []);
       List<String> activeDates = List<String>.from(userData['activeDates'] ?? []);
 
       final todayObj = DateTime.parse(today);
 
-      if (freezeLastRefillDate == null) {
-        freezeLastRefillDate = today;
-      } else {
-        final refillDateObj = DateTime.parse(freezeLastRefillDate);
-        if (todayObj.difference(refillDateObj).inDays >= 7) {
-          freezesAvailable = math.min(2, freezesAvailable + 1);
-          freezeLastRefillDate = today;
-        }
-      }
-
       int newOverallStreak;
       if (overallLastDate == null) {
         newOverallStreak = 1;
       } else {
-        final lastDateObj = DateTime.parse(overallLastDate);
-        
-        // Month change resets streak to 1
-        if (todayObj.month != lastDateObj.month || todayObj.year != lastDateObj.year) {
-          newOverallStreak = 1;
-        } else if (overallLastDate == yesterday) {
-          newOverallStreak = prevOverallStreak + 1;
-        } else {
-          final daysMissed = todayObj.difference(lastDateObj).inDays - 1;
-          
-          if (daysMissed > 0 && freezesAvailable >= daysMissed) {
-            freezesAvailable -= daysMissed;
-            newOverallStreak = prevOverallStreak + 1;
-            
-            for (int i = 1; i <= daysMissed; i++) {
-              final missingDay = lastDateObj.add(Duration(days: i));
-              final missingDayStr = '${missingDay.year}-${missingDay.month.toString().padLeft(2, '0')}-${missingDay.day.toString().padLeft(2, '0')}';
-              if (!frozenDates.contains(missingDayStr)) {
-                frozenDates.add(missingDayStr);
-              }
-            }
-          } else {
-            newOverallStreak = 1;
-          }
-        }
+        final fromDate = DateTime.parse(lastEvaluatedDate!);
+        final result = _applyMissedDays(
+          fromDate: fromDate,
+          toDate: todayObj,
+          freezesAvailable: freezesAvailable,
+          frozenDates: frozenDates,
+        );
+        freezesAvailable = result.freezesAvailable;
+        frozenDates = result.frozenDates;
+        newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
       }
 
       if (!activeDates.contains(today)) {
@@ -271,8 +270,8 @@ class StreakService {
       tx.set(userRef, {
         'overallStreak': newOverallStreak,
         'overallLastDate': today,
-        'freezesAvailable': freezesAvailable,
-        'freezeLastRefillDate': freezeLastRefillDate,
+        'overallLastEvaluatedDate': today,
+        'freezesAvailable': 2,
         'activeDates': activeDates,
         'frozenDates': frozenDates,
       }, SetOptions(merge: true));
@@ -281,39 +280,55 @@ class StreakService {
     });
   }
 
-  /// Checks if the streak is broken and updates the database if necessary.
+  // ─── Check & Update Streak (app-open) ───────────────────────────────────────
+
+  /// Runs on every app-open. Lazily evaluates any missed days since last check.
+  /// Deducts freezes one-per-missed-day sequentially. Breaks streak only when
+  /// a missed day has no freeze available. Wrapped in a transaction to prevent
+  /// race conditions with logExercise.
   static Future<void> checkAndUpdateStreak(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    final userSnap = await userRef.get();
-    if (!userSnap.exists) return;
 
-    final userData = userSnap.data() ?? {};
-    final overallStreak = (userData['overallStreak'] ?? 0) as int;
-    if (overallStreak <= 0) return;
+    await FirebaseFirestore.instance.runTransaction<void>((tx) async {
+      final userSnap = await tx.get(userRef);
+      if (!userSnap.exists) return;
 
-    final overallLastDate = userData['overallLastDate'] as String?;
-    if (overallLastDate == null) return;
+      final userData = userSnap.data() ?? {};
+      final overallLastDate = userData['overallLastDate'] as String?;
 
-    final freezesAvailable = (userData['freezesAvailable'] ?? 0) as int;
-    final today = _todayKey();
-    final todayObj = DateTime.parse(today);
-    final lastDateObj = DateTime.parse(overallLastDate);
+      if (overallLastDate == null) return;
 
-    // If it's a new month, reset the streak
-    if (todayObj.month != lastDateObj.month || todayObj.year != lastDateObj.year) {
-      await userRef.set({
-        'overallStreak': 0, // Reset for new month
-      }, SetOptions(merge: true));
-      return;
-    }
+      final lastEvaluatedDate =
+          (userData['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
 
-    final daysMissed = todayObj.difference(lastDateObj).inDays - 1;
+      final now = DateTime.now();
+      final todayObj = DateTime(now.year, now.month, now.day);
+      final fromDate = DateTime.parse(lastEvaluatedDate);
 
-    // If we missed 1 or more days (yesterday was missed) and we don't have enough freezes
-    if (daysMissed > 0 && freezesAvailable < daysMissed) {
-      await userRef.set({
-        'overallStreak': 0, // Broken streak
-      }, SetOptions(merge: true));
-    }
+      if (!fromDate.isBefore(todayObj.subtract(const Duration(days: 1)))) return;
+
+      int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+      List<String> frozenDates = List<String>.from(userData['frozenDates'] ?? []);
+
+      final result = _applyMissedDays(
+        fromDate: fromDate,
+        toDate: todayObj,
+        freezesAvailable: freezesAvailable,
+        frozenDates: frozenDates,
+      );
+
+      final yesterday = todayObj.subtract(const Duration(days: 1));
+      final Map<String, dynamic> updates = {
+        'freezesAvailable': result.freezesAvailable,
+        'frozenDates': result.frozenDates,
+        'overallLastEvaluatedDate': _dateKey(yesterday),
+      };
+
+      if (result.streakBroken) {
+        updates['overallStreak'] = 0;
+      }
+
+      tx.set(userRef, updates, SetOptions(merge: true));
+    });
   }
 }
