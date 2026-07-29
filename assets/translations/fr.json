@@ -344,5 +344,15 @@
   "admin_appearance": "Apparence",
   "admin_image_tips_bank": "Banque d'Images et Conseils",
   "admin_manage_dynamic_session": "Gérer les images et conseils dynamiques de session",
-  "exercises_count": "{} Exercices"
+  "exercises_count": "{} Exercices",
+  "purchase_successful": "Achat réussi !",
+  "upgrade_to_premium": "Passer à Premium",
+  "potato_couch_premium": "Potato Couch Premium",
+  "unlock_ad_free": "Débloquez une expérience sans publicité et soutenez le développement.",
+  "permanently_remove_ads": "Supprimer définitivement toutes les publicités",
+  "support_development": "Soutenir le développement futur",
+  "faster_workouts": "Des entraînements plus rapides, sans interruption",
+  "upgrade_for_price": "Mettre à niveau pour {}",
+  "loading_price": "Chargement du prix...",
+  "restore_purchases": "Restaurer les achats"
 }

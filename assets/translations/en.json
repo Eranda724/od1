@@ -344,5 +344,15 @@
   "admin_appearance": "Appearance",
   "admin_image_tips_bank": "Image & Tips Bank",
   "admin_manage_dynamic_session": "Manage dynamic session images and tips",
-  "exercises_count": "{} Exercises"
+  "exercises_count": "{} Exercises",
+  "purchase_successful": "Purchase successful!",
+  "upgrade_to_premium": "Upgrade to Premium",
+  "potato_couch_premium": "Potato Couch Premium",
+  "unlock_ad_free": "Unlock an ad-free experience and support our development.",
+  "permanently_remove_ads": "Permanently remove all ads",
+  "support_development": "Support future development",
+  "faster_workouts": "Faster, uninterrupted workouts",
+  "upgrade_for_price": "Upgrade for {}",
+  "loading_price": "Loading price...",
+  "restore_purchases": "Restore Purchases"
 }
