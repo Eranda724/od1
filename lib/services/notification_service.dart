@@ -130,6 +130,17 @@ class NotificationService {
         }, SetOptions(merge: true));
       }
     });
+
+    // Listen to real-time changes in notification times from Firestore
+    FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('notifications')
+        .snapshots()
+        .listen((_) {
+      // Clear debounce cache to force an immediate reschedule
+      _lastSyncTime = null;
+      refreshSchedule();
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

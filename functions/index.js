@@ -73,18 +73,29 @@ exports.sendFriendActivityNotification = onDocumentUpdated("users/{uid}", async 
 
   if (friendUids.length === 0) return;
 
-  // EFFICIENT BATCH READ: Fetch all friend user documents in a single network request
+  // Fetch all friend user documents, plus the sender's document to get their current token
   const friendRefs = friendUids.map(fUid => db.collection("users").doc(fUid));
   const friendDocs = await db.getAll(...friendRefs);
+
+  // We must not send the push to the sender's own device!
+  // This happens if the user tests two accounts on one physical phone (both share the same FCM token).
+  const senderToken = after.fcmToken || null;
 
   const tokens = [];
   friendDocs.forEach(doc => {
     if (doc.exists && doc.data().fcmToken) {
-      tokens.push(doc.data().fcmToken);
+      const friendToken = doc.data().fcmToken;
+      // Exclude if it's the exact same physical device token as the person who worked out
+      if (friendToken !== senderToken) {
+        tokens.push(friendToken);
+      }
     }
   });
 
-  if (tokens.length === 0) return;
+  if (tokens.length === 0) {
+    console.log(`No valid friend tokens found (or they were all the sender's own device).`);
+    return;
+  }
 
   const message = {
     notification: {
