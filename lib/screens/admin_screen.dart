@@ -5,6 +5,7 @@ import '../models/exercise_icons.dart';
 import '../admin/admin_exercise_screen.dart';
 import '../admin/admin_users_view.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../admin/admin_assets_screen.dart';
 
 // Firestore path that stores admin-configurable notification times.
 // Document shape: { morningHour: int, morningMinute: int, eveningHour: int, eveningMinute: int }
@@ -277,6 +278,32 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                       ),
               ),
             ),
+            
+            const SizedBox(height: 32),
+            
+            const Text(
+              'Appearance',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 16),
+
+            // ── Session Assets Bank ───────────────────────────────────────────
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                leading: const Text('🖼️', style: TextStyle(fontSize: 28)),
+                title: const Text('Image & Tips Bank', style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle: const Text('Manage dynamic session images and tips', style: TextStyle(fontSize: 13)),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AdminAssetsScreen()),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
           ],
         );
       },

@@ -1,0 +1,397 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../app_settings.dart';
+
+const List<Map<String, dynamic>> kDefaultSessionImages = [
+  {"url": "assets/images/screen1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen3.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen4.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen5.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen6.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen7.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen8.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen9.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/screen10.png", "isAsset": true, "enabled": true},
+];
+
+const List<Map<String, dynamic>> kDefaultSessionTips = [
+  {"text": "couch_tip_1", "isKey": true, "enabled": true},
+  {"text": "couch_tip_2", "isKey": true, "enabled": true},
+  {"text": "couch_tip_3", "isKey": true, "enabled": true},
+  {"text": "couch_tip_4", "isKey": true, "enabled": true},
+  {"text": "couch_tip_5", "isKey": true, "enabled": true},
+  {"text": "couch_tip_6", "isKey": true, "enabled": true},
+  {"text": "couch_tip_7", "isKey": true, "enabled": true},
+];
+
+class AdminAssetsScreen extends StatefulWidget {
+  const AdminAssetsScreen({super.key});
+
+  @override
+  State<AdminAssetsScreen> createState() => _AdminAssetsScreenState();
+}
+
+class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
+  final _db = FirebaseFirestore.instance;
+  DocumentReference get _docRef => _db.collection('app_config').doc('session_assets');
+  bool _isUploading = false;
+
+  Future<void> _updateArray(String field, List<dynamic> newList) async {
+    await _docRef.set({field: newList}, SetOptions(merge: true));
+  }
+
+  Future<void> _uploadImage(List<dynamic> currentImages) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile == null) return;
+
+    setState(() => _isUploading = true);
+    try {
+      final file = File(pickedFile.path);
+      final filename = 'session_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance.ref().child('session_images').child(filename);
+      
+      final uploadTask = await ref.putFile(file);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      final newList = List<dynamic>.from(currentImages);
+      newList.add({
+        "url": downloadUrl,
+        "isAsset": false,
+        "enabled": true,
+      });
+      await _updateArray('images', newList);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  void _showAddImageOptions(List<dynamic> currentImages) {
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.upload_file),
+              title: const Text('Upload from Device'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _uploadImage(currentImages);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.link),
+              title: const Text('Add by URL'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _showAddImageDialog(currentImages);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddImageDialog(List<dynamic> currentImages) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Network Image'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(hintText: 'https://...'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('cancel_btn'.tr())),
+          ElevatedButton(
+            onPressed: () {
+              if (ctrl.text.trim().isNotEmpty) {
+                final newList = List<dynamic>.from(currentImages);
+                newList.add({
+                  "url": ctrl.text.trim(),
+                  "isAsset": false,
+                  "enabled": true,
+                });
+                _updateArray('images', newList);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddTipDialog(List<dynamic> currentTips) {
+    final ctrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add Custom Tip'),
+        content: TextField(
+          controller: ctrl,
+          decoration: const InputDecoration(hintText: 'Enter tip text...'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('cancel_btn'.tr())),
+          ElevatedButton(
+            onPressed: () {
+              if (ctrl.text.trim().isNotEmpty) {
+                final newList = List<dynamic>.from(currentTips);
+                newList.add({
+                  "text": ctrl.text.trim(),
+                  "isKey": false, // custom texts are not localization keys
+                  "enabled": true,
+                });
+                _updateArray('tips', newList);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagesGrid(List<dynamic> images) {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _isUploading ? null : () => _showAddImageOptions(images),
+        child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
+      ),
+      body: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 0.8,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+        ),
+        itemCount: images.length,
+        itemBuilder: (context, index) {
+          final item = images[index] as Map<String, dynamic>;
+          final url = item['url'] as String? ?? '';
+          final isAsset = item['isAsset'] as bool? ?? false;
+          final enabled = item['enabled'] as bool? ?? true;
+
+          return Card(
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: enabled ? PCColors.green : Colors.grey,
+                width: enabled ? 2 : 1,
+              ),
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                isAsset
+                    ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.error))
+                    : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.error)),
+                
+                // Overlay for disabled state
+                if (!enabled)
+                  Container(color: Colors.black.withValues(alpha: 0.5)),
+
+                // Top-left Delete
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: IconButton(
+                    iconSize: 20,
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      if (images.length <= 1) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('at_least_one_image_required'.tr())),
+                        );
+                        return;
+                      }
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: Text('delete_btn'.tr()),
+                          content: const Text('Are you sure you want to delete this image?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
+                            TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        final newList = List<dynamic>.from(images)..removeAt(index);
+                        _updateArray('images', newList);
+                      }
+                    },
+                  ),
+                ),
+                
+                // Top-right Toggle (Round Tick)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    iconSize: 28,
+                    padding: EdgeInsets.zero,
+                    icon: Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.black45, // visibility on light images
+                      ),
+                      child: Icon(
+                        enabled ? Icons.check_circle : Icons.circle_outlined,
+                        color: enabled ? PCColors.green : Colors.white,
+                      ),
+                    ),
+                    onPressed: () {
+                      final newList = List<dynamic>.from(images);
+                      newList[index] = Map<String, dynamic>.from(item)..['enabled'] = !enabled;
+                      _updateArray('images', newList);
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTipsList(List<dynamic> tips) {
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddTipDialog(tips),
+        child: const Icon(Icons.add),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: tips.length,
+        itemBuilder: (context, index) {
+          final item = tips[index] as Map<String, dynamic>;
+          final text = item['text'] as String? ?? '';
+          final isKey = item['isKey'] as bool? ?? false;
+          final enabled = item['enabled'] as bool? ?? true;
+
+          final displayText = isKey ? text.tr() : text;
+
+          return Card(
+            elevation: 2,
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              title: Text(displayText),
+              subtitle: Text(isKey ? 'Local Translation' : 'Custom Text', style: const TextStyle(fontSize: 12)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    iconSize: 20,
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      if (tips.length <= 1) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('at_least_one_tip_required'.tr())),
+                        );
+                        return;
+                      }
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: Text('delete_btn'.tr()),
+                          content: const Text('Are you sure you want to delete this tip?'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
+                            TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        final newList = List<dynamic>.from(tips)..removeAt(index);
+                        _updateArray('tips', newList);
+                      }
+                    },
+                  ),
+                  IconButton(
+                    iconSize: 28,
+                    padding: EdgeInsets.zero,
+                    icon: Icon(
+                      enabled ? Icons.check_circle : Icons.circle_outlined,
+                      color: enabled ? PCColors.green : Colors.grey,
+                    ),
+                    onPressed: () {
+                      final newList = List<dynamic>.from(tips);
+                      newList[index] = Map<String, dynamic>.from(item)..['enabled'] = !enabled;
+                      _updateArray('tips', newList);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Image & Tips Bank'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Images'),
+              Tab(text: 'Tips'),
+            ],
+          ),
+        ),
+        body: StreamBuilder<DocumentSnapshot>(
+          stream: _docRef.snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
+            
+            // If data is empty, initialize it implicitly with defaults for the UI
+            final images = data['images'] as List<dynamic>? ?? kDefaultSessionImages;
+            final tips = data['tips'] as List<dynamic>? ?? kDefaultSessionTips;
+
+            return TabBarView(
+              children: [
+                _buildImagesGrid(images),
+                _buildTipsList(tips),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
