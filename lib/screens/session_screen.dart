@@ -12,6 +12,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_icons.dart';
 import 'dart:math';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../admin/admin_assets_screen.dart';
 
 /// Shown after the 3-2-1 countdown finishes. The user is "in session":
 /// a stopwatch runs, tips rotate, and Stop ends the session and moves
@@ -57,17 +59,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   late final AudioPlayer _player;
 
   // ── Rotating tips ────────────────────────────────────────────────────────
-  // Swap this list for your real "during-session" message bank later —
-  // same rotation mechanism, just a different content source.
-  static const List<String> _tipKeys = [
-    "couch_tip_1",
-    "couch_tip_2",
-    "couch_tip_3",
-    "couch_tip_4",
-    "couch_tip_5",
-    "couch_tip_6",
-    "couch_tip_7",
-  ];
+  List<Map<String, dynamic>> _activeTips = [];
   int _tipIndex = 0;
   Timer? _tipTimer;
 
@@ -78,28 +70,51 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   bool _showAdOverlay = false;
   int _adSkipCountdown = 5;
   Timer? _adSkipTimer;
-  late final String _randomSessionImage;
+  
+  String? _randomSessionImage;
+  bool _isAssetImage = true;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
 
-    final images = [
-      'assets/images/screen1.png',
-      'assets/images/screen2.png',
-      'assets/images/screen3.png',
-      'assets/images/screen4.png',
-      'assets/images/screen5.png',
-      'assets/images/screen6.png',
-      'assets/images/screen7.png',
-      'assets/images/screen8.png',
-      'assets/images/screen9.png',
-      'assets/images/screen10.png',
-    ];
-    _randomSessionImage = images[Random().nextInt(images.length)];
+    _loadAssetsAndStart();
+  }
 
-    _startSession();
+  Future<void> _loadAssetsAndStart() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('app_config').doc('session_assets').get();
+      final data = doc.data() ?? {};
+      
+      final rawImages = data['images'] as List<dynamic>? ?? kDefaultSessionImages;
+      final rawTips = data['tips'] as List<dynamic>? ?? kDefaultSessionTips;
+
+      final enabledImages = rawImages.where((i) => i['enabled'] == true).toList();
+      final enabledTips = rawTips.where((t) => t['enabled'] == true).map((t) => t as Map<String, dynamic>).toList();
+
+      if (enabledImages.isNotEmpty) {
+        final img = enabledImages[Random().nextInt(enabledImages.length)];
+        _randomSessionImage = img['url'];
+        _isAssetImage = img['isAsset'] == true;
+      }
+
+      if (enabledTips.isNotEmpty) {
+        _activeTips = enabledTips;
+      }
+    } catch (e) {
+      // Fallback
+      _activeTips = kDefaultSessionTips;
+      final img = kDefaultSessionImages[Random().nextInt(kDefaultSessionImages.length)];
+      _randomSessionImage = img['url'];
+      _isAssetImage = true;
+    }
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _startSession();
+    }
   }
 
   @override
@@ -182,7 +197,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
     // Rotate tips every 5 seconds.
     _tipTimer = Timer.periodic(const Duration(seconds: 5), (_) {
-      setState(() => _tipIndex = (_tipIndex + 1) % _tipKeys.length);
+      if (_activeTips.isNotEmpty) {
+        setState(() => _tipIndex = (_tipIndex + 1) % _activeTips.length);
+      }
     });
   }
 
@@ -238,25 +255,47 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: PCColors.brownDark,
+        body: Center(child: CircularProgressIndicator(color: PCColors.yellow)),
+      );
+    }
+
     return Scaffold(
       backgroundColor: PCColors.brownDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
           // ── Background image ──────────────────────────────────────────
-          Image.asset(
-              _randomSessionImage,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [PCColors.brown, PCColors.brownDark],
+          if (_randomSessionImage != null)
+            _isAssetImage
+                ? Image.asset(
+                    _randomSessionImage!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [PCColors.brown, PCColors.brownDark],
+                        ),
+                      ),
+                    ),
+                  )
+                : CachedNetworkImage(
+                    imageUrl: _randomSessionImage!,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, url, error) => Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [PCColors.brown, PCColors.brownDark],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
 
           // ── Dark scrim for text legibility ────────────────────────────
           Container(color: Colors.black.withValues(alpha: 0.45)),
@@ -369,7 +408,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                           transitionBuilder: (child, animation) =>
                               FadeTransition(opacity: animation, child: child),
                           child: Text(
-                            _tipKeys[_tipIndex].tr(),
+                            _activeTips.isNotEmpty
+                                ? (_activeTips[_tipIndex]['isKey'] == true
+                                    ? (_activeTips[_tipIndex]['text'] as String).tr()
+                                    : _activeTips[_tipIndex]['text'] as String)
+                                : '',
                             key: ValueKey(_tipIndex),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
