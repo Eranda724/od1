@@ -46,13 +46,14 @@ enum LeaderboardPeriod { daily, weekly, monthly }
 
 extension LeaderboardPeriodExt on LeaderboardPeriod {
   String get scoreField {
+    final now = DateTime.now();
     switch (this) {
       case LeaderboardPeriod.daily:
-        return 'scores.daily';
+        return 'scores.daily_scores.${LeaderboardService.utcDailyKey(now)}';
       case LeaderboardPeriod.weekly:
-        return 'scores.weekly';
+        return 'scores.weekly_scores.${LeaderboardService.utcWeekKey(now)}';
       case LeaderboardPeriod.monthly:
-        return 'scores.monthly';
+        return 'scores.monthly_scores.${LeaderboardService.utcMonthKey(now)}';
     }
   }
 
@@ -70,6 +71,34 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
 
 class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
+
+  // ── UTC Date Key Helpers ─────────────────────────────────────────────────────
+
+  static String utcDailyKey(DateTime d) {
+    final utc = d.toUtc();
+    return '${utc.year}-${utc.month.toString().padLeft(2, '0')}-${utc.day.toString().padLeft(2, '0')}';
+  }
+
+  static String utcMonthKey(DateTime d) {
+    final utc = d.toUtc();
+    return '${utc.year}-${utc.month.toString().padLeft(2, '0')}';
+  }
+
+  static String utcWeekKey(DateTime d) {
+    final utc = d.toUtc();
+    // Shift to Thursday of the same week to determine the ISO week year.
+    // weekday is 1 for Monday, 7 for Sunday. Thursday is 4.
+    final thursday = utc.add(Duration(days: 4 - utc.weekday));
+    // The ISO week year is the year of this Thursday.
+    final isoYear = thursday.year;
+    // Week number is calculated by days from the Thursday in the first week of the year.
+    // The first week of the year is the week containing Jan 4th.
+    final jan4 = DateTime.utc(isoYear, 1, 4);
+    final jan4Thursday = jan4.add(Duration(days: 4 - jan4.weekday));
+    final weekNumber = 1 + (thursday.difference(jan4Thursday).inDays / 7).round();
+    
+    return '${isoYear}-W${weekNumber.toString().padLeft(2, '0')}';
+  }
 
   // ── Avatars based on score rank ──────────────────────────────────────────────
   static String _avatarFor(int rank) {
@@ -95,14 +124,26 @@ class LeaderboardService {
         .map((snap) {
       final entries = <LeaderboardEntry>[];
       int rank = 0;
+      
+      final now = DateTime.now();
+      final dKey = utcDailyKey(now);
+      final wKey = utcWeekKey(now);
+      final mKey = utcMonthKey(now);
+
       for (final doc in snap.docs) {
         rank++;
         final data = doc.data();
         final scores = data['scores'] as Map<String, dynamic>? ?? {};
-        final daily = (scores['daily'] as num?)?.toInt() ?? 0;
-        final weekly = (scores['weekly'] as num?)?.toInt() ?? 0;
-        final monthly = (scores['monthly'] as num?)?.toInt() ?? 0;
-        final score = _scoreForPeriod(scores, period);
+        
+        final dMap = scores['daily_scores'] as Map<String, dynamic>? ?? {};
+        final wMap = scores['weekly_scores'] as Map<String, dynamic>? ?? {};
+        final mMap = scores['monthly_scores'] as Map<String, dynamic>? ?? {};
+        
+        final daily = (dMap[dKey] as num?)?.toInt() ?? 0;
+        final weekly = (wMap[wKey] as num?)?.toInt() ?? 0;
+        final monthly = (mMap[mKey] as num?)?.toInt() ?? 0;
+
+        final score = _scoreForPeriod(period, daily, weekly, monthly);
         if (score == 0 && rank > 3) continue; // hide zero scorers below podium
         // Name resolution priority: displayName → username → email prefix → 'User'
         final name = _resolveName(data);
@@ -121,15 +162,14 @@ class LeaderboardService {
     });
   }
 
-  static int _scoreForPeriod(
-      Map<String, dynamic> scores, LeaderboardPeriod period) {
+  static int _scoreForPeriod(LeaderboardPeriod period, int daily, int weekly, int monthly) {
     switch (period) {
       case LeaderboardPeriod.daily:
-        return (scores['daily'] as num?)?.toInt() ?? 0;
+        return daily;
       case LeaderboardPeriod.weekly:
-        return (scores['weekly'] as num?)?.toInt() ?? 0;
+        return weekly;
       case LeaderboardPeriod.monthly:
-        return (scores['monthly'] as num?)?.toInt() ?? 0;
+        return monthly;
     }
   }
 
@@ -157,10 +197,24 @@ class LeaderboardService {
     required DateTime now,
   }) {
     final newScores = Map<String, dynamic>.from(existing);
+    
+    final dKey = utcDailyKey(now);
+    final wKey = utcWeekKey(now);
+    final mKey = utcMonthKey(now);
 
-    newScores['daily'] = (existing['daily'] as num? ?? 0).toInt() + points;
-    newScores['weekly'] = (existing['weekly'] as num? ?? 0).toInt() + points;
-    newScores['monthly'] = (existing['monthly'] as num? ?? 0).toInt() + points;
+    final dMap = Map<String, dynamic>.from(newScores['daily_scores'] as Map? ?? {});
+    final wMap = Map<String, dynamic>.from(newScores['weekly_scores'] as Map? ?? {});
+    final mMap = Map<String, dynamic>.from(newScores['monthly_scores'] as Map? ?? {});
+
+    dMap[dKey] = ((dMap[dKey] as num?)?.toInt() ?? 0) + points;
+    wMap[wKey] = ((wMap[wKey] as num?)?.toInt() ?? 0) + points;
+    mMap[mKey] = ((mMap[mKey] as num?)?.toInt() ?? 0) + points;
+
+    newScores['daily_scores'] = dMap;
+    newScores['weekly_scores'] = wMap;
+    newScores['monthly_scores'] = mMap;
+    
+    // Maintain lifetime overall score
     newScores['lifetime'] = (existing['lifetime'] as num? ?? 0).toInt() + points;
     newScores['lastUpdated'] = Timestamp.fromDate(now);
 
