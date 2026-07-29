@@ -1,4 +1,5 @@
 const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
@@ -58,4 +59,40 @@ exports.resetMonthlyLeaderboard = onSchedule({
   timeZone: TIMEZONE
 }, async (event) => {
   await resetScoresForField("scores.monthly");
+});
+
+// 4. Friend Request Notifications
+exports.sendFriendRequestNotification = onDocumentCreated("friendRequests/{requestId}", async (event) => {
+  const requestData = event.data.data();
+  if (!requestData || requestData.status !== "pending") return;
+
+  const toUid = requestData.toUid;
+  const fromName = requestData.fromName || "Someone";
+
+  const targetUserDoc = await db.collection("users").doc(toUid).get();
+  if (!targetUserDoc.exists) {
+    console.log(`Target user ${toUid} not found. Skipping.`);
+    return;
+  }
+
+  const fcmToken = targetUserDoc.data().fcmToken;
+  if (!fcmToken) {
+    console.log(`Target user ${toUid} has no fcmToken. Skipping push notification.`);
+    return;
+  }
+
+  const message = {
+    notification: {
+      title: "🤝 New Friend Request",
+      body: `${fromName} wants to be your friend!`,
+    },
+    token: fcmToken,
+  };
+
+  try {
+    await admin.messaging().send(message);
+    console.log(`Successfully sent friend request push to ${toUid}`);
+  } catch (error) {
+    console.error(`Error sending push to ${toUid}:`, error);
+  }
 });

@@ -1,5 +1,8 @@
 import 'dart:math';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -87,20 +90,64 @@ class NotificationService {
       settings: const InitializationSettings(android: android, iOS: ios),
     );
 
-    // Request permission on Android 13+
+    // Request permission on Android 13+ and iOS for local notifications
     await _plugin
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.requestNotificationsPermission();
+
+    // Setup FCM
+    final fcm = FirebaseMessaging.instance;
+    await fcm.requestPermission();
+
+    // Foreground message handler
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      if (message.notification != null) {
+        showFriendActivityNotification(
+          message.notification!.title ?? 'New Message',
+          message.notification!.body ?? '',
+        );
+      }
+    });
+
+    // Save token whenever auth state changes to a logged-in user
+    FirebaseAuth.instance.authStateChanges().listen((user) async {
+      if (user != null) {
+        final token = await fcm.getToken();
+        if (token != null) {
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+            'fcmToken': token,
+          }, SetOptions(merge: true));
+        }
+      }
+    });
+
+    fcm.onTokenRefresh.listen((token) async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'fcmToken': token,
+        }, SetOptions(merge: true));
+      }
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // Public API
   // ─────────────────────────────────────────────────────────────────────────────
 
+  DateTime? _lastSyncTime;
+
   /// Schedules both daily reminders — only if notifications are enabled in settings.
   Future<void> refreshSchedule() async {
     if (!AppSettings().notificationsEnabled) return;
+
+    final now = DateTime.now();
+    if (_lastSyncTime != null && now.difference(_lastSyncTime!) < const Duration(minutes: 5)) {
+      return; // Debounce spamming
+    }
+    _lastSyncTime = now;
+
     await _scheduleMorning();
     await _scheduleEvening();
   }
@@ -109,8 +156,10 @@ class NotificationService {
   /// a user successfully saves an exercise.
   Future<void> cancelTodayEveningReminder() async {
     if (!AppSettings().notificationsEnabled) return;
-    // v22 uses named parameter `id:`
-    await _plugin.cancel(id: _eveningId);
+    // Cancel the current recurring schedule first
+    await _plugin.cancel(id: _eveningId); 
+    // Re-schedule immediately starting from tomorrow
+    await _scheduleEvening(skipToday: true);
   }
 
   /// Cancels ALL notifications — used when user disables notifications in settings.
@@ -198,14 +247,14 @@ class NotificationService {
     );
   }
 
-  Future<void> _scheduleEvening() async {
+  Future<void> _scheduleEvening({bool skipToday = false}) async {
     final times = await _fetchNotifTimes();
     final idx = await _pickIndex(_eveningMessages, 'notif_evening_last');
     await _plugin.zonedSchedule(
       id: _eveningId,
       title: '⚠️ Your streak is at risk!',
       body: _eveningMessages[idx],
-      scheduledDate: _nextInstanceOfHour(times['eveningHour']!, times['eveningMinute']!),
+      scheduledDate: _nextInstanceOfHour(times['eveningHour']!, times['eveningMinute']!, skipToday: skipToday),
       notificationDetails: _notifDetails(
         channelId: 'streak_saver',
         channelName: 'Streak Saver',
@@ -235,11 +284,11 @@ class NotificationService {
     );
   }
 
-  tz.TZDateTime _nextInstanceOfHour(int hour, int minute) {
+  tz.TZDateTime _nextInstanceOfHour(int hour, int minute, {bool skipToday = false}) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
         tz.local, now.year, now.month, now.day, hour, minute);
-    if (scheduled.isBefore(now)) {
+    if (scheduled.isBefore(now) || skipToday) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return scheduled;
