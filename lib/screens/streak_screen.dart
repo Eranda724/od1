@@ -468,14 +468,24 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                             ),
                           ),
                           // The ice cube (filled or silhouette)
-                          hasFreeze
-                              ? Image.asset('assets/images/ice_cube_3d.png', width: 44, height: 44)
-                              : Image.asset(
-                                  'assets/images/ice_cube_3d.png',
-                                  width: 44,
-                                  height: 44,
-                                  color: Colors.black54,
-                                ),
+                          Transform.translate(
+                            offset: const Offset(
+                              0,
+                              4,
+                            ), // Shift down to vertically center
+                            child: hasFreeze
+                                ? Image.asset(
+                                    'assets/images/ice_cube_3d.png',
+                                    width: 52,
+                                    height: 52,
+                                  )
+                                : Image.asset(
+                                    'assets/images/ice_cube_3d.png',
+                                    width: 52,
+                                    height: 52,
+                                    color: Colors.black54,
+                                  ),
+                          ),
                         ],
                       ),
                     );
@@ -498,8 +508,8 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                       widget.freezesAvailable == 2
                           ? 'Next freeze in 2 days'
                           : widget.freezesAvailable == 1
-                              ? 'Next freeze in 1 day'
-                              : 'Last freeze is going on',
+                          ? 'Next freeze in 1 day'
+                          : 'Last freeze is going on',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
