@@ -111,7 +111,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                 ),
                 if (isActive) ...[
                   const SizedBox(height: 1),
-                  const Text('🔥', style: TextStyle(fontSize: 10, height: 1.0)),
+                  Image.asset('assets/images/fire_3d.png', width: 10, height: 10),
                 ],
               ],
             ),
@@ -129,7 +129,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           children: [
             Transform.translate(
               offset: const Offset(0, -4), // Move fire emoji slightly up
-              child: const Text('🔥', style: TextStyle(fontSize: 34)),
+              child: Image.asset('assets/images/fire_3d.png', width: 34, height: 34),
             ),
             // Date number on top (shifted slightly down towards the fire's base)
             Transform.translate(
@@ -158,9 +158,10 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           children: [
             Transform.translate(
               offset: const Offset(0, 0), // Center the ice cube emoji
-              child: const Text(
-                '🧊',
-                style: TextStyle(fontSize: 34),
+              child: Image.asset(
+                'assets/images/ice_cube_3d.png',
+                width: 34,
+                height: 34,
               ), // Same size as fire, full opacity
             ),
             Transform.translate(

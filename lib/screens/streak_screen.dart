@@ -410,7 +410,11 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                         ),
                         child: Center(
                           child: hasFreeze
-                              ? const Text('🧊', style: TextStyle(fontSize: 20))
+                              ? OverflowBox(
+                                  maxWidth: 60,
+                                  maxHeight: 60,
+                                  child: Image.asset('assets/images/ice_cube_3d.png', width: 44, height: 44),
+                                )
                               : const SizedBox(),
                         ),
                       );

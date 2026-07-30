@@ -28,7 +28,9 @@ class WeekStreakRow extends StatelessWidget {
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: days.map((date) => Expanded(child: _buildDayColumn(context, date))).toList(),
+      children: days
+          .map((date) => Expanded(child: _buildDayColumn(context, date)))
+          .toList(),
     );
   }
 
@@ -59,26 +61,22 @@ class WeekStreakRow extends StatelessWidget {
   }
 
   Widget _buildIcon({required bool isActive, required bool isFrozen}) {
-    const circleSize = 38.0; 
+    const circleSize = 38.0;
     const boxHeight = 48.0; // Uniform vertical bounding box to align day labels
 
     if (isActive) {
       return SizedBox(
         width: circleSize, // Keep width tight to prevent row overflow
         height: boxHeight,
-        child: Center(
-          child: Container(
-            width: circleSize,
-            height: circleSize,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [Color(0xFFFFC72C), Color(0xFFFF8C00)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+        child: OverflowBox(
+          maxWidth: 100, // Allow horizontal visual bleed
+          maxHeight: 100, // Allow vertical visual bleed
+          child: Center(
+            child: Image.asset(
+              'assets/images/fire_3d.png',
+              width: 30,
+              height: 30,
             ),
-            child: const Center(child: Text('🔥', style: TextStyle(fontSize: 22))),
           ),
         ),
       );
@@ -91,8 +89,15 @@ class WeekStreakRow extends StatelessWidget {
         child: OverflowBox(
           maxWidth: 100, // Allow horizontal visual bleed
           maxHeight: 100, // Allow vertical visual bleed
-          child: const Center(
-            child: Text('🧊', style: TextStyle(fontSize: 42)),
+          child: Center(
+            child: Transform.translate(
+              offset: const Offset(0, 4), // Shift down slightly
+              child: Image.asset(
+                'assets/images/ice_cube_3d.png',
+                height: 66,
+                width: 66,
+              ),
+            ),
           ),
         ),
       );
