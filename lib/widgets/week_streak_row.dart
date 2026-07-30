@@ -90,13 +90,10 @@ class WeekStreakRow extends StatelessWidget {
           maxWidth: 100, // Allow horizontal visual bleed
           maxHeight: 100, // Allow vertical visual bleed
           child: Center(
-            child: Transform.translate(
-              offset: const Offset(0, 4), // Shift down slightly
-              child: Image.asset(
-                'assets/images/ice_cube_3d.png',
-                height: 66,
-                width: 66,
-              ),
+            child: Image.asset(
+              'assets/images/ice_cube_3d.png',
+              height: 42,
+              width: 42,
             ),
           ),
         ),

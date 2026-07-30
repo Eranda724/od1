@@ -372,56 +372,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                   letterSpacing: 1.4,
                 ),
               ),
-              const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'freezes_label'.tr().toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.blueAccent,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(2, (index) {
-                      final hasFreeze = index < widget.freezesAvailable;
-                      return Container(
-                        margin: EdgeInsets.only(left: index == 0 ? 0 : 4),
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.black38,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white12, width: 1.5),
-                          boxShadow: hasFreeze
-                              ? [
-                                  const BoxShadow(
-                                    color: Colors.blueAccent,
-                                    blurRadius: 6,
-                                    spreadRadius: -3,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Center(
-                          child: hasFreeze
-                              ? OverflowBox(
-                                  maxWidth: 60,
-                                  maxHeight: 60,
-                                  child: Image.asset('assets/images/ice_cube_3d.png', width: 44, height: 44),
-                                )
-                              : const SizedBox(),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
             ],
           ),
 
@@ -481,6 +431,84 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                 frozenDates: widget.frozenDates,
                 userStartDate: widget.userStartDate,
               ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Streak Freeze Section
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.black26, // Low dark background matching the image
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white12, width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(2, (index) {
+                    final hasFreeze = index < widget.freezesAvailable;
+                    return Container(
+                      margin: EdgeInsets.only(right: index == 0 ? 8 : 0),
+                      width: 44, // Allocate same width to keep alignment
+                      height: 44,
+                      alignment: Alignment.center,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // The hole container
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black26,
+                            ),
+                          ),
+                          // The ice cube (filled or silhouette)
+                          hasFreeze
+                              ? Image.asset('assets/images/ice_cube_3d.png', width: 44, height: 44)
+                              : Image.asset(
+                                  'assets/images/ice_cube_3d.png',
+                                  width: 44,
+                                  height: 44,
+                                  color: Colors.black54,
+                                ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Streak Freeze',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.freezesAvailable == 2
+                          ? 'Next freeze in 2 days'
+                          : widget.freezesAvailable == 1
+                              ? 'Next freeze in 1 day'
+                              : 'Last freeze is going on',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
 
