@@ -5,12 +5,16 @@ class WeekStreakRow extends StatelessWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
   final DateTime today;
+  final int freezesAvailable;
+  final int streak;
 
   const WeekStreakRow({
     super.key,
     required this.activeDates,
     required this.frozenDates,
     required this.today,
+    required this.freezesAvailable,
+    required this.streak,
   });
 
   String _dateKey(DateTime d) {
@@ -37,8 +41,13 @@ class WeekStreakRow extends StatelessWidget {
   Widget _buildDayColumn(BuildContext context, DateTime date) {
     final key = _dateKey(date);
     final isActive = activeDates.contains(key);
-    final isFrozen = frozenDates.contains(key);
     final isToday = _isSameDay(date, today);
+    bool isFrozen = frozenDates.contains(key);
+
+    // Visual override: if today is not active, but we have a streak and freezes available, visually show a freeze for today!
+    if (isToday && !isActive && streak > 0 && freezesAvailable > 0) {
+      isFrozen = true;
+    }
 
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final dayLabel = dayNames[date.weekday - 1];

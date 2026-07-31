@@ -6,12 +6,16 @@ class MonthCalendarWidget extends StatefulWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
   final String? userStartDate; // first day the user ever logged an exercise
+  final int freezesAvailable;
+  final int streak;
 
   const MonthCalendarWidget({
     super.key,
     required this.activeDates,
     required this.frozenDates,
     this.userStartDate,
+    required this.freezesAvailable,
+    required this.streak,
   });
 
   @override
@@ -53,11 +57,17 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
 
     final key = _formatDateKey(date);
     final isActive = widget.activeDates.contains(key);
-    final isFrozen = widget.frozenDates.contains(key);
+    bool isFrozen = widget.frozenDates.contains(key);
 
     final now = DateTime.now();
     final isToday =
         date.year == now.year && date.month == now.month && date.day == now.day;
+
+    // Visual override: if today is not active, but we have a streak and freezes available, visually show a freeze for today!
+    if (isToday && !isActive && widget.streak > 0 && widget.freezesAvailable > 0) {
+      isFrozen = true;
+    }
+
     final isFuture = date.isAfter(now) && !isToday;
 
     // Days before the user started the app are neutral — not "missed"
@@ -89,32 +99,44 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       return Container(
         margin: const EdgeInsets.all(2),
         child: Center(
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: const BoxDecoration(
-              color: PCColors.yellow,
-              shape: BoxShape.circle,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 2),
-                Text(
-                  '${date.day}',
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    height: 1.0,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isActive)
+                Transform.translate(
+                  offset: const Offset(0, -4),
+                  child: Image.asset(
+                    'assets/images/fire_3d.png',
+                    width: 34,
+                    height: 34,
                   ),
                 ),
-                if (isActive) ...[
-                  const SizedBox(height: 1),
-                  Image.asset('assets/images/fire_3d.png', width: 10, height: 10),
-                ],
-              ],
-            ),
+              if (isFrozen)
+                Transform.translate(
+                  offset: const Offset(0, 4),
+                  child: OverflowBox(
+                    maxWidth: 60,
+                    maxHeight: 60,
+                    child: Image.asset(
+                      'assets/images/ice_cube_3d.png',
+                      width: 46,
+                      height: 60,
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                ),
+              Transform.translate(
+                offset: const Offset(0, 1),
+                child: Text(
+                  '${date.day}',
+                  style: TextStyle(
+                    color: (isActive || isFrozen) ? Colors.black : Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -129,7 +151,11 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           children: [
             Transform.translate(
               offset: const Offset(0, -4), // Move fire emoji slightly up
-              child: Image.asset('assets/images/fire_3d.png', width: 34, height: 34),
+              child: Image.asset(
+                'assets/images/fire_3d.png',
+                width: 34,
+                height: 34,
+              ),
             ),
             // Date number on top (shifted slightly down towards the fire's base)
             Transform.translate(
@@ -157,11 +183,16 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           alignment: Alignment.center,
           children: [
             Transform.translate(
-              offset: const Offset(0, 0), // Center the ice cube emoji
-              child: Image.asset(
-                'assets/images/ice_cube_3d.png',
-                width: 34,
-                height: 34,
+              offset: const Offset(0, 4), // Center the ice cube emoji
+              child: OverflowBox(
+                maxWidth: 60,
+                maxHeight: 60,
+                child: Image.asset(
+                  'assets/images/ice_cube_3d.png',
+                  width: 46,
+                  height: 60,
+                  fit: BoxFit.fill,
+                ),
               ), // Same size as fire, full opacity
             ),
             Transform.translate(
@@ -273,9 +304,9 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Weekday Headers
           Row(
             children: weekDays.map((dayKey) {

@@ -19,7 +19,9 @@ class StreakScreen extends StatefulWidget {
   State<StreakScreen> createState() => _StreakScreenState();
 }
 
-class _StreakScreenState extends State<StreakScreen> {
+class _StreakScreenState extends State<StreakScreen> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,7 @@ class _StreakScreenState extends State<StreakScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) {
       return Center(child: Text('not_signed_in'.tr()));
@@ -145,9 +148,8 @@ class _StreakScreenState extends State<StreakScreen> {
                   final exData = Map<String, dynamic>.from(
                     exercisesMap[id] ?? {},
                   );
-                  final lastCompletedDate =
-                      exData['lastCompletedDate'] as String?;
-                  return lastCompletedDate == today;
+                  final currentStreak = (exData['currentStreak'] ?? 0) as int;
+                  return currentStreak > 0;
                 }).toList();
 
                 userExercises.sort((a, b) {
@@ -266,14 +268,43 @@ class _StreakScreenState extends State<StreakScreen> {
                         final lastDate = exData['lastCompletedDate'] as String?;
                         final doneToday = lastDate == today;
 
-                        // Which of the last 7 days has this exercise been done?
-                        // We only know today/yesterday with certainty from streak data.
+                        List<String> exActiveDates = List<String>.from(
+                          exData['activeDates'] ?? [],
+                        );
+                        final List<String> exFrozenDates = List<String>.from(
+                          exData['frozenDates'] ?? [],
+                        );
+                        final int exFreezesAvailable =
+                            (exData['freezesAvailable'] ?? 2) as int;
+
+                        // Fallback: If database has a legacy streak number but no saved dates yet, fill the UI to match
+                        if (streak > 0 &&
+                            lastDate != null &&
+                            exActiveDates.length < streak) {
+                          try {
+                            final lastDateObj = DateTime.parse(lastDate);
+                            final int fillCount = streak > 7 ? 7 : streak;
+                            for (int i = 0; i < fillCount; i++) {
+                              final d = lastDateObj.subtract(Duration(days: i));
+                              final key =
+                                  '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+                              if (!exActiveDates.contains(key) &&
+                                  !exFrozenDates.contains(key)) {
+                                exActiveDates.add(key);
+                              }
+                            }
+                          } catch (_) {}
+                        }
+
                         return _ExerciseStreakCard(
                           def: def,
                           streak: streak,
                           lifetime: lifetime,
                           doneToday: doneToday,
                           lastCompletedDate: lastDate,
+                          activeDates: exActiveDates,
+                          frozenDates: exFrozenDates,
+                          freezesAvailable: exFreezesAvailable,
                         );
                       }),
                   ],
@@ -425,11 +456,15 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                 activeDates: widget.activeDates,
                 frozenDates: widget.frozenDates,
                 today: DateTime.now(),
+                freezesAvailable: widget.freezesAvailable,
+                streak: widget.overallStreak,
               ),
               secondChild: MonthCalendarWidget(
                 activeDates: widget.activeDates,
                 frozenDates: widget.frozenDates,
                 userStartDate: widget.userStartDate,
+                freezesAvailable: widget.freezesAvailable,
+                streak: widget.overallStreak,
               ),
             ),
           ),
@@ -546,6 +581,96 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Mini Week Row for individual exercise cards
+// ─────────────────────────────────────────────────────────────────────────────
+class _MiniWeekRow extends StatelessWidget {
+  final List<String> activeDates;
+  final List<String> frozenDates;
+  final int freezesAvailable;
+  final int streak;
+
+  const _MiniWeekRow({
+    required this.activeDates,
+    required this.frozenDates,
+    required this.freezesAvailable,
+    required this.streak,
+  });
+
+  String _dateKey(DateTime d) {
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final today = DateTime.now();
+    final days = List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: days.map((date) {
+        final key = _dateKey(date);
+        final isActive = activeDates.contains(key);
+        final isToday = date.year == today.year &&
+            date.month == today.month &&
+            date.day == today.day;
+        bool isFrozen = frozenDates.contains(key);
+
+        if (isToday && !isActive && streak > 0 && freezesAvailable > 0) {
+          isFrozen = true;
+        }
+
+        if (isActive) {
+          return SizedBox(
+            width: 34,
+            height: 34,
+            child: Center(
+              child: Image.asset(
+                'assets/images/fire_3d.png',
+                width: 28,
+                height: 28,
+              ),
+            ),
+          );
+        }
+
+        if (isFrozen) {
+          return SizedBox(
+            width: 34,
+            height: 34,
+            child: Center(
+              child: Transform.translate(
+                offset: const Offset(0, 6), // move below slightly
+                child: OverflowBox(
+                  maxWidth: 80,
+                  maxHeight: 80,
+                  child: Image.asset(
+                    'assets/images/ice_cube_3d.png',
+                    width: 36,
+                    height: 46,
+                    fit: BoxFit.fill,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white12
+                : Colors.black.withOpacity(0.06),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Per-exercise streak card
 // ─────────────────────────────────────────────────────────────────────────────
 class _ExerciseStreakCard extends StatelessWidget {
@@ -554,6 +679,9 @@ class _ExerciseStreakCard extends StatelessWidget {
   final int lifetime;
   final bool doneToday;
   final String? lastCompletedDate;
+  final List<String> activeDates;
+  final List<String> frozenDates;
+  final int freezesAvailable;
 
   const _ExerciseStreakCard({
     required this.def,
@@ -561,6 +689,9 @@ class _ExerciseStreakCard extends StatelessWidget {
     required this.lifetime,
     required this.doneToday,
     required this.lastCompletedDate,
+    required this.activeDates,
+    required this.frozenDates,
+    required this.freezesAvailable,
   });
 
   @override
@@ -636,37 +767,34 @@ class _ExerciseStreakCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department,
-                        color: Colors.orange,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        '$streak',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    '$streak',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   Text(
-                    streak == 1 ? 'day_unit'.tr() : 'days_unit'.tr(),
+                    streak == 1
+                        ? '${'day_unit'.tr()} streak'
+                        : '${'days_unit'.tr()} streak',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          _MiniWeekRow(
+            activeDates: activeDates,
+            frozenDates: frozenDates,
+            freezesAvailable: freezesAvailable,
+            streak: streak,
           ),
         ],
       ),

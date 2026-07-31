@@ -65,18 +65,26 @@ class _HomeScreenState extends State<HomeScreen>
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AdminScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const AdminScreen(),
+                    ),
                   );
                 },
                 style: OutlinedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 0, 0, 0),
                   foregroundColor: Colors.white,
-                  side: const BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 1.5),
+                  side: const BorderSide(
+                    color: Color.fromARGB(255, 0, 0, 0),
+                    width: 1.5,
+                  ),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
                 ),
 
                 child: Text('admin_panel'.tr()),
@@ -97,19 +105,28 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           indicatorWeight: 3,
           tabs: [
-            Tab(icon: const Icon(Icons.fitness_center_rounded), text: 'exercise_tab'.tr()),
-            Tab(icon: const Icon(Icons.local_fire_department_rounded), text: 'streaks_tab'.tr()),
-            Tab(icon: const Icon(Icons.leaderboard_rounded), text: 'rankings_tab'.tr()),
+            Tab(
+              icon: const Icon(Icons.fitness_center_rounded),
+              text: 'exercise_tab'.tr(),
+            ),
+            Tab(
+              icon: const Icon(Icons.local_fire_department_rounded),
+              text: 'streaks_tab'.tr(),
+            ),
+            Tab(
+              icon: const Icon(Icons.leaderboard_rounded),
+              text: 'rankings_tab'.tr(),
+            ),
             Tab(
               text: 'social_tab'.tr(),
               icon: StreamBuilder<QuerySnapshot>(
                 stream: user == null
                     ? const Stream.empty()
                     : FirebaseFirestore.instance
-                        .collection('friendRequests')
-                        .where('toUid', isEqualTo: user.uid)
-                        .where('status', isEqualTo: 'pending')
-                        .snapshots(),
+                          .collection('friendRequests')
+                          .where('toUid', isEqualTo: user.uid)
+                          .where('status', isEqualTo: 'pending')
+                          .snapshots(),
                 builder: (context, snap) {
                   final hasPending = (snap.data?.docs.isNotEmpty) == true;
                   return Badge(
@@ -128,9 +145,11 @@ class _HomeScreenState extends State<HomeScreen>
         controller: _tabController,
         children: [
           ExerciseScreen(user: user),
-          StreakScreen(onStartRoutine: () {
-            _tabController.animateTo(0);
-          }),
+          StreakScreen(
+            onStartRoutine: () {
+              _tabController.animateTo(0);
+            },
+          ),
           LeaderboardScreen(currentUid: user?.uid),
           const SocialScreen(),
         ],
@@ -140,7 +159,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildMenuButton(User? user) {
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').doc(user?.uid).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user?.uid)
+          .snapshots(),
       builder: (context, snapshot) {
         final data = snapshot.data?.data() as Map<String, dynamic>?;
         final isPremium = data?['isPremium'] == true;
@@ -161,20 +183,26 @@ class _HomeScreenState extends State<HomeScreen>
             final isDark = _settings.themeMode == ThemeMode.dark;
             return PopupMenuButton<String>(
               icon: const Icon(Icons.menu_rounded),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
               offset: const Offset(0, 48),
               onSelected: (value) async {
                 switch (value) {
                   case 'profile':
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const ProfileScreen(),
+                      ),
                     );
                     break;
                   case 'settings':
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsScreen(),
+                      ),
                     );
                     break;
                   case 'theme_light':
@@ -186,7 +214,9 @@ class _HomeScreenState extends State<HomeScreen>
                   case 'remove_ads':
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const PremiumUpgradeScreen(),
+                      ),
                     );
                     break;
                   case 'logout':
@@ -197,72 +227,99 @@ class _HomeScreenState extends State<HomeScreen>
               itemBuilder: (context) => [
                 PopupMenuItem<String>(
                   value: 'profile',
-                  child: Row(children: [
-                    const Icon(Icons.person_outline_rounded, size: 20),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          dispName,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (isPremium)
+                  child: Row(
+                    children: [
+                      const Icon(Icons.person_outline_rounded, size: 20),
+                      const SizedBox(width: 10),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
                           Text(
-                            'premium_user_badge'.tr(),
-                            style: const TextStyle(
-                              color: PCColors.yellow,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                            ),
+                            dispName,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                      ],
-                    ),
-                  ]),
+                          if (isPremium)
+                            Text(
+                              'premium_user_badge'.tr(),
+                              style: const TextStyle(
+                                color: PCColors.yellow,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const PopupMenuDivider(),
                 PopupMenuItem<String>(
                   value: isDark ? 'theme_light' : 'theme_dark',
-                  child: Row(children: [
-                    Icon(
-                      isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(isDark ? 'light_mode'.tr() : 'dark_mode'.tr()),
-                  ]),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isDark
+                            ? Icons.light_mode_rounded
+                            : Icons.dark_mode_rounded,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(isDark ? 'light_mode'.tr() : 'dark_mode'.tr()),
+                    ],
+                  ),
                 ),
                 const PopupMenuDivider(),
                 PopupMenuItem<String>(
                   value: 'settings',
-                  child: Row(children: [
-                    const Icon(Icons.settings_outlined, size: 20),
-                    SizedBox(width: 10),
-                    Text('settings'.tr()),
-                  ]),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.settings_outlined, size: 20),
+                      SizedBox(width: 10),
+                      Text('settings'.tr()),
+                    ],
+                  ),
                 ),
                 if (!isPremium) ...[
                   const PopupMenuDivider(),
                   PopupMenuItem<String>(
                     value: 'remove_ads',
-                    child: Row(children: [
-                      const Icon(Icons.star_rounded, size: 20, color: Color(0xFFFFC72C)),
-                      const SizedBox(width: 10),
-                      Text('remove_ads_menu'.tr(), style: const TextStyle(fontWeight: FontWeight.w600)),
-                    ]),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 20,
+                          color: Color(0xFFFFC72C),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'remove_ads_menu'.tr(),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
                 const PopupMenuDivider(),
                 PopupMenuItem<String>(
                   value: 'logout',
-                  child: Row(children: [
-                    const Icon(Icons.logout_rounded, size: 20, color: Colors.red),
-                    const SizedBox(width: 10),
-                    Text('logout'.tr(),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.logout_rounded,
+                        size: 20,
+                        color: Colors.red,
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'logout'.tr(),
                         style: const TextStyle(
-                            color: Colors.red, fontWeight: FontWeight.w600)),
-                  ]),
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             );
