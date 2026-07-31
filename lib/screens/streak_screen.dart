@@ -12,22 +12,49 @@ import 'exercise_start_screen.dart';
 
 class StreakScreen extends StatefulWidget {
   final VoidCallback? onStartRoutine;
+  final TabController? tabController;
 
-  const StreakScreen({super.key, this.onStartRoutine});
+  const StreakScreen({super.key, this.onStartRoutine, this.tabController});
 
   @override
   State<StreakScreen> createState() => _StreakScreenState();
 }
 
 class _StreakScreenState extends State<StreakScreen> with AutomaticKeepAliveClientMixin {
+  final GlobalKey<_OverallStreakCardState> _overallCardKey = GlobalKey();
+
   @override
   bool get wantKeepAlive => true;
+
   @override
   void initState() {
     super.initState();
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid != null) {
       StreakService.checkAndUpdateStreak(uid);
+    }
+    widget.tabController?.addListener(_onTabChanged);
+  }
+
+  @override
+  void didUpdateWidget(covariant StreakScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.tabController != widget.tabController) {
+      oldWidget.tabController?.removeListener(_onTabChanged);
+      widget.tabController?.addListener(_onTabChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.tabController?.removeListener(_onTabChanged);
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    // If the tab is changed away from the Streak tab (index 1), collapse the month view
+    if (widget.tabController != null && widget.tabController!.index != 1) {
+      _overallCardKey.currentState?.collapse();
     }
   }
 
@@ -175,6 +202,7 @@ class _StreakScreenState extends State<StreakScreen> with AutomaticKeepAliveClie
                   children: [
                     // ── Overall streak hero card ────────────────────────────────
                     _OverallStreakCard(
+                      key: _overallCardKey,
                       overallStreak: overallStreak,
                       lastDate: overallLastDate,
                       today: today,
@@ -333,6 +361,7 @@ class _OverallStreakCard extends StatefulWidget {
   final String? userStartDate;
 
   const _OverallStreakCard({
+    super.key,
     required this.overallStreak,
     required this.lastDate,
     required this.today,
@@ -351,21 +380,44 @@ class _OverallStreakCard extends StatefulWidget {
 class _OverallStreakCardState extends State<_OverallStreakCard> {
   bool _isExpanded = false;
 
+  void collapse() {
+    if (mounted && _isExpanded) {
+      setState(() {
+        _isExpanded = false;
+      });
+    }
+  }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // TickerMode is disabled when the tab is off-screen.
-    // Reset to collapsed view so it's always default when they return.
-    final isVisible = TickerMode.of(context);
-    if (!isVisible && _isExpanded) {
-      _isExpanded = false;
+    // Revert to week view if a new page is pushed on top.
+    // Tab switching is now explicitly handled by TabController listener above.
+    final isCurrentRoute = ModalRoute.of(context)?.isCurrent ?? true;
+
+    if (!isCurrentRoute && _isExpanded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _isExpanded) {
+          setState(() {
+            _isExpanded = false;
+          });
+        }
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final isActiveToday = widget.lastDate == widget.today;
-    // isActiveToday is available for future use
+    final isStreakActive = widget.overallStreak > 0;
+    
+    int displayFreezes = widget.freezesAvailable;
+    bool usingProvisionalFreeze = false;
+    
+    if (!isActiveToday && isStreakActive && widget.freezesAvailable > 0) {
+      usingProvisionalFreeze = true;
+      displayFreezes -= 1;
+    }
 
     return Container(
       width: double.infinity,
@@ -484,7 +536,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(2, (index) {
-                    final hasFreeze = index < widget.freezesAvailable;
+                    final hasFreeze = index < displayFreezes;
                     return Container(
                       margin: EdgeInsets.only(right: index == 0 ? 8 : 0),
                       width: 44, // Allocate same width to keep alignment
@@ -540,11 +592,13 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      widget.freezesAvailable == 2
-                          ? 'Next freeze in 2 days'
-                          : widget.freezesAvailable == 1
-                          ? 'Next freeze in 1 day'
-                          : 'Last freeze is going on',
+                      displayFreezes == 2
+                          ? '2 Freezes Available'
+                          : displayFreezes == 1
+                              ? '1 Freeze Available'
+                              : usingProvisionalFreeze
+                                  ? 'Last freeze is going on'
+                                  : 'No freezes left!',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
