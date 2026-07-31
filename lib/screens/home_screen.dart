@@ -146,6 +146,7 @@ class _HomeScreenState extends State<HomeScreen>
         children: [
           ExerciseScreen(user: user),
           StreakScreen(
+            tabController: _tabController,
             onStartRoutine: () {
               _tabController.animateTo(0);
             },
