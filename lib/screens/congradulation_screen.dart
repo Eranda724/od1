@@ -121,47 +121,41 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
               const Spacer(),
 
-              // ── "Nice work" headline ─────────────────────────────────────
+              // ── Headline removed per client request ──────────────────────
+              const SizedBox(height: 8),
               Text(
-                'nice_work'.tr(),
+                widget.exerciseName.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 32,
                   fontWeight: FontWeight.w900,
                   color: PCColors.yellow,
+                  letterSpacing: 0.5,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.exerciseName,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: PCColors.yellow,
-                ),
+                textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 36),
 
               // ── Animated exercise streak ──────────────────────────────────
               ScaleTransition(
                 scale: _scale,
                 child: Column(
                   children: [
-                    const Text('🔥', style: TextStyle(fontSize: 56)),
-                    const SizedBox(height: 4),
+                    const Text('🔥', style: TextStyle(fontSize: 64)),
+                    const SizedBox(height: 8),
                     Text(
                       'day_streak_count'.tr(args: [widget.dayStreak.toString()]),
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 32,
                         fontWeight: FontWeight.w900,
                         color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       'exercise_streak_label'.tr(args: [widget.exerciseName]),
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: context.textSecondary,
                       ),
@@ -170,33 +164,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 ),
               ),
 
-              // ── Overall streak badge ───────────────────────────────────────
-              if (widget.overallStreak > 0) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: PCColors.yellow.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: PCColors.yellow.withValues(alpha: 0.5), width: 1.5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🏆', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'overall_streak_count'.tr(args: [widget.overallStreak.toString()]),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
 
               const SizedBox(height: 32),
 
