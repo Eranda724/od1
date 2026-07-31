@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import '../models/exercise_item.dart';
@@ -773,7 +774,17 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     vertical: _PCSpacing.md,
                     horizontal: _PCSpacing.xl,
                   ),
-                  child: Image.asset(_randomImage, fit: BoxFit.contain),
+                  child: (widget.exerciseDef != null && widget.exerciseDef!.mediaItems.isNotEmpty)
+                      ? CachedNetworkImage(
+                          imageUrl: widget.exerciseDef!.mediaItems.first.url,
+                          fit: BoxFit.contain,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(color: PCColors.yellow),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              Image.asset(_randomImage, fit: BoxFit.contain),
+                        )
+                      : Image.asset(_randomImage, fit: BoxFit.contain),
                 ),
               ),
 
