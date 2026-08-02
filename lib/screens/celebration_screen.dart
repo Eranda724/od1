@@ -120,25 +120,9 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     _navigated = true;
     _autoTimer?.cancel();
 
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (ctx, anim, secAnim) => CongratulationScreen(
-          exerciseName: widget.exerciseName,
-          dayStreak: widget.dayStreak,
-          todayReps: widget.todayReps,
-          lifetimeTotal: widget.lifetimeTotal,
-          overallStreak: widget.overallStreak,
-          unit: widget.unit,
-          exerciseIndex: widget.exerciseIndex,
-          totalExercises: widget.totalExercises,
-          onContinue: widget.onContinue,
-        ),
-        transitionsBuilder: (_, anim, _, child) {
-          return FadeTransition(opacity: anim, child: child);
-        },
-      ),
-    );
+    // Call onContinue directly to go to the next exercise or summary, 
+    // skipping the CongradulationScreen entirely.
+    widget.onContinue(context);
   }
 
   @override

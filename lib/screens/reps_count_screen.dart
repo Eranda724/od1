@@ -23,7 +23,8 @@ class RepEntryScreen extends StatefulWidget {
   final String exerciseName;
   final String unit; // e.g. "reps"
   final ExerciseItem? exerciseDef;
-  final int defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
+  final int
+  defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
 
   /// Optional — pass these through if you're tracking a multi-exercise session.
   final int? exerciseIndex;
@@ -124,35 +125,46 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       // Proceed to summary
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
-      
+
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
         final overallStreak = userDoc.data()?['overallStreak'] ?? 0;
-        
-        final exSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').get();
+
+        final exSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('exercises')
+            .get();
         final now = DateTime.now();
-        final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-        
+        final todayKey =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
         List<ExerciseDaySummary> summaryList = [];
         for (var doc in exSnap.docs) {
           final data = doc.data();
           if (data['lastCompletedDate'] == todayKey) {
-             summaryList.add(ExerciseDaySummary(
+            summaryList.add(
+              ExerciseDaySummary(
                 exerciseName: data['exerciseName'] ?? doc.id,
-                unit: widget.unit, // Assuming similar units or using the last one
+                unit:
+                    widget.unit, // Assuming similar units or using the last one
                 todayReps: data['todayReps'] ?? 0,
                 currentStreak: data['currentStreak'] ?? 0,
                 lifetimeTotal: data['lifetimeTotal'] ?? 0,
-             ));
+              ),
+            );
           }
         }
-        
+
         if (!navContext.mounted) return;
         Navigator.of(navContext).pushReplacement(
           MaterialPageRoute(
             builder: (_) => DailySummaryScreen(
-               completedExercises: summaryList,
-               overallStreak: overallStreak,
+              completedExercises: summaryList,
+              overallStreak: overallStreak,
             ),
           ),
         );
@@ -201,7 +213,6 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
       // Trigger Social/Friend updates asynchronously
       FriendsService.instance.recordExerciseDone(user.uid);
-
 
       if (!mounted) return;
 
@@ -302,18 +313,29 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: context.cardColor,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                          borderSide: BorderSide(
+                            color: context.borderColor,
+                            width: 2,
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide(color: context.borderColor, width: 2),
+                          borderSide: BorderSide(
+                            color: context.borderColor,
+                            width: 2,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(color: PCColors.yellow, width: 2),
+                          borderSide: const BorderSide(
+                            color: PCColors.yellow,
+                            width: 2,
+                          ),
                         ),
                       ),
                       onChanged: (val) {
@@ -348,7 +370,10 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
 
@@ -369,17 +394,25 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                       borderRadius: BorderRadius.circular(16),
                       side: const BorderSide(color: PCColors.brown, width: 1.5),
                     ),
-                    disabledBackgroundColor: PCColors.green.withValues(alpha: 0.5),
+                    disabledBackgroundColor: PCColors.green.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   child: _isSaving
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2.5,
+                          ),
                         )
                       : Text(
                           'submit_btn'.tr(),
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                 ),
               ),
