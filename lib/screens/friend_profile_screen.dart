@@ -6,6 +6,8 @@ import '../services/friends_service.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../services/streak_service.dart';
+import 'dart:math' as math;
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -45,25 +47,43 @@ class FriendProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(friend.uid).snapshots(),
-        builder: (context, userSnap) {
-          if (!userSnap.hasData) {
-            return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
-          }
-          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
-          final overallStreak = (userData['overallStreak'] ?? friend.overallStreak) as int;
-          final freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+        stream: FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots(),
+        builder: (context, currentUserSnap) {
+          final currentUserData = currentUserSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final currentUserStreak = (currentUserData['overallStreak'] ?? 0) as int;
 
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').doc(friend.uid).collection('exercises').snapshots(),
-            builder: (context, exSnap) {
-              final activeDays = <String>{};
-              if (exSnap.hasData) {
-                for (final doc in exSnap.data!.docs) {
-                  final exData = doc.data() as Map<String, dynamic>;
-                  final d = exData['lastCompletedDate'] as String?;
-                  if (d != null) activeDays.add(d);
-                }
+          return StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance.collection('users').doc(friend.uid).snapshots(),
+            builder: (context, userSnap) {
+              if (!userSnap.hasData) {
+                return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
+              }
+              final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
+              final rawOverallStreak = (userData['overallStreak'] ?? friend.overallStreak) as int;
+              final rawFreezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+              final rawFrozenDates = List<String>.from(userData['frozenDates'] ?? []);
+              final rawLastEvaluatedDate = userData['overallLastEvaluatedDate'] as String?;
+
+              final effectiveData = StreakService.getEffectiveStreakData(
+                streak: rawOverallStreak,
+                freezesAvailable: rawFreezesAvailable,
+                frozenDates: rawFrozenDates,
+                lastEvaluatedDate: rawLastEvaluatedDate,
+              );
+
+              final overallStreak = effectiveData.streak;
+              final freezesAvailable = effectiveData.freezesAvailable;
+              final frozenDates = effectiveData.frozenDates.toSet();
+
+              final liveSharedStreak = math.min(currentUserStreak, overallStreak);
+
+              final activeDaysList = List<String>.from(userData['activeDates'] ?? []);
+              final activeDays = activeDaysList.toSet();
+              
+              final bool doneToday = activeDays.contains(today);
+              int displayFreezes = freezesAvailable;
+              if (!doneToday && overallStreak > 0 && freezesAvailable > 0) {
+                displayFreezes -= 1;
               }
 
               return SingleChildScrollView(
@@ -153,7 +173,7 @@ class FriendProfileScreen extends StatelessWidget {
                                           const Text('🤝', style: TextStyle(fontSize: 28)),
                                           const SizedBox(height: 12),
                                           Text(
-                                            '${friend.sharedStreak}',
+                                            '$liveSharedStreak',
                                             style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
                                           ),
                                           const SizedBox(height: 6),
@@ -188,7 +208,7 @@ class FriendProfileScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'shared_streak_sentence'.tr(args: [friend.displayName, '${friend.sharedStreak}']),
+                                  'shared_streak_sentence'.tr(args: [friend.displayName, '$liveSharedStreak']),
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70, height: 1.4),
                                 ),
@@ -216,9 +236,23 @@ class FriendProfileScreen extends StatelessWidget {
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(color: Colors.blueAccent, width: 1),
                                       ),
-                                      child: Text(
-                                        '❄️ $freezesAvailable/2',
-                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.blueAccent),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Transform.translate(
+                                            offset: const Offset(0, 1.5),
+                                            child: Image.asset(
+                                              'assets/images/ice_cube_3d.png',
+                                              width: 12,
+                                              height: 12,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '$displayFreezes/2',
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.blueAccent),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                 ],
@@ -229,9 +263,16 @@ class FriendProfileScreen extends StatelessWidget {
                                 children: last7.map((day) {
                                   final isActive = activeDays.contains(day);
                                   final isToday = day == today;
+                                  bool isFrozen = frozenDates.contains(day);
+
+                                  if (isToday && !isActive && overallStreak > 0 && freezesAvailable > 0) {
+                                    isFrozen = true;
+                                  }
+
                                   return _DayDot(
                                     label: _shortDay(context, day),
                                     active: isActive,
+                                    isFrozen: isFrozen,
                                     isToday: isToday,
                                   );
                                 }).toList(),
@@ -263,28 +304,48 @@ class FriendProfileScreen extends StatelessWidget {
 class _DayDot extends StatelessWidget {
   final String label;
   final bool active;
+  final bool isFrozen;
   final bool isToday;
 
-  const _DayDot({required this.label, required this.active, required this.isToday});
+  const _DayDot({required this.label, required this.active, required this.isFrozen, required this.isToday});
 
   @override
   Widget build(BuildContext context) {
+    Widget iconWidget;
+
+    if (active) {
+      iconWidget = SizedBox(
+        width: 36, height: 36,
+        child: Center(child: Image.asset('assets/images/fire_3d.png', width: 28, height: 28)),
+      );
+    } else if (isFrozen) {
+      iconWidget = SizedBox(
+        width: 36, height: 36,
+        child: Center(
+          child: Transform.translate(
+            offset: const Offset(0, 6),
+            child: OverflowBox(
+              maxWidth: 80, maxHeight: 80,
+              child: Image.asset('assets/images/ice_cube_3d.png', width: 36, height: 46, fit: BoxFit.fill),
+            ),
+          ),
+        ),
+      );
+    } else {
+      iconWidget = Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white12,
+          border: isToday ? Border.all(color: PCColors.yellow, width: 2) : null,
+        ),
+        child: isToday ? const Center(child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1))) : null,
+      );
+    }
+
     return Column(
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? PCColors.yellow : Colors.white12,
-            border: isToday ? Border.all(color: PCColors.yellow, width: 2) : null,
-          ),
-          child: active
-              ? const Center(child: Text('🔥', style: TextStyle(fontSize: 16)))
-              : isToday
-                  ? const Center(child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1)))
-                  : null,
-        ),
+        iconWidget,
         const SizedBox(height: 4),
         Text(
           label,

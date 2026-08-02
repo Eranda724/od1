@@ -326,11 +326,21 @@ class _SocialScreenState extends State<SocialScreen> {
                           padding: const EdgeInsets.all(12.0),
                           child: Row(
                           children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: f.friendDoneToday ? PCColors.green : context.cardColor,
-                              backgroundImage: f.photoUrl != null ? CachedNetworkImageProvider(f.photoUrl!) : null,
-                              child: f.photoUrl == null ? Icon(Icons.person, color: f.friendDoneToday ? Colors.white : context.textPrimary) : null,
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: f.friendDoneToday ? PCColors.green : Colors.transparent,
+                                  width: 2.5,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 22,
+                                backgroundColor: context.cardColor,
+                                backgroundImage: f.photoUrl != null ? CachedNetworkImageProvider(f.photoUrl!) : null,
+                                child: f.photoUrl == null ? Icon(Icons.person, color: context.textPrimary) : null,
+                              ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(

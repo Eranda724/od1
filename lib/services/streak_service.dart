@@ -52,6 +52,41 @@ class StreakService {
     );
   }
 
+  /// Calculates the effective streak and freezes for a user based on their last evaluated date.
+  /// This is purely read-only and in-memory. It computes what the streak WOULD be 
+  /// if they evaluated right now, without writing to the database.
+  static ({int streak, int freezesAvailable, List<String> frozenDates}) 
+  getEffectiveStreakData({
+    required int streak,
+    required int freezesAvailable,
+    required List<String> frozenDates,
+    required String? lastEvaluatedDate,
+  }) {
+    if (streak == 0 || lastEvaluatedDate == null) {
+      return (streak: streak, freezesAvailable: freezesAvailable, frozenDates: frozenDates);
+    }
+    
+    final fromDate = DateTime.parse(lastEvaluatedDate);
+    final todayObj = DateTime.parse(_todayKey());
+    
+    if (fromDate.isAtSameMomentAs(todayObj) || fromDate.isAfter(todayObj)) {
+      return (streak: streak, freezesAvailable: freezesAvailable, frozenDates: frozenDates);
+    }
+
+    final result = _applyMissedDays(
+      fromDate: fromDate,
+      toDate: todayObj,
+      freezesAvailable: freezesAvailable,
+      frozenDates: List.from(frozenDates),
+    );
+    
+    return (
+      streak: result.streakBroken ? 0 : streak,
+      freezesAvailable: result.freezesAvailable,
+      frozenDates: result.frozenDates,
+    );
+  }
+
   // ─── Log Exercise ────────────────────────────────────────────────────────────
 
   /// Logs an exercise and returns a map of the updated stats.
