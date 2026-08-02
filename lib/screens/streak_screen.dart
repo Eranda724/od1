@@ -20,7 +20,8 @@ class StreakScreen extends StatefulWidget {
   State<StreakScreen> createState() => _StreakScreenState();
 }
 
-class _StreakScreenState extends State<StreakScreen> with AutomaticKeepAliveClientMixin {
+class _StreakScreenState extends State<StreakScreen>
+    with AutomaticKeepAliveClientMixin {
   final GlobalKey<_OverallStreakCardState> _overallCardKey = GlobalKey();
 
   @override
@@ -410,10 +411,10 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
   Widget build(BuildContext context) {
     final isActiveToday = widget.lastDate == widget.today;
     final isStreakActive = widget.overallStreak > 0;
-    
+
     int displayFreezes = widget.freezesAvailable;
     bool usingProvisionalFreeze = false;
-    
+
     if (!isActiveToday && isStreakActive && widget.freezesAvailable > 0) {
       usingProvisionalFreeze = true;
       displayFreezes -= 1;
@@ -595,10 +596,10 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                       displayFreezes == 2
                           ? '2 Freezes Available'
                           : displayFreezes == 1
-                              ? '1 Freeze Available'
-                              : usingProvisionalFreeze
-                                  ? 'Last freeze is going on'
-                                  : 'No freezes left!',
+                          ? '1 Freeze Available'
+                          : usingProvisionalFreeze
+                          ? 'Last freeze is going on'
+                          : 'No freezes left!',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -664,7 +665,8 @@ class _MiniWeekRow extends StatelessWidget {
       children: days.map((date) {
         final key = _dateKey(date);
         final isActive = activeDates.contains(key);
-        final isToday = date.year == today.year &&
+        final isToday =
+            date.year == today.year &&
             date.month == today.month &&
             date.day == today.day;
         bool isFrozen = frozenDates.contains(key);
@@ -750,6 +752,11 @@ class _ExerciseStreakCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int displayFreezes = freezesAvailable;
+    if (!doneToday && streak > 0 && freezesAvailable > 0) {
+      displayFreezes -= 1;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -817,7 +824,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                 ),
               ),
 
-              // Streak badge
+              // Streak badge & Freezes
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -835,10 +842,51 @@ class _ExerciseStreakCard extends StatelessWidget {
                         : '${'days_unit'.tr()} streak',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (freezesAvailable > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.blueAccent.withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Transform.translate(
+                            offset: const Offset(0, 1.5),
+                            child: Image.asset(
+                              'assets/images/ice_cube_3d.png',
+                              width: 12,
+                              height: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$displayFreezes/2',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.blueAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

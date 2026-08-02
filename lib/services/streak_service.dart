@@ -117,7 +117,7 @@ class StreakService {
           );
           exFreezesAvailable = result.freezesAvailable;
           exFrozenDates = result.frozenDates;
-          newStreak = result.streakBroken ? 0 : prevStreak + 1;
+          newStreak = result.streakBroken ? 1 : prevStreak + 1;
         }
 
         if (!exActiveDates.contains(today)) {
@@ -190,7 +190,7 @@ class StreakService {
           );
           freezesAvailable = result.freezesAvailable;
           frozenDates = result.frozenDates;
-          newOverallStreak = result.streakBroken ? 0 : prevOverallStreak + 1;
+          newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
         }
 
         if (!activeDates.contains(today)) {
@@ -312,7 +312,7 @@ class StreakService {
         );
         freezesAvailable = result.freezesAvailable;
         frozenDates = result.frozenDates;
-        newOverallStreak = result.streakBroken ? 0 : prevOverallStreak + 1;
+        newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
       }
 
       if (!activeDates.contains(today)) {
