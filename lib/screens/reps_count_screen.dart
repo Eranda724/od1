@@ -8,7 +8,7 @@ import '../services/notification_service.dart';
 import '../services/friends_service.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
-import 'celebration_screen.dart';
+import 'congradulation_screen.dart';
 import 'exercise_start_screen.dart';
 import 'daily_summary_screen.dart';
 import '../models/exercise_item.dart';
@@ -207,27 +207,22 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
       widget.onSaved?.call();
 
-      if (widget.sessionQueue == null || widget.sessionQueue!.isEmpty) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => CelebrationScreen(
-              exerciseName: widget.exerciseName,
-              dayStreak: result['currentStreak']!,
-              todayReps: result['todayReps']!,
-              lifetimeTotal: result['lifetimeTotal']!,
-              overallStreak: result['overallStreak']!,
-              unit: widget.unit,
-              exerciseIndex: widget.exerciseIndex,
-              totalExercises: widget.totalExercises,
-              onContinue: (navContext) {
-                _goToNextOrSummary(navContext);
-              },
-            ),
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => CongratulationScreen(
+            exerciseName: widget.exerciseName,
+            dayStreak: result['currentStreak']!,
+            todayReps: result['todayReps']!,
+            lifetimeTotal: result['lifetimeTotal']!,
+            unit: widget.unit,
+            exerciseIndex: widget.exerciseIndex,
+            totalExercises: widget.totalExercises,
+            onContinue: (navContext) {
+              _goToNextOrSummary(navContext);
+            },
           ),
-        );
-      } else {
-        _goToNextOrSummary(context);
-      }
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {

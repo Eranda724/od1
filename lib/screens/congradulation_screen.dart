@@ -170,33 +170,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 ),
               ),
 
-              // ── Overall streak badge ───────────────────────────────────────
-              if (widget.overallStreak > 0) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: PCColors.yellow.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: PCColors.yellow.withValues(alpha: 0.5), width: 1.5),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text('🏆', style: TextStyle(fontSize: 18)),
-                      const SizedBox(width: 6),
-                      Text(
-                        'overall_streak_count'.tr(args: [widget.overallStreak.toString()]),
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: context.textPrimary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+
 
               const SizedBox(height: 32),
 
