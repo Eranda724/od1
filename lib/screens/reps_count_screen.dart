@@ -199,9 +199,6 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       // (Fire and forget, no need to await and block the UI)
       NotificationService.instance.cancelTodayEveningReminder();
 
-      // Trigger Social/Friend updates asynchronously
-      FriendsService.instance.recordExerciseDone(user.uid);
-
 
       if (!mounted) return;
 

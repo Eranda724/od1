@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'notification_service.dart';
+import 'dart:math' as math;
 
 class FriendsService {
   FriendsService._();
@@ -89,10 +90,6 @@ class FriendsService {
     final pairRef = FirebaseFirestore.instance.collection('friendPairs').doc(pairId);
     batch.set(pairRef, {
       'uids': [fromUid, toUid],
-      'sharedStreak': 0,
-      'sharedLastDate': null,
-      '${fromUid}_doneToday': false,
-      '${toUid}_doneToday': false,
     });
 
     await batch.commit();
@@ -134,84 +131,53 @@ class FriendsService {
         .snapshots()
         .asyncMap((snapshot) async {
       final List<FriendInfo> friends = [];
+      
+      final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
+      final currentUserStreak = (currentUserDoc.data()?['overallStreak'] ?? 0) as int;
+      final today = _todayKey();
+
+      final friendUids = <String>[];
+      final pairIdsByFriendUid = <String, String>{};
+
       for (final doc in snapshot.docs) {
         final data = doc.data();
         final uids = List<String>.from(data['uids']);
         final friendUid = uids.firstWhere((id) => id != currentUid);
+        friendUids.add(friendUid);
+        pairIdsByFriendUid[friendUid] = doc.id;
+      }
 
-        // Fetch friend's public profile stats
-        final friendDoc = await FirebaseFirestore.instance.collection('users').doc(friendUid).get();
-        if (!friendDoc.exists) continue;
+      final friendDocs = <DocumentSnapshot>[];
+      for (var i = 0; i < friendUids.length; i += 10) {
+        final chunk = friendUids.sublist(i, math.min(i + 10, friendUids.length));
+        if (chunk.isEmpty) continue;
+        final snap = await FirebaseFirestore.instance
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: chunk)
+            .get();
+        friendDocs.addAll(snap.docs);
+      }
 
-        final fData = friendDoc.data()!;
+      for (final friendDoc in friendDocs) {
+        final fData = friendDoc.data() as Map<String, dynamic>;
+        final friendUid = friendDoc.id;
         final friendName = fData['displayName'] ?? 'Unknown';
         final overallStreak = fData['overallStreak'] ?? 0;
+        final friendDoneToday = (fData['overallLastDate'] as String?) == today;
 
         friends.add(FriendInfo(
           uid: friendUid,
           displayName: friendName,
           overallStreak: overallStreak,
-          sharedStreak: data['sharedStreak'] ?? 0,
-          sharedLastDate: data['sharedLastDate'],
-          friendDoneToday: data['${friendUid}_doneToday'] ?? false,
-          pairId: doc.id,
+          sharedStreak: math.min(currentUserStreak, overallStreak),
+          sharedLastDate: null,
+          friendDoneToday: friendDoneToday,
+          pairId: pairIdsByFriendUid[friendUid]!,
           photoUrl: fData['photoUrl'],
         ));
       }
       return friends;
     });
-  }
-
-  // ── Record Exercise Done ──
-  Future<void> recordExerciseDone(String uid) async {
-    final pairsSnap = await FirebaseFirestore.instance
-        .collection('friendPairs')
-        .where('uids', arrayContains: uid)
-        .get();
-
-    if (pairsSnap.docs.isEmpty) return;
-
-    final today = _todayKey();
-    final yesterday = _yesterdayKey();
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (final doc in pairsSnap.docs) {
-      final data = doc.data();
-      final uids = List<String>.from(data['uids']);
-      final friendUid = uids.firstWhere((id) => id != uid);
-
-      final friendDone = data['${friendUid}_doneToday'] ?? false;
-      final sharedLastDate = data['sharedLastDate'];
-      int sharedStreak = data['sharedStreak'] ?? 0;
-
-      if (friendDone) {
-        // Both have done it today! Increment/set shared streak
-        if (sharedLastDate == today) {
-          // already incremented today, do nothing to streak
-        } else if (sharedLastDate == yesterday) {
-          sharedStreak++;
-        } else {
-          sharedStreak = 1;
-        }
-
-        batch.update(doc.reference, {
-          'sharedStreak': sharedStreak,
-          'sharedLastDate': today,
-          '${uid}_doneToday': false,
-          '${friendUid}_doneToday': false, // reset for tomorrow
-        });
-      } else {
-        // Only this user has done it today
-        // If they missed yesterday and didn't complete today, streak resets if we were checking strictly.
-        // For shared streak without freeze, we wait for both. If sharedLastDate < yesterday,
-        // it will naturally reset to 1 when both complete it.
-        batch.update(doc.reference, {
-          '${uid}_doneToday': true,
-        });
-      }
-    }
-
-    await batch.commit();
   }
 
 }
