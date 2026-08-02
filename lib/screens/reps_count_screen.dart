@@ -207,6 +207,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => CelebrationScreen(
+            exerciseId: widget.exerciseId,
             exerciseName: widget.exerciseName,
             dayStreak: result['currentStreak']!,
             todayReps: result['todayReps']!,

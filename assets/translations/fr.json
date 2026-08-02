@@ -354,5 +354,6 @@
   "faster_workouts": "Des entraînements plus rapides, sans interruption",
   "upgrade_for_price": "Mettre à niveau pour {}",
   "loading_price": "Chargement du prix...",
-  "restore_purchases": "Restaurer les achats"
+  "restore_purchases": "Restaurer les achats",
+  "exercise_week_streak": "Série de la semaine de {}"
 }

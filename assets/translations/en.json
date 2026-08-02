@@ -354,5 +354,6 @@
   "faster_workouts": "Faster, uninterrupted workouts",
   "upgrade_for_price": "Upgrade for {}",
   "loading_price": "Loading price...",
-  "restore_purchases": "Restore Purchases"
+  "restore_purchases": "Restore Purchases",
+  "exercise_week_streak": "{} Week Streak"
 }

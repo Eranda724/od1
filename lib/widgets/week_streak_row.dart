@@ -60,7 +60,7 @@ class WeekStreakRow extends StatelessWidget {
         Text(
           dayLabel,
           style: TextStyle(
-            color: isToday ? PCColors.yellow : Colors.white54,
+            color: isToday ? PCColors.yellow : context.textSecondary,
             fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
             fontSize: 13,
           ),

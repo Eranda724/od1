@@ -10,6 +10,7 @@ import 'package:easy_localization/easy_localization.dart';
 /// Plays a celebration sound, shows a random potato image, then
 /// auto-advances (or advances on tap) to CongratulationScreen.
 class CelebrationScreen extends StatefulWidget {
+  final String exerciseId;
   final String exerciseName;
   final int dayStreak;
   final int todayReps;
@@ -22,6 +23,7 @@ class CelebrationScreen extends StatefulWidget {
 
   const CelebrationScreen({
     super.key,
+    required this.exerciseId,
     required this.exerciseName,
     required this.dayStreak,
     required this.todayReps,
@@ -123,6 +125,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => CongratulationScreen(
+          exerciseId: widget.exerciseId,
           exerciseName: widget.exerciseName,
           dayStreak: widget.dayStreak,
           todayReps: widget.todayReps,

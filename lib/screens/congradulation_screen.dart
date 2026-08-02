@@ -3,13 +3,18 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/week_streak_row.dart';
+import '../services/streak_service.dart';
 
 /// Shown right after a user submits reps for one exercise.
 /// Celebrates the streak, shows today's + lifetime stats, then either
 /// moves to the next selected exercise or to the final daily summary.
 class CongratulationScreen extends StatefulWidget {
+  final String exerciseId;
   final String exerciseName;
   final int dayStreak;
   final int todayReps;
@@ -27,6 +32,7 @@ class CongratulationScreen extends StatefulWidget {
 
   const CongratulationScreen({
     super.key,
+    required this.exerciseId,
     required this.exerciseName,
     required this.dayStreak,
     required this.todayReps,
@@ -53,10 +59,15 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
   AudioPlayer? _player;
+  late final String _heroImage;
 
   @override
   void initState() {
     super.initState();
+    final rng = math.Random();
+    const images = ['assets/images/po1.png', 'assets/images/po2.png', 'assets/images/po3.png'];
+    _heroImage = images[rng.nextInt(images.length)];
+    
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
@@ -118,85 +129,89 @@ class _CongratulationScreenState extends State<CongratulationScreen>
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
+                  const Spacer(flex: 2),
 
-                  // ── Progress indicator ("Exercise 2 of 3") ──────────────────
-                  if (widget.totalExercises != null &&
-                      widget.totalExercises! > 1)
-                    Text(
-                      'exercise_x_of_y'.tr(
-                        args: [
-                          widget.exerciseIndex.toString(),
-                          widget.totalExercises.toString(),
-                        ],
-                      ),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: context.textSecondary,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-
-                  const Spacer(),
-
-                  // ── "Nice work" headline ─────────────────────────────────────
-                  Text(
-                    'nice_work'.tr(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: PCColors.yellow,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.exerciseName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: PCColors.yellow,
-                    ),
-                  ),
-
-                  const SizedBox(height: 28),
-
-                  // ── Animated exercise streak ──────────────────────────────────
+                  // ── Hero Graphic (Potato) ───────────────────────────────────
                   ScaleTransition(
                     scale: _scale,
-                    child: Column(
-                      children: [
-                        const Text('🔥', style: TextStyle(fontSize: 56)),
-                        const SizedBox(height: 4),
-                        Text(
-                          'day_streak_count'.tr(
-                            args: [widget.dayStreak.toString()],
+                    child: Image.asset(
+                      _heroImage,
+                      height: 180,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Exercise Name ───────────────────────────────────────────
+                  Text(
+                    widget.exerciseName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: PCColors.yellow,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ── Huge Streak Number ──────────────────────────────────────
+                  ScaleTransition(
+                    scale: _scale,
+                    child: Text(
+                      '${widget.dayStreak}',
+                      style: TextStyle(
+                        fontSize: 100,
+                        height: 0.95,
+                        fontWeight: FontWeight.w900,
+                        color: PCColors.yellow,
+                        shadows: [
+                          Shadow(
+                            color: PCColors.yellow.withValues(alpha: 0.4),
+                            blurRadius: 24,
                           ),
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w900,
-                            color: context.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'exercise_streak_label'.tr(
-                            args: [widget.exerciseName],
-                          ),
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.textSecondary,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // ── "Day Streak!" ───────────────────────────────────────────
+                  Text(
+                    'day streak!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: context.textPrimary,
                     ),
                   ),
 
                   const SizedBox(height: 32),
+                  Text(
+                    'exercise_week_streak'.tr(args: [widget.exerciseName]).toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: context.textSecondary,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
 
-                  // ── Stats row: today's reps + lifetime total ────────────────
+                  // ── Live 7-Day Activity Row ─────────────────────────────────
+                  _buildLiveWeekStreakRow(),
+
+                  const SizedBox(height: 32),
+                  
+                  Divider(color: context.borderColor.withValues(alpha: 0.3), thickness: 1),
+                  
+                  const SizedBox(height: 20),
+
+                  // ── Stats row: today's reps / lifetime total ────────────────
                   Row(
                     children: [
                       Expanded(
@@ -227,44 +242,24 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     child: ElevatedButton(
                       onPressed: () => widget.onContinue(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLast
-                            ? PCColors.yellow
-                            : PCColors.green,
-                        foregroundColor: isLast
-                            ? PCColors.brownDark
-                            : Colors.white,
+                        backgroundColor: isLast ? PCColors.yellow : PCColors.green,
+                        foregroundColor: isLast ? PCColors.brownDark : Colors.white,
                         elevation: 4,
                         shadowColor: (isLast ? PCColors.yellow : PCColors.green)
                             .withValues(alpha: 0.5),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(
-                            color: PCColors.brown,
-                            width: 1.5,
-                          ),
+                          borderRadius: BorderRadius.circular(100), // Pill shape
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              isLast
-                                  ? 'finish_and_summary'.tr()
-                                  : 'next_exercise'.tr(),
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Icon(
-                            isLast ? Icons.flag_rounded : Icons.list_rounded,
-                            size: 20,
-                          ),
-                        ],
+                      child: Text(
+                        isLast
+                            ? 'finish_and_summary'.tr().toUpperCase()
+                            : 'next_exercise'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                     ),
                   ),
@@ -325,6 +320,48 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     path.close();
     return path;
   }
+
+  Widget _buildLiveWeekStreakRow() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return const SizedBox.shrink();
+
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('exercises')
+          .doc(widget.exerciseId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const SizedBox(height: 70); // Placeholder
+        }
+
+        final exData = snapshot.data!.data() as Map<String, dynamic>;
+        
+        final rawCurrentStreak = (exData['currentStreak'] ?? 0) as int;
+        final rawFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
+        final rawFrozenDates = List<String>.from(exData['frozenDates'] ?? []);
+        final rawLastEvaluatedDate = exData['lastEvaluatedDate'] as String?;
+        final activeDatesList = List<String>.from(exData['activeDates'] ?? []);
+
+        final effectiveData = StreakService.getEffectiveStreakData(
+          streak: rawCurrentStreak,
+          freezesAvailable: rawFreezesAvailable,
+          frozenDates: rawFrozenDates,
+          lastEvaluatedDate: rawLastEvaluatedDate,
+        );
+
+        return WeekStreakRow(
+          activeDates: activeDatesList,
+          frozenDates: effectiveData.frozenDates.toList(),
+          today: DateTime.now(),
+          freezesAvailable: effectiveData.freezesAvailable,
+          streak: effectiveData.streak,
+        );
+      },
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -346,7 +383,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
         color: highlight
             ? PCColors.yellow.withValues(alpha: 0.2)
@@ -374,8 +411,8 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
               color: context.textPrimary,
             ),
           ),
