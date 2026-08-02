@@ -120,9 +120,20 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     _navigated = true;
     _autoTimer?.cancel();
 
-    // Call onContinue directly to go to the next exercise or summary, 
-    // skipping the CongradulationScreen entirely.
-    widget.onContinue(context);
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => CongratulationScreen(
+          exerciseName: widget.exerciseName,
+          dayStreak: widget.dayStreak,
+          todayReps: widget.todayReps,
+          lifetimeTotal: widget.lifetimeTotal,
+          unit: widget.unit,
+          exerciseIndex: widget.exerciseIndex,
+          totalExercises: widget.totalExercises,
+          onContinue: widget.onContinue,
+        ),
+      ),
+    );
   }
 
   @override

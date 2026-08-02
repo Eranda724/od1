@@ -15,7 +15,7 @@ class CongratulationScreen extends StatefulWidget {
   final int todayReps;
   final int lifetimeTotal;
   final String unit;
-  final int overallStreak;  // NEW: consecutive days any exercise was done
+  final int overallStreak; // NEW: consecutive days any exercise was done
 
   /// 1-based index of this exercise in the user's session (e.g. 2 of 3).
   /// Pass null (or totalExercises == 1) to hide the progress indicator.
@@ -39,7 +39,9 @@ class CongratulationScreen extends StatefulWidget {
   });
 
   bool get isLastExercise =>
-      exerciseIndex == null || totalExercises == null || exerciseIndex! >= totalExercises!;
+      exerciseIndex == null ||
+      totalExercises == null ||
+      exerciseIndex! >= totalExercises!;
 
   @override
   State<CongratulationScreen> createState() => _CongratulationScreenState();
@@ -61,14 +63,26 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     );
     // Slight overshoot then settle — a small "pop" on the streak number.
     _scale = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.4, end: 1.15)
-          .chain(CurveTween(curve: Curves.easeOutBack)), weight: 70),
-      TweenSequenceItem(tween: Tween(begin: 1.15, end: 1.0)
-          .chain(CurveTween(curve: Curves.easeOut)), weight: 30),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 0.4,
+          end: 1.15,
+        ).chain(CurveTween(curve: Curves.easeOutBack)),
+        weight: 70,
+      ),
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.15,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
+        weight: 30,
+      ),
     ]).animate(_controller);
     _controller.forward();
 
-    _confettiController = ConfettiController(duration: const Duration(seconds: 4));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 4),
+    );
     _confettiController.play(); // fireworks start immediately
 
     // ── Play sound immediately ──────────────────────────────────────────────
@@ -105,137 +119,161 @@ class _CongratulationScreenState extends State<CongratulationScreen>
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // ── Progress indicator ("Exercise 2 of 3") ──────────────────
-              if (widget.totalExercises != null && widget.totalExercises! > 1)
-                Text(
-                  'exercise_x_of_y'.tr(args: [widget.exerciseIndex.toString(), widget.totalExercises.toString()]),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: context.textSecondary,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-
-              const Spacer(),
-
-              // ── "Nice work" headline ─────────────────────────────────────
-              Text(
-                'nice_work'.tr(),
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                  color: PCColors.yellow,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                widget.exerciseName,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: PCColors.yellow,
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              // ── Animated exercise streak ──────────────────────────────────
-              ScaleTransition(
-                scale: _scale,
-                child: Column(
-                  children: [
-                    const Text('🔥', style: TextStyle(fontSize: 56)),
-                    const SizedBox(height: 4),
+                  // ── Progress indicator ("Exercise 2 of 3") ──────────────────
+                  if (widget.totalExercises != null &&
+                      widget.totalExercises! > 1)
                     Text(
-                      'day_streak_count'.tr(args: [widget.dayStreak.toString()]),
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: context.textPrimary,
+                      'exercise_x_of_y'.tr(
+                        args: [
+                          widget.exerciseIndex.toString(),
+                          widget.totalExercises.toString(),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'exercise_streak_label'.tr(args: [widget.exerciseName]),
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
                         color: context.textSecondary,
+                        letterSpacing: 1.2,
                       ),
                     ),
-                  ],
-                ),
-              ),
 
+                  const Spacer(),
 
-
-              const SizedBox(height: 32),
-
-              // ── Stats row: today's reps + lifetime total ────────────────
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      label: 'today_label'.tr(),
-                      value: '${widget.todayReps}',
-                      sub: widget.unit,
+                  // ── "Nice work" headline ─────────────────────────────────────
+                  Text(
+                    'nice_work'.tr(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: PCColors.yellow,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'lifetime_label'.tr(),
-                      value: '${widget.lifetimeTotal}',
-                      sub: widget.unit,
-                      highlight: true,
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.exerciseName,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: PCColors.yellow,
                     ),
                   ),
-                ],
-              ),
 
-              const Spacer(flex: 2),
+                  const SizedBox(height: 28),
 
-              // ── Continue button ──────────────────────────────────────────
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () => widget.onContinue(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isLast ? PCColors.yellow : PCColors.green,
-                    foregroundColor: isLast ? PCColors.brownDark : Colors.white,
-                    elevation: 4,
-                    shadowColor: (isLast ? PCColors.yellow : PCColors.green).withValues(alpha: 0.5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: PCColors.brown, width: 1.5),
+                  // ── Animated exercise streak ──────────────────────────────────
+                  ScaleTransition(
+                    scale: _scale,
+                    child: Column(
+                      children: [
+                        const Text('🔥', style: TextStyle(fontSize: 56)),
+                        const SizedBox(height: 4),
+                        Text(
+                          'day_streak_count'.tr(
+                            args: [widget.dayStreak.toString()],
+                          ),
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'exercise_streak_label'.tr(
+                            args: [widget.exerciseName],
+                          ),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: context.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+
+                  const SizedBox(height: 32),
+
+                  // ── Stats row: today's reps + lifetime total ────────────────
+                  Row(
                     children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          isLast ? 'finish_and_summary'.tr() : 'next_exercise'.tr(),
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                      Expanded(
+                        child: _StatCard(
+                          label: 'today_label'.tr(),
+                          value: '${widget.todayReps}',
+                          sub: widget.unit,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Icon(isLast ? Icons.flag_rounded : Icons.list_rounded, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _StatCard(
+                          label: 'lifetime_label'.tr(),
+                          value: '${widget.lifetimeTotal}',
+                          sub: widget.unit,
+                          highlight: true,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 24),
-            ],
+                  const Spacer(flex: 2),
+
+                  // ── Continue button ──────────────────────────────────────────
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => widget.onContinue(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isLast
+                            ? PCColors.yellow
+                            : PCColors.green,
+                        foregroundColor: isLast
+                            ? PCColors.brownDark
+                            : Colors.white,
+                        elevation: 4,
+                        shadowColor: (isLast ? PCColors.yellow : PCColors.green)
+                            .withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(
+                            color: PCColors.brown,
+                            width: 1.5,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isLast
+                                  ? 'finish_and_summary'.tr()
+                                  : 'next_exercise'.tr(),
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            isLast ? Icons.flag_rounded : Icons.list_rounded,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
           // ── Confetti Animation ──────────────────────────────────────────
           Align(
             alignment: Alignment.topCenter,
@@ -249,7 +287,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 Colors.blue,
                 Colors.pink,
                 Colors.orange,
-                Colors.purple
+                Colors.purple,
               ],
               createParticlePath: drawStar,
             ),
@@ -275,10 +313,14 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     path.moveTo(size.width, halfWidth);
 
     for (double step = 0; step < fullAngle; step += degreesPerStep) {
-      path.lineTo(halfWidth + externalRadius * math.cos(step),
-          halfWidth + externalRadius * math.sin(step));
-      path.lineTo(halfWidth + internalRadius * math.cos(step + halfDegreesPerStep),
-          halfWidth + internalRadius * math.sin(step + halfDegreesPerStep));
+      path.lineTo(
+        halfWidth + externalRadius * math.cos(step),
+        halfWidth + externalRadius * math.sin(step),
+      );
+      path.lineTo(
+        halfWidth + internalRadius * math.cos(step + halfDegreesPerStep),
+        halfWidth + internalRadius * math.sin(step + halfDegreesPerStep),
+      );
     }
     path.close();
     return path;
@@ -306,10 +348,14 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
       decoration: BoxDecoration(
-        color: highlight ? PCColors.yellow.withValues(alpha: 0.2) : context.cardColor,
+        color: highlight
+            ? PCColors.yellow.withValues(alpha: 0.2)
+            : context.cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: highlight ? PCColors.yellow.withValues(alpha: 0.6) : context.borderColor,
+          color: highlight
+              ? PCColors.yellow.withValues(alpha: 0.6)
+              : context.borderColor,
           width: highlight ? 1.8 : 1.5,
         ),
       ),
