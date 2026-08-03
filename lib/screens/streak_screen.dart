@@ -413,12 +413,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
     final isStreakActive = widget.overallStreak > 0;
 
     int displayFreezes = widget.freezesAvailable;
-    bool usingProvisionalFreeze = false;
-
-    if (!isActiveToday && isStreakActive && widget.freezesAvailable > 0) {
-      usingProvisionalFreeze = true;
-      displayFreezes -= 1;
-    }
 
     return Container(
       width: double.infinity,
@@ -597,8 +591,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                           ? '2 Freezes Available'
                           : displayFreezes == 1
                           ? '1 Freeze Available'
-                          : usingProvisionalFreeze
-                          ? 'Last freeze is going on'
                           : 'No freezes left!',
                       style: const TextStyle(
                         fontSize: 12,
@@ -671,9 +663,7 @@ class _MiniWeekRow extends StatelessWidget {
             date.day == today.day;
         bool isFrozen = frozenDates.contains(key);
 
-        if (isToday && !isActive && streak > 0 && freezesAvailable > 0) {
-          isFrozen = true;
-        }
+
 
         if (isActive) {
           return SizedBox(
@@ -753,9 +743,6 @@ class _ExerciseStreakCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int displayFreezes = freezesAvailable;
-    if (!doneToday && streak > 0 && freezesAvailable > 0) {
-      displayFreezes -= 1;
-    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

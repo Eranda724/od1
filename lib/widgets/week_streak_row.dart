@@ -44,10 +44,7 @@ class WeekStreakRow extends StatelessWidget {
     final isToday = _isSameDay(date, today);
     bool isFrozen = frozenDates.contains(key);
 
-    // Visual override: if today is not active, but we have a streak and freezes available, visually show a freeze for today!
-    if (isToday && !isActive && streak > 0 && freezesAvailable > 0) {
-      isFrozen = true;
-    }
+
 
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final dayLabel = dayNames[date.weekday - 1];

@@ -13,7 +13,11 @@ class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
   final bool isFriend;
 
-  const FriendProfileScreen({super.key, required this.friend, this.isFriend = true});
+  const FriendProfileScreen({
+    super.key,
+    required this.friend,
+    this.isFriend = true,
+  });
 
   String _todayKey() {
     final now = DateTime.now();
@@ -24,7 +28,9 @@ class FriendProfileScreen extends StatelessWidget {
     final days = <String>[];
     for (int i = 6; i >= 0; i--) {
       final d = DateTime.now().subtract(Duration(days: i));
-      days.add('${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}');
+      days.add(
+        '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}',
+      );
     }
     return days;
   }
@@ -47,22 +53,38 @@ class FriendProfileScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots(),
+        stream: FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .snapshots(),
         builder: (context, currentUserSnap) {
-          final currentUserData = currentUserSnap.data?.data() as Map<String, dynamic>? ?? {};
-          final currentUserStreak = (currentUserData['overallStreak'] ?? 0) as int;
+          final currentUserData =
+              currentUserSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final currentUserStreak =
+              (currentUserData['overallStreak'] ?? 0) as int;
 
           return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance.collection('users').doc(friend.uid).snapshots(),
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(friend.uid)
+                .snapshots(),
             builder: (context, userSnap) {
               if (!userSnap.hasData) {
-                return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
+                return const Center(
+                  child: CircularProgressIndicator(color: PCColors.yellowDark),
+                );
               }
-              final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
-              final rawOverallStreak = (userData['overallStreak'] ?? friend.overallStreak) as int;
-              final rawFreezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
-              final rawFrozenDates = List<String>.from(userData['frozenDates'] ?? []);
-              final rawLastEvaluatedDate = userData['overallLastEvaluatedDate'] as String?;
+              final userData =
+                  userSnap.data?.data() as Map<String, dynamic>? ?? {};
+              final rawOverallStreak =
+                  (userData['overallStreak'] ?? friend.overallStreak) as int;
+              final rawFreezesAvailable =
+                  (userData['freezesAvailable'] ?? 2) as int;
+              final rawFrozenDates = List<String>.from(
+                userData['frozenDates'] ?? [],
+              );
+              final rawLastEvaluatedDate =
+                  userData['overallLastEvaluatedDate'] as String?;
 
               final effectiveData = StreakService.getEffectiveStreakData(
                 streak: rawOverallStreak,
@@ -75,16 +97,18 @@ class FriendProfileScreen extends StatelessWidget {
               final freezesAvailable = effectiveData.freezesAvailable;
               final frozenDates = effectiveData.frozenDates.toSet();
 
-              final liveSharedStreak = math.min(currentUserStreak, overallStreak);
+              final liveSharedStreak = math.min(
+                currentUserStreak,
+                overallStreak,
+              );
 
-              final activeDaysList = List<String>.from(userData['activeDates'] ?? []);
+              final activeDaysList = List<String>.from(
+                userData['activeDates'] ?? [],
+              );
               final activeDays = activeDaysList.toSet();
-              
+
               final bool doneToday = activeDays.contains(today);
               int displayFreezes = freezesAvailable;
-              if (!doneToday && overallStreak > 0 && freezesAvailable > 0) {
-                displayFreezes -= 1;
-              }
 
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
@@ -97,8 +121,16 @@ class FriendProfileScreen extends StatelessWidget {
                         CircleAvatar(
                           radius: 32,
                           backgroundColor: context.cardColor,
-                          backgroundImage: friend.photoUrl != null ? CachedNetworkImageProvider(friend.photoUrl!) : null,
-                          child: friend.photoUrl == null ? Icon(Icons.person, size: 32, color: context.textPrimary) : null,
+                          backgroundImage: friend.photoUrl != null
+                              ? CachedNetworkImageProvider(friend.photoUrl!)
+                              : null,
+                          child: friend.photoUrl == null
+                              ? Icon(
+                                  Icons.person,
+                                  size: 32,
+                                  color: context.textPrimary,
+                                )
+                              : null,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -108,7 +140,11 @@ class FriendProfileScreen extends StatelessWidget {
                             children: [
                               Text(
                                 friend.displayName,
-                                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: context.textPrimary),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: context.textPrimary,
+                                ),
                               ),
                             ],
                           ),
@@ -118,10 +154,14 @@ class FriendProfileScreen extends StatelessWidget {
                     const SizedBox(height: 32),
 
                     StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance.collection('friendPairs').doc(pairId).snapshots(),
+                      stream: FirebaseFirestore.instance
+                          .collection('friendPairs')
+                          .doc(pairId)
+                          .snapshots(),
                       builder: (context, pairSnap) {
-                        final actuallyFriends = pairSnap.hasData && pairSnap.data!.exists;
-                        
+                        final actuallyFriends =
+                            pairSnap.hasData && pairSnap.data!.exists;
+
                         return Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
@@ -133,7 +173,11 @@ class FriendProfileScreen extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: const [
-                              BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(0, 4),
+                              ),
                             ],
                           ),
                           child: Column(
@@ -147,94 +191,165 @@ class FriendProfileScreen extends StatelessWidget {
                                   Expanded(
                                     child: Column(
                                       children: [
-                                        const Text('🔥', style: TextStyle(fontSize: 28)),
+                                        const Text(
+                                          '🔥',
+                                          style: TextStyle(fontSize: 28),
+                                        ),
                                         const SizedBox(height: 12),
                                         Text(
                                           '$overallStreak',
-                                          style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
+                                          style: const TextStyle(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.w900,
+                                            color: PCColors.yellow,
+                                            height: 1,
+                                          ),
                                         ),
                                         const SizedBox(height: 6),
                                         Text(
                                           'current_streak'.tr(),
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, height: 1.2),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white54,
+                                            height: 1.2,
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  
+
                                   if (actuallyFriends) ...[
-                                    Container(width: 1, height: 100, color: Colors.white12),
-                                    
+                                    Container(
+                                      width: 1,
+                                      height: 100,
+                                      color: Colors.white12,
+                                    ),
+
                                     // Right Half: Shared Streak
                                     Expanded(
                                       child: Column(
                                         children: [
-                                          const Text('🤝', style: TextStyle(fontSize: 28)),
+                                          const Text(
+                                            '🤝',
+                                            style: TextStyle(fontSize: 28),
+                                          ),
                                           const SizedBox(height: 12),
                                           Text(
                                             '$liveSharedStreak',
-                                            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: PCColors.yellow, height: 1),
+                                            style: const TextStyle(
+                                              fontSize: 48,
+                                              fontWeight: FontWeight.w900,
+                                              color: PCColors.yellow,
+                                              height: 1,
+                                            ),
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
                                             'together_streak'.tr(),
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white54, height: 1.2),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white54,
+                                              height: 1.2,
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                  ]
+                                  ],
                                 ],
                               ),
-                              
+
                               if (actuallyFriends) ...[
                                 const SizedBox(height: 24),
-                                const Divider(color: Colors.white12, thickness: 1),
+                                const Divider(
+                                  color: Colors.white12,
+                                  thickness: 1,
+                                ),
                                 const SizedBox(height: 24),
-                                
+
                                 // MIDDLE SECTION (Shared Context)
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Text('🤝', style: TextStyle(fontSize: 16)),
+                                    const Text(
+                                      '🤝',
+                                      style: TextStyle(fontSize: 16),
+                                    ),
                                     const SizedBox(width: 8),
                                     Text(
                                       'shared_streak_header'.tr().toUpperCase(),
-                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: PCColors.yellow, letterSpacing: 1.4),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w900,
+                                        color: PCColors.yellow,
+                                        letterSpacing: 1.4,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  'shared_streak_sentence'.tr(args: [friend.displayName, '$liveSharedStreak']),
+                                  'shared_streak_sentence'.tr(
+                                    args: [
+                                      friend.displayName,
+                                      '$liveSharedStreak',
+                                    ],
+                                  ),
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white70, height: 1.4),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white70,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ],
-                              
+
                               const SizedBox(height: 24),
-                              const Divider(color: Colors.white12, thickness: 1),
+                              const Divider(
+                                color: Colors.white12,
+                                thickness: 1,
+                              ),
                               const SizedBox(height: 24),
-                              
+
                               // BOTTOM SECTION (Weekly Activity)
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_month_rounded, color: Colors.white54, size: 16),
+                                  const Icon(
+                                    Icons.calendar_month_rounded,
+                                    color: Colors.white54,
+                                    size: 16,
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     'weekly_activity'.tr().toUpperCase(),
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white54, letterSpacing: 1.4),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white54,
+                                      letterSpacing: 1.4,
+                                    ),
                                   ),
                                   const Spacer(),
                                   if (freezesAvailable > 0)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                       decoration: BoxDecoration(
-                                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                                        color: Colors.blueAccent.withValues(
+                                          alpha: 0.15,
+                                        ),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.blueAccent, width: 1),
+                                        border: Border.all(
+                                          color: Colors.blueAccent,
+                                          width: 1,
+                                        ),
                                       ),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -250,7 +365,11 @@ class FriendProfileScreen extends StatelessWidget {
                                           const SizedBox(width: 4),
                                           Text(
                                             '$displayFreezes/2',
-                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.blueAccent),
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.blueAccent,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -259,15 +378,14 @@ class FriendProfileScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 20),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: last7.map((day) {
                                   final isActive = activeDays.contains(day);
                                   final isToday = day == today;
                                   bool isFrozen = frozenDates.contains(day);
 
-                                  if (isToday && !isActive && overallStreak > 0 && freezesAvailable > 0) {
-                                    isFrozen = true;
-                                  }
+
 
                                   return _DayDot(
                                     label: _shortDay(context, day),
@@ -284,13 +402,17 @@ class FriendProfileScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 32),
-                    _FriendshipActionButtons(currentUid: currentUid, friend: friend, pairId: pairId),
+                    _FriendshipActionButtons(
+                      currentUid: currentUid,
+                      friend: friend,
+                      pairId: pairId,
+                    ),
                   ],
                 ),
               );
             },
           );
-        }
+        },
       ),
     );
   }
@@ -307,7 +429,12 @@ class _DayDot extends StatelessWidget {
   final bool isFrozen;
   final bool isToday;
 
-  const _DayDot({required this.label, required this.active, required this.isFrozen, required this.isToday});
+  const _DayDot({
+    required this.label,
+    required this.active,
+    required this.isFrozen,
+    required this.isToday,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -315,31 +442,57 @@ class _DayDot extends StatelessWidget {
 
     if (active) {
       iconWidget = SizedBox(
-        width: 36, height: 36,
-        child: Center(child: Image.asset('assets/images/fire_3d.png', width: 28, height: 28)),
+        width: 36,
+        height: 36,
+        child: Center(
+          child: Image.asset(
+            'assets/images/fire_3d.png',
+            width: 28,
+            height: 28,
+          ),
+        ),
       );
     } else if (isFrozen) {
       iconWidget = SizedBox(
-        width: 36, height: 36,
+        width: 36,
+        height: 36,
         child: Center(
           child: Transform.translate(
             offset: const Offset(0, 6),
             child: OverflowBox(
-              maxWidth: 80, maxHeight: 80,
-              child: Image.asset('assets/images/ice_cube_3d.png', width: 36, height: 46, fit: BoxFit.fill),
+              maxWidth: 80,
+              maxHeight: 80,
+              child: Image.asset(
+                'assets/images/ice_cube_3d.png',
+                width: 36,
+                height: 46,
+                fit: BoxFit.fill,
+              ),
             ),
           ),
         ),
       );
     } else {
       iconWidget = Container(
-        width: 36, height: 36,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.white12,
           border: isToday ? Border.all(color: PCColors.yellow, width: 2) : null,
         ),
-        child: isToday ? const Center(child: Text('•', style: TextStyle(color: PCColors.yellow, fontSize: 22, height: 1))) : null,
+        child: isToday
+            ? const Center(
+                child: Text(
+                  '•',
+                  style: TextStyle(
+                    color: PCColors.yellow,
+                    fontSize: 22,
+                    height: 1,
+                  ),
+                ),
+              )
+            : null,
       );
     }
 
@@ -365,10 +518,15 @@ class _FriendshipActionButtons extends StatefulWidget {
   final FriendInfo friend;
   final String pairId;
 
-  const _FriendshipActionButtons({required this.currentUid, required this.friend, required this.pairId});
+  const _FriendshipActionButtons({
+    required this.currentUid,
+    required this.friend,
+    required this.pairId,
+  });
 
   @override
-  State<_FriendshipActionButtons> createState() => _FriendshipActionButtonsState();
+  State<_FriendshipActionButtons> createState() =>
+      _FriendshipActionButtonsState();
 }
 
 class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
@@ -376,16 +534,23 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.currentUid.isEmpty || widget.currentUid == widget.friend.uid) return const SizedBox.shrink();
+    if (widget.currentUid.isEmpty || widget.currentUid == widget.friend.uid)
+      return const SizedBox.shrink();
 
     return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('friendPairs').doc(widget.pairId).snapshots(),
+      stream: FirebaseFirestore.instance
+          .collection('friendPairs')
+          .doc(widget.pairId)
+          .snapshots(),
       builder: (context, pairSnap) {
         if (pairSnap.hasError) {
           debugPrint('Error loading pair: ${pairSnap.error}');
         }
-        if (!pairSnap.hasData && !pairSnap.hasError) return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
-        
+        if (!pairSnap.hasData && !pairSnap.hasError)
+          return const Center(
+            child: CircularProgressIndicator(color: PCColors.yellowDark),
+          );
+
         final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
@@ -396,47 +561,81 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     side: const BorderSide(color: PCColors.brown, width: 2),
                   ),
-                  child: Text('back'.tr(), style: const TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    'back'.tr(),
+                    style: const TextStyle(
+                      color: PCColors.brownDark,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (c) => AlertDialog(
-                        title: Text('remove_friend_title'.tr()),
-                        content: Text('remove_friend_confirm_msg'.tr()),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel'.tr())),
-                          TextButton(onPressed: () => Navigator.pop(c, true), child: Text('remove'.tr(), style: const TextStyle(color: Colors.red))),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      setState(() => _isLoading = true);
-                      try {
-                        await FriendsService.instance.removeFriend(widget.currentUid, widget.friend.uid);
-                        if (context.mounted) Navigator.pop(context);
-                      } finally {
-                        if (mounted) setState(() => _isLoading = false);
-                      }
-                    }
-                  },
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (c) => AlertDialog(
+                              title: Text('remove_friend_title'.tr()),
+                              content: Text('remove_friend_confirm_msg'.tr()),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(c, false),
+                                  child: Text('cancel'.tr()),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(c, true),
+                                  child: Text(
+                                    'remove'.tr(),
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            setState(() => _isLoading = true);
+                            try {
+                              await FriendsService.instance.removeFriend(
+                                widget.currentUid,
+                                widget.friend.uid,
+                              );
+                              if (context.mounted) Navigator.pop(context);
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade100,
                     foregroundColor: Colors.red,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: _isLoading 
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.red))
-                      : Text('remove_friend_title'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.red,
+                          ),
+                        )
+                      : Text(
+                          'remove_friend_title'.tr(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                 ),
               ),
             ],
@@ -454,8 +653,11 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
             if (reqSnap.hasError) {
               debugPrint('Error loading requests: ${reqSnap.error}');
             }
-            if (!reqSnap.hasData && !reqSnap.hasError) return const Center(child: CircularProgressIndicator(color: PCColors.yellowDark));
-            
+            if (!reqSnap.hasData && !reqSnap.hasError)
+              return const Center(
+                child: CircularProgressIndicator(color: PCColors.yellowDark),
+              );
+
             final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
             return Row(
@@ -465,60 +667,117 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       side: const BorderSide(color: PCColors.brown, width: 2),
                     ),
-                    child: Text('back'.tr(), style: const TextStyle(color: PCColors.brownDark, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'back'.tr(),
+                      style: const TextStyle(
+                        color: PCColors.brownDark,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : () async {
-                      setState(() => _isLoading = true);
-                      try {
-                        if (hasSentRequest) {
-                          await FriendsService.instance.removeFriendRequest(widget.currentUid, widget.friend.uid);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('request_removed'.tr()), backgroundColor: Colors.grey),
-                            );
-                          }
-                        } else {
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser != null) {
-                            await FriendsService.instance.sendFriendRequest(
-                              fromUid: currentUser.uid,
-                              fromName: currentUser.displayName ?? 'A user',
-                              toUsername: widget.friend.displayName,
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('friend_request_sent'.tr()), backgroundColor: Colors.green),
-                              );
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            setState(() => _isLoading = true);
+                            try {
+                              if (hasSentRequest) {
+                                await FriendsService.instance
+                                    .removeFriendRequest(
+                                      widget.currentUid,
+                                      widget.friend.uid,
+                                    );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('request_removed'.tr()),
+                                      backgroundColor: Colors.grey,
+                                    ),
+                                  );
+                                }
+                              } else {
+                                final currentUser =
+                                    FirebaseAuth.instance.currentUser;
+                                if (currentUser != null) {
+                                  await FriendsService.instance
+                                      .sendFriendRequest(
+                                        fromUid: currentUser.uid,
+                                        fromName:
+                                            currentUser.displayName ?? 'A user',
+                                        toUsername: widget.friend.displayName,
+                                      );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'friend_request_sent'.tr(),
+                                        ),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'error_msg'.tr(
+                                        args: [
+                                          e.toString().replaceFirst(
+                                            'Exception: ',
+                                            '',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
                             }
-                          }
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('error_msg'.tr(args: [e.toString().replaceFirst('Exception: ', '')])), backgroundColor: Colors.red),
-                          );
-                        }
-                      } finally {
-                        if (mounted) setState(() => _isLoading = false);
-                      }
-                    },
+                          },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: hasSentRequest ? Colors.grey.shade300 : PCColors.yellow,
-                      foregroundColor: hasSentRequest ? Colors.black54 : PCColors.brownDark,
+                      backgroundColor: hasSentRequest
+                          ? Colors.grey.shade300
+                          : PCColors.yellow,
+                      foregroundColor: hasSentRequest
+                          ? Colors.black54
+                          : PCColors.brownDark,
                       elevation: hasSentRequest ? 0 : 2,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: _isLoading 
-                        ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: hasSentRequest ? Colors.black54 : PCColors.brownDark))
-                        : Text(hasSentRequest ? 'remove_request'.tr() : 'send_request'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
+                    child: _isLoading
+                        ? SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: hasSentRequest
+                                  ? Colors.black54
+                                  : PCColors.brownDark,
+                            ),
+                          )
+                        : Text(
+                            hasSentRequest
+                                ? 'remove_request'.tr()
+                                : 'send_request'.tr(),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
               ],

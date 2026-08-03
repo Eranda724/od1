@@ -63,10 +63,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
     final isToday =
         date.year == now.year && date.month == now.month && date.day == now.day;
 
-    // Visual override: if today is not active, but we have a streak and freezes available, visually show a freeze for today!
-    if (isToday && !isActive && widget.streak > 0 && widget.freezesAvailable > 0) {
-      isFrozen = true;
-    }
+
 
     final isFuture = date.isAfter(now) && !isToday;
 
