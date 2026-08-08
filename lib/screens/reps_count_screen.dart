@@ -29,6 +29,7 @@ class RepEntryScreen extends StatefulWidget {
   final int? exerciseIndex;
   final int? totalExercises;
   final List<SessionItem>? sessionQueue;
+  final int actualSecondsSpent;
 
   /// Called once the Firestore update succeeds and Congratulation screen
   /// is about to be shown — gives the caller a hook to advance its own
@@ -45,6 +46,7 @@ class RepEntryScreen extends StatefulWidget {
     this.exerciseIndex,
     this.totalExercises,
     this.sessionQueue,
+    this.actualSecondsSpent = 0,
     this.onSaved,
   });
 
@@ -189,6 +191,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         exerciseId: widget.exerciseId,
         exerciseName: widget.exerciseName,
         reps: _reps,
+        timeSpentSeconds: widget.actualSecondsSpent,
       );
 
       // overallStreak is now computed atomically inside logExercise().

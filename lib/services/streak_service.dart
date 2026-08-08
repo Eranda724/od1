@@ -97,6 +97,7 @@ class StreakService {
     required String exerciseId,
     required String exerciseName,
     required int reps,
+    int timeSpentSeconds = 0,
   }) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     final exRef = userRef.collection('exercises').doc(exerciseId);
@@ -192,8 +193,14 @@ class StreakService {
       final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
 
       int newOverallStreak = prevOverallStreak;
-      // Default: same-day exercise — only update scores, no streak/freeze changes
-      Map<String, dynamic> overallStreakUpdate = {'scores': newScores};
+      int prevTodayTimeSpent = (userData['todayTimeSpent'] ?? 0) as int;
+      int newTodayTimeSpent = prevTodayTimeSpent + timeSpentSeconds;
+
+      // Default: same-day exercise — only update scores, time spent, no streak/freeze changes
+      Map<String, dynamic> overallStreakUpdate = {
+        'scores': newScores,
+        'todayTimeSpent': newTodayTimeSpent,
+      };
 
       if (overallLastDate != today) {
         // First exercise today — process any missed days since last evaluation
@@ -231,9 +238,12 @@ class StreakService {
         if (!activeDates.contains(today)) {
           activeDates.add(today);
         }
+        
+        newTodayTimeSpent = timeSpentSeconds; // Reset for the new day
 
         overallStreakUpdate = {
           'scores': newScores,
+          'todayTimeSpent': newTodayTimeSpent,
           'overallStreak': newOverallStreak,
           'overallLastDate': today,
           'overallLastEvaluatedDate': today,

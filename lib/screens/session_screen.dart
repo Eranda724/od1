@@ -233,6 +233,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
           sessionQueue: widget.sessionQueue,
           exerciseIndex: widget.exerciseIndex,
           totalExercises: widget.totalExercises,
+          actualSecondsSpent: secondsCompleted,
         ),
       ),
     );
