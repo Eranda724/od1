@@ -223,11 +223,18 @@ class _StreakScreenState extends State<StreakScreen>
                             height: 56,
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(28),
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  offset: const Offset(0, 4),
-                                  blurRadius: 8,
+                                  color: Color(
+                                    0xFFD49C19,
+                                  ), // Darker yellow for 3D effect
+                                  offset: Offset(0, 5),
+                                  blurRadius: 0,
+                                ),
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  offset: Offset(0, 8),
+                                  blurRadius: 6,
                                 ),
                               ],
                             ),
@@ -276,7 +283,9 @@ class _StreakScreenState extends State<StreakScreen>
                           int estimatedSeconds = 0;
                           for (final entry in userExercises) {
                             final def = entry.value;
-                            estimatedSeconds += (def.defaultTimer > 0) ? def.defaultTimer : 60;
+                            estimatedSeconds += (def.defaultTimer > 0)
+                                ? def.defaultTimer
+                                : 60;
                           }
                           final estimatedMins = (estimatedSeconds / 60).ceil();
 
@@ -441,8 +450,8 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
   Widget build(BuildContext context) {
     int displayFreezes = widget.freezesAvailable;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bottomColor = isDark 
-        ? (Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor) 
+    final bottomColor = isDark
+        ? (Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor)
         : Colors.white;
 
     return Column(
@@ -629,7 +638,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Streak Freeze',
+                                  'streak_freeze_title'.tr(),
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w800,
@@ -640,10 +649,10 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                                 ),
                                 Text(
                                   displayFreezes == 2
-                                      ? '2 Freezes Available'
+                                      ? 'two_freezes_available'.tr()
                                       : displayFreezes == 1
-                                      ? '1 Freeze Available'
-                                      : 'No freezes left!',
+                                      ? 'one_freeze_available'.tr()
+                                      : 'no_freezes_left'.tr(),
                                   style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w600,

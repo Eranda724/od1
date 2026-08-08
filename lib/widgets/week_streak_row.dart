@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../app_settings.dart';
 
 class WeekStreakRow extends StatelessWidget {
@@ -44,7 +45,7 @@ class WeekStreakRow extends StatelessWidget {
     final isToday = _isSameDay(date, today);
     bool isFrozen = frozenDates.contains(key);
 
-    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dayNames = ['mon'.tr(), 'tue'.tr(), 'wed'.tr(), 'thu'.tr(), 'fri'.tr(), 'sat'.tr(), 'sun'.tr()];
     final dayLabel = dayNames[date.weekday - 1];
 
     return Column(
