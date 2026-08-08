@@ -161,13 +161,13 @@ class _HomeScreenState extends State<HomeScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          ExerciseScreen(user: user),
           StreakScreen(
             tabController: _tabController,
             onStartRoutine: () {
-              _tabController.animateTo(0);
+              _tabController.animateTo(1);
             },
           ),
+          ExerciseScreen(user: user),
           LeaderboardScreen(currentUid: user?.uid),
           const SocialScreen(),
         ],
