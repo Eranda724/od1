@@ -30,6 +30,9 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -56,7 +59,10 @@ class _HomeScreenState extends State<HomeScreen>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         leading: _buildMenuButton(user),
-        title: Text('home_title'.tr()),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: Theme.of(context).iconTheme,
         actions: [
           if (widget.isAdmin)
             Padding(
@@ -86,60 +92,71 @@ class _HomeScreenState extends State<HomeScreen>
                     fontSize: 13,
                   ),
                 ),
-
                 child: Text('admin_panel'.tr()),
               ),
             ),
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () {
+              // Notification action
+            },
+          ),
+          const SizedBox(width: 8),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w800,
-            fontSize: 11,
-            letterSpacing: 0.2,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.w500,
-            fontSize: 11,
-          ),
-          indicatorWeight: 3,
-          tabs: [
-            Tab(
-              icon: const Icon(Icons.fitness_center_rounded),
-              text: 'exercise_tab'.tr(),
-            ),
-            Tab(
-              icon: const Icon(Icons.local_fire_department_rounded),
-              text: 'streaks_tab'.tr(),
-            ),
-            Tab(
-              icon: const Icon(Icons.leaderboard_rounded),
-              text: 'rankings_tab'.tr(),
-            ),
-            Tab(
-              text: 'social_tab'.tr(),
-              icon: StreamBuilder<QuerySnapshot>(
-                stream: user == null
-                    ? const Stream.empty()
-                    : FirebaseFirestore.instance
-                          .collection('friendRequests')
-                          .where('toUid', isEqualTo: user.uid)
-                          .where('status', isEqualTo: 'pending')
-                          .snapshots(),
-                builder: (context, snap) {
-                  final hasPending = (snap.data?.docs.isNotEmpty) == true;
-                  return Badge(
-                    isLabelVisible: hasPending,
-                    backgroundColor: Colors.red,
-                    smallSize: 8,
-                    child: const Icon(Icons.people_rounded),
-                  );
-                },
-              ),
-            ),
-          ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _tabController.index,
+        onTap: (index) {
+          _tabController.animateTo(index);
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: PCColors.yellow,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+          letterSpacing: 0.2,
         ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.local_fire_department_rounded),
+            label: 'streaks_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.fitness_center_rounded),
+            label: 'exercise_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.leaderboard_rounded),
+            label: 'rankings_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            label: 'social_tab'.tr(),
+            icon: StreamBuilder<QuerySnapshot>(
+              stream: user == null
+                  ? const Stream.empty()
+                  : FirebaseFirestore.instance
+                        .collection('friendRequests')
+                        .where('toUid', isEqualTo: user.uid)
+                        .where('status', isEqualTo: 'pending')
+                        .snapshots(),
+              builder: (context, snap) {
+                final hasPending = (snap.data?.docs.isNotEmpty) == true;
+                return Badge(
+                  isLabelVisible: hasPending,
+                  backgroundColor: Colors.red,
+                  smallSize: 8,
+                  child: const Icon(Icons.people_rounded),
+                );
+              },
+            ),
+          ),
+        ],
       ),
       body: TabBarView(
         controller: _tabController,

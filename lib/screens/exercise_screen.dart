@@ -10,6 +10,7 @@ import '../models/session_item.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/ad_service.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../widgets/week_streak_row.dart';
 
 class ExerciseScreen extends StatefulWidget {
   final User? user;
@@ -105,6 +106,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         final selectedExercises = neverConfigured
             ? null
             : List<String>.from(rawSelected);
+            
+        final overallStreak = (userData['overallStreak'] ?? 0) as int;
+        final activeDates = List<String>.from(userData['activeDates'] ?? []);
+        final frozenDates = List<String>.from(userData['frozenDates'] ?? []);
+        final freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
 
         return StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -664,130 +670,123 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                             children: [
-                              // Dashboard Header for My Routine
+                              // 1. STREAK HERO CARD
                               Container(
-                                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                                width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Theme.of(context).dividerColor,
-                                    ),
-                                  ),
+                                  color: const Color(0xFFFFC72C), // Solid yellow
+                                  borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      _getGreeting(),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      'todays_routine_title'.tr(),
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      ' ${'exercises_count'.tr(args: [(todoExercises.length + doneExercises.length).toString()])}',
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    if (todoExercises.isNotEmpty) ...[
-                                      Container(
-                                        width: double.infinity,
-                                        height: 56,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: const Border(
-                                            bottom: BorderSide(
-                                              color: PCColors.greenDark,
-                                              width: 4,
-                                            ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 16, top: 16, right: 16, bottom: 0),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.center,
+                                        children: [
+                                          // Left Column: Mascot
+                                          Image.asset(
+                                            'assets/images/po1.png',
+                                            height: 100,
+                                            fit: BoxFit.contain,
                                           ),
-                                        ),
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            final firstId = todoExercises.first;
-                                            final def = exerciseDefs[firstId];
-                                            final exData = Map<String, dynamic>.from(
-                                              exercises[firstId] ?? {},
-                                            );
-                                            startExercise(
-                                              firstId,
-                                              false,
-                                              def?.name ?? _fallbackName(firstId),
-                                              def,
-                                              exData['currentStreak'] ?? 0,
-                                              exData['lifetimeTotal'] ?? 0,
-                                              def?.unit ?? 'reps',
-                                            );
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: PCColors.green,
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                          ),
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              'start_my_routine'.tr().toUpperCase(),
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w900,
-                                                letterSpacing: 1.0,
+                                          const SizedBox(width: 16),
+                                          // Right Column: COMMENCER MA ROUTINE BUTTON
+                                          if (todoExercises.isNotEmpty)
+                                            Expanded(
+                                              child: SizedBox(
+                                                height: 52,
+                                                child: ElevatedButton(
+                                                  onPressed: () {
+                                                    final firstId = todoExercises.first;
+                                                    final def = exerciseDefs[firstId];
+                                                    final exData = Map<String, dynamic>.from(
+                                                      exercises[firstId] ?? {},
+                                                    );
+                                                    startExercise(
+                                                      firstId,
+                                                      false,
+                                                      def?.name ?? _fallbackName(firstId),
+                                                      def,
+                                                      exData['currentStreak'] ?? 0,
+                                                      exData['lifetimeTotal'] ?? 0,
+                                                      def?.unit ?? 'reps',
+                                                    );
+                                                  },
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.white,
+                                                    foregroundColor: const Color(0xFF5A3D00),
+                                                    elevation: 0,
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(26),
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisAlignment: MainAxisAlignment.center,
+                                                    children: [
+                                                      const Icon(Icons.play_arrow_rounded, size: 24),
+                                                      const SizedBox(width: 4),
+                                                      Flexible(
+                                                        child: Text(
+                                                          'start_my_routine'.tr().toUpperCase(),
+                                                          style: const TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w900,
+                                                            letterSpacing: 0.5,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'tap_to_finish_routine'.tr(),
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                        textAlign: TextAlign.center,
+                                    ),
+                                    
+                                    // 7-Day Strip (No white background)
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                                      child: WeekStreakRow(
+                                        activeDates: activeDates,
+                                        frozenDates: frozenDates,
+                                        today: DateTime.now(),
+                                        freezesAvailable: freezesAvailable,
+                                        streak: overallStreak,
                                       ),
-                                    ] else if (!isEmpty) ...[
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        width: double.infinity,
-                                        decoration: BoxDecoration(
-                                          color: Colors.green.withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(16),
-                                          border: Border.all(color: Colors.green),
-                                        ),
-                                        child: Text(
-                                          'routine_completed_today'.tr(),
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(height: 24),
+
+                              // 3. AUJOURD'HUI TEXT
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'todays_routine_title'.tr().toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    ' ${'exercises_count'.tr(args: [(todoExercises.length + doneExercises.length).toString()])} - ~${(todoExercises.length + doneExercises.length) * 1} min',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
                               
                               if (isEmpty)
                                 Padding(

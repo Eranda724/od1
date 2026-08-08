@@ -663,8 +663,6 @@ class _MiniWeekRow extends StatelessWidget {
             date.day == today.day;
         bool isFrozen = frozenDates.contains(key);
 
-
-
         if (isActive) {
           return SizedBox(
             width: 34,
