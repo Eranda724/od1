@@ -44,8 +44,6 @@ class WeekStreakRow extends StatelessWidget {
     final isToday = _isSameDay(date, today);
     bool isFrozen = frozenDates.contains(key);
 
-
-
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final dayLabel = dayNames[date.weekday - 1];
 
@@ -53,7 +51,7 @@ class WeekStreakRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildIcon(isActive: isActive, isFrozen: isFrozen),
-        const SizedBox(height: 8),
+        const SizedBox(height: 2),
         Text(
           dayLabel,
           style: TextStyle(

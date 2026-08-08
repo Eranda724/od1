@@ -63,8 +63,6 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
     final isToday =
         date.year == now.year && date.month == now.month && date.day == now.day;
 
-
-
     final isFuture = date.isAfter(now) && !isToday;
 
     // Days before the user started the app are neutral — not "missed"
@@ -82,7 +80,13 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
             child: Text(
               '${date.day}',
               style: TextStyle(
-                color: isFuture ? Colors.white24 : Colors.white30,
+                color: isFuture
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.2)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.3),
                 fontSize: 13,
               ),
             ),
@@ -127,7 +131,9 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                 child: Text(
                   '${date.day}',
                   style: TextStyle(
-                    color: (isActive || isFrozen) ? Colors.black : Colors.white,
+                    color: (isActive || isFrozen)
+                        ? Colors.black
+                        : Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -216,7 +222,12 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           offset: const Offset(0, 1),
           child: Text(
             '${date.day}',
-            style: const TextStyle(color: Colors.white30, fontSize: 13),
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.3),
+              fontSize: 13,
+            ),
           ),
         ),
       ),
@@ -275,7 +286,10 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, color: Colors.white),
+                icon: Icon(
+                  Icons.chevron_left,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
                 onPressed: _previousMonth,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -284,7 +298,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               Text(
                 monthName,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 22, // Increased font size for expanded view
                   fontWeight: FontWeight.bold,
                   color: PCColors.yellow,
                 ),
@@ -293,7 +307,11 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               IconButton(
                 icon: Icon(
                   Icons.chevron_right,
-                  color: isCurrentMonth ? Colors.white24 : Colors.white,
+                  color: isCurrentMonth
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.2)
+                      : Theme.of(context).colorScheme.onSurface,
                 ),
                 onPressed: isCurrentMonth ? null : _nextMonth,
                 padding: EdgeInsets.zero,
@@ -311,10 +329,12 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                 child: Center(
                   child: Text(
                     dayKey.tr().toUpperCase().substring(0, 1),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white54,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.54),
                     ),
                   ),
                 ),
