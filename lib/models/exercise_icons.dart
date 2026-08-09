@@ -48,11 +48,12 @@ Widget buildExerciseIconWidget(String value, {double size = 28, Color? iconColor
 
 /// Comprehensive widget — renders uploaded image if available, else falls back to icon.
 Widget buildExerciseVisual(dynamic exercise, {double size = 28, double? width, double? height, Color? iconColor, BoxFit fit = BoxFit.contain}) {
-  if (exercise.mediaItems.isNotEmpty) {
+  final labelUrl = (exercise.labelImage != null && exercise.labelImage.toString().isNotEmpty) ? exercise.labelImage as String : null;
+  if (labelUrl != null) {
     final double? w = width ?? size;
     final double? h = height ?? size;
     return CachedNetworkImage(
-      imageUrl: exercise.mediaItems.first.url,
+      imageUrl: labelUrl,
       width: w,
       height: h,
       fit: fit,

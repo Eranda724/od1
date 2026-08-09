@@ -20,7 +20,8 @@ class ExerciseItem {
   final String name;
   final String? description; // Optional legacy single description
   final Map<String, String>? descriptions; // Localized descriptions
-  final String icon;
+  final String icon; // Legacy emoji icon
+  final String? labelImage; // New custom label image
   final String unit;
   final int defaultReps;
   final int defaultTimer; // Admin-configured exercise duration (in seconds)
@@ -36,6 +37,7 @@ class ExerciseItem {
     this.description,
     this.descriptions,
     required this.icon,
+    this.labelImage,
     required this.unit,
     this.defaultReps = 0,
     this.defaultTimer = 0,
@@ -79,6 +81,7 @@ class ExerciseItem {
       description: data['description'] as String?,
       descriptions: parsedDescriptions,
       icon: data['icon'] ?? '💪',
+      labelImage: data['labelImage'] as String?,
       unit: data['unit'] ?? 'reps',
       defaultReps: (data['defaultReps'] as num?)?.toInt() ?? 0,
       defaultTimer: (data['defaultTimer'] as num?)?.toInt() ?? 0,
@@ -92,6 +95,7 @@ class ExerciseItem {
         if (description != null) 'description': description,
         if (descriptions != null) 'descriptions': descriptions,
         'icon': icon,
+        if (labelImage != null) 'labelImage': labelImage,
         'unit': unit,
         'defaultReps': defaultReps,
         'defaultTimer': defaultTimer,

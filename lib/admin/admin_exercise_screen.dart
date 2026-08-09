@@ -30,7 +30,9 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
   bool _isLoading = false;
   bool _isDetailsCustom = false;
-  String _selectedIcon = 'default';
+
+  File? _labelImageFile;
+  String? _existingLabelImage;
 
   File? _selectedImage;
   String? _existingImageUrl;
@@ -42,19 +44,26 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     final e = widget.existing;
     _nameController = TextEditingController(text: e?.name ?? '');
     _descController = TextEditingController(text: e?.description ?? '');
-    _selectedIcon = e?.icon ?? 'default';
-    if (!exerciseIcons.any((item) => item.id == _selectedIcon)) {
-      _selectedIcon = 'default';
-    }
-    _repsController = TextEditingController(text: (e?.defaultReps ?? 0).toString());
-    _timerController = TextEditingController(text: (e?.defaultTimer ?? 0).toString());
-    _daysController = TextEditingController(text: (e?.defaultDays ?? 0).toString());
+    _existingLabelImage = e?.labelImage;
+    _repsController = TextEditingController(
+      text: (e?.defaultReps ?? 0).toString(),
+    );
+    _timerController = TextEditingController(
+      text: (e?.defaultTimer ?? 0).toString(),
+    );
+    _daysController = TextEditingController(
+      text: (e?.defaultDays ?? 0).toString(),
+    );
 
-    if ((e?.defaultReps ?? 0) > 0 || (e?.defaultTimer ?? 0) > 0 || (e?.defaultDays ?? 0) > 0) {
+    if ((e?.defaultReps ?? 0) > 0 ||
+        (e?.defaultTimer ?? 0) > 0 ||
+        (e?.defaultDays ?? 0) > 0) {
       _isDetailsCustom = true;
     }
 
-    _existingImageUrl = (e?.mediaItems.isNotEmpty == true) ? e!.mediaItems.first.url : null;
+    _existingImageUrl = (e?.mediaItems.isNotEmpty == true)
+        ? e!.mediaItems.first.url
+        : null;
   }
 
   @override
@@ -69,15 +78,18 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
     final isEdit = widget.existing != null;
-    final id = isEdit 
-        ? widget.existing!.id 
-        : name.toLowerCase().replaceAll(RegExp(r'\s+'), '_').replaceAll(RegExp(r'[^a-z0-9_]'), '');
-        
+    final id = isEdit
+        ? widget.existing!.id
+        : name
+              .toLowerCase()
+              .replaceAll(RegExp(r'\s+'), '_')
+              .replaceAll(RegExp(r'[^a-z0-9_]'), '');
+
     if (id.isEmpty) return;
 
     setState(() => _isLoading = true);
@@ -90,11 +102,14 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         descMap = {};
         final translator = GoogleTranslator();
         // Translate to 'en' to detect the source language
-        final translationResult = await translator.translate(originalDesc, to: 'en');
+        final translationResult = await translator.translate(
+          originalDesc,
+          to: 'en',
+        );
         final sourceCode = translationResult.sourceLanguage.code;
-        
+
         final targetLangs = ['en', 'fr', 'es'];
-        
+
         for (final lang in targetLangs) {
           if (sourceCode == lang) {
             descMap[lang] = originalDesc;
@@ -113,10 +128,19 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         await ref.putFile(_selectedImage!);
         final url = await ref.getDownloadURL();
         media = [ExerciseMedia(url: url, isVideo: false)];
-      } 
+      }
       // If image was removed
       else if (_existingImageUrl == null) {
         media = [];
+      }
+
+      String? finalLabelImage = _existingLabelImage;
+      if (_labelImageFile != null) {
+        final ref = FirebaseStorage.instance.ref('exercises/$id/label.jpg');
+        await ref.putFile(_labelImageFile!);
+        finalLabelImage = await ref.getDownloadURL();
+      } else if (_existingLabelImage == null) {
+        finalLabelImage = null; // User removed the label image
       }
 
       final item = ExerciseItem(
@@ -124,11 +148,20 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         name: name,
         description: originalDesc,
         descriptions: descMap,
-        icon: _selectedIcon,
+        icon:
+            widget.existing?.icon ??
+            '💪', // Keep legacy icon intact for older versions
+        labelImage: finalLabelImage,
         unit: 'reps',
-        defaultReps: _isDetailsCustom ? (int.tryParse(_repsController.text.trim()) ?? 0) : 0,
-        defaultTimer: _isDetailsCustom ? (int.tryParse(_timerController.text.trim()) ?? 0) : 0,
-        defaultDays: _isDetailsCustom ? (int.tryParse(_daysController.text.trim()) ?? 0) : 0,
+        defaultReps: _isDetailsCustom
+            ? (int.tryParse(_repsController.text.trim()) ?? 0)
+            : 0,
+        defaultTimer: _isDetailsCustom
+            ? (int.tryParse(_timerController.text.trim()) ?? 0)
+            : 0,
+        defaultDays: _isDetailsCustom
+            ? (int.tryParse(_daysController.text.trim()) ?? 0)
+            : 0,
         mediaItems: media,
       );
 
@@ -158,7 +191,11 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
             // Also seed the exercise stats doc so the card can load smoothly.
             batch.set(
               userDoc.reference.collection('exercises').doc(id),
-              {'currentStreak': 0, 'lifetimeTotal': 0, 'lastCompletedDate': null},
+              {
+                'currentStreak': 0,
+                'lifetimeTotal': 0,
+                'lastCompletedDate': null,
+              },
               SetOptions(merge: true),
             );
           }
@@ -170,9 +207,12 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     } catch (e) {
       if (mounted) {
         String msg = e.toString();
-        if (msg.contains('404') || msg.contains('-13010') || msg.contains('object-not-found')) {
+        if (msg.contains('404') ||
+            msg.contains('-13010') ||
+            msg.contains('object-not-found')) {
           msg = 'storage_error_message'.tr();
-        } else if (msg.contains('unauthorized') || msg.contains('permission-denied')) {
+        } else if (msg.contains('unauthorized') ||
+            msg.contains('permission-denied')) {
           msg = 'permission_error_message'.tr();
         } else {
           msg = 'failed_to_save'.tr(args: [msg]);
@@ -192,7 +232,9 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'edit_exercise_title'.tr() : 'add_exercise_title'.tr()),
+        title: Text(
+          isEdit ? 'edit_exercise_title'.tr() : 'add_exercise_title'.tr(),
+        ),
         backgroundColor: context.appBarColor,
       ),
       body: Form(
@@ -201,78 +243,140 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             // Basic Info
-            Text('basic_info_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'basic_info_title'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'exercise_name_label'.tr(), border: const OutlineInputBorder()),
-              validator: (v) => v!.trim().isEmpty ? 'required_error'.tr() : null,
+              decoration: InputDecoration(
+                labelText: 'exercise_name_label'.tr(),
+                border: const OutlineInputBorder(),
+              ),
+              validator: (v) =>
+                  v!.trim().isEmpty ? 'required_error'.tr() : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               children: [
-                Expanded(
-                  child: Text('exercise_icon_label'.tr(), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                Text(
+                  'Exercise Label (Icon Image)',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                SizedBox(
-                  width: 180,
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedIcon,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      isDense: true,
-                    ),
-                    items: [
-                      // ── Material Icons section ──────────────────────────────
-                      DropdownMenuItem<String>(
-                        enabled: false,
-                        value: '__header_icons__',
-                        child: Text('material_icons_label'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ),
-                      ...exerciseIcons.map((item) {
-                        return DropdownMenuItem<String>(
-                          value: item.id,
-                          child: Row(
-                            children: [
-                              Icon(item.icon, size: 20),
-                              const SizedBox(width: 8),
-                              Text(item.label, style: const TextStyle(fontSize: 13)),
-                            ],
-                          ),
-                        );
-                      }),
-                      // ── Emoji section ───────────────────────────────────────
-                      DropdownMenuItem<String>(
-                        enabled: false,
-                        value: '__header_emojis__',
-                        child: Text('emojis_label'.tr(), style: const TextStyle(color: Colors.grey, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ),
-                      ...exerciseEmojis.map((emoji) {
-                        return DropdownMenuItem<String>(
-                          value: emoji,
-                          child: Text(emoji, style: const TextStyle(fontSize: 22)),
-                        );
-                      }),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _selectedIcon = val);
-                      }
-                    },
+                const SizedBox(width: 8),
+                Tooltip(
+                  message: '1:1 Aspect Ratio Recommended',
+                  child: Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: context.textSecondary,
                   ),
                 ),
               ],
             ),
-            
+            const SizedBox(height: 4),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Tooltip(
+                  message: 'Recommended size: 1:1 Aspect Ratio',
+                  child: Container(
+                    height: 80,
+                    width: 80,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey.withValues(alpha: 0.3),
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: context.cardColor,
+                    ),
+                    child: _labelImageFile != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: Image.file(
+                              _labelImageFile!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : _existingLabelImage != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(7),
+                            child: CachedNetworkImage(
+                              imageUrl: _existingLabelImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          )
+                        : Icon(Icons.image, color: context.textSecondary),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.upload_file),
+                        label: const Text('Upload Label'),
+                        onPressed: () async {
+                          final picked = await _picker.pickImage(
+                            source: ImageSource.gallery,
+                          );
+                          if (picked != null) {
+                            setState(() => _labelImageFile = File(picked.path));
+                          }
+                        },
+                      ),
+                      if (_labelImageFile != null ||
+                          _existingLabelImage != null) ...[
+                        const SizedBox(height: 4),
+                        TextButton.icon(
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.red,
+                            size: 18,
+                          ),
+                          label: const Text(
+                            'Remove',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(50, 30),
+                            alignment: Alignment.centerLeft,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _labelImageFile = null;
+                              _existingLabelImage = null;
+                            });
+                          },
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 16),
-            Text('custom_image_label'.tr(), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
+            const Text(
+              'Main Image',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
             if (_selectedImage != null)
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(_selectedImage!, width: double.infinity, height: 200, fit: BoxFit.contain),
+                child: Image.file(
+                  _selectedImage!,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.contain,
+                ),
               )
             else if (_existingImageUrl != null)
               ClipRRect(
@@ -286,12 +390,17 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
               )
             else
               Container(
-                width: double.infinity, height: 120,
+                width: double.infinity,
+                height: 120,
                 decoration: BoxDecoration(
                   color: context.cardColor,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(Icons.image, color: context.textSecondary, size: 48),
+                child: Icon(
+                  Icons.image,
+                  color: context.textSecondary,
+                  size: 48,
+                ),
               ),
             const SizedBox(height: 12),
             Row(
@@ -325,62 +434,85 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                           _existingImageUrl = null;
                         });
                       },
-                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                      child: const Text(
+                        'Remove',
+                        style: TextStyle(color: Colors.red),
+                      ),
                     ),
                   ),
               ],
             ),
 
-            const SizedBox(height: 24),
-
-            // Details
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('details_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _isDetailsCustom = !_isDetailsCustom;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _isDetailsCustom
-                        ? PCColors.yellow
-                        : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    foregroundColor: context.textPrimary,
-                    elevation: 0,
-                  ),
-                  child: Text(_isDetailsCustom ? 'save_btn'.tr() : 'edit_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
+            const SizedBox(height: 16),
+            Text(
+              'exercise_desc_label'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
-            _buildDetailCounter('reps_label'.tr(), _repsController),
-            const SizedBox(height: 16),
-            _buildDetailCounter('timer_seconds_label'.tr(), _timerController),
-            const SizedBox(height: 16),
-            _buildDetailCounter('days_label'.tr(), _daysController),
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _descController,
+              decoration: const InputDecoration(border: OutlineInputBorder()),
+              maxLines: 2,
+            ),
+
+            // Details (Exercise Settings)
             Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
-                title: Text('desc_optional_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                initiallyExpanded: _descController.text.isNotEmpty,
+                title: const Text(
+                  'Exercise Settings',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                initiallyExpanded: _isDetailsCustom,
                 tilePadding: EdgeInsets.zero,
                 children: [
-                  TextFormField(
-                    controller: _descController,
-                    decoration: InputDecoration(
-                      labelText: 'exercise_desc_label'.tr(),
-                      border: const OutlineInputBorder(),
-                    ),
-                    maxLines: 3,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        '',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ), // Spacer to push button right
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _isDetailsCustom = !_isDetailsCustom;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isDetailsCustom
+                              ? PCColors.yellow
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                          foregroundColor: context.textPrimary,
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          _isDetailsCustom ? 'save_btn'.tr() : 'edit_btn'.tr(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 8),
+                  _buildDetailCounter('reps_label'.tr(), _repsController),
+                  const SizedBox(height: 8),
+                  _buildDetailCounter(
+                    'timer_seconds_label'.tr(),
+                    _timerController,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDetailCounter('days_label'.tr(), _daysController),
+                  const SizedBox(height: 4),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -388,11 +520,27 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFFFC72C),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: _isLoading 
-                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                  : Text('save_exercise_btn'.tr(), style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.black,
+                        ),
+                      )
+                    : Text(
+                        'save_exercise_btn'.tr(),
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
             const SizedBox(height: 40),
@@ -405,14 +553,21 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
   Widget _buildDetailCounter(String label, TextEditingController controller) {
     return Row(
       children: [
-        Expanded(child: Text(label, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+        ),
         IconButton(
           icon: const Icon(Icons.remove_circle_outline),
           color: _isDetailsCustom ? context.textPrimary : context.textSecondary,
-          onPressed: _isDetailsCustom ? () {
-            int val = int.tryParse(controller.text) ?? 0;
-            if (val > 0) controller.text = (val - 1).toString();
-          } : null,
+          onPressed: _isDetailsCustom
+              ? () {
+                  int val = int.tryParse(controller.text) ?? 0;
+                  if (val > 0) controller.text = (val - 1).toString();
+                }
+              : null,
         ),
         SizedBox(
           width: 80,
@@ -436,13 +591,14 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
         IconButton(
           icon: const Icon(Icons.add_circle_outline),
           color: _isDetailsCustom ? context.textPrimary : context.textSecondary,
-          onPressed: _isDetailsCustom ? () {
-            int val = int.tryParse(controller.text) ?? 0;
-            controller.text = (val + 1).toString();
-          } : null,
+          onPressed: _isDetailsCustom
+              ? () {
+                  int val = int.tryParse(controller.text) ?? 0;
+                  controller.text = (val + 1).toString();
+                }
+              : null,
         ),
       ],
     );
   }
 }
-
