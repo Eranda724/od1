@@ -7,6 +7,7 @@ import '../widgets/month_calendar_widget.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
 import '../widgets/exercise_thumbnail.dart';
+import '../app_settings.dart';
 
 class StreakScreen extends StatefulWidget {
   final VoidCallback? onStartRoutine;
@@ -225,10 +226,8 @@ class _StreakScreenState extends State<StreakScreen>
                               borderRadius: BorderRadius.circular(28),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: Color(
-                                    0xFFD49C19,
-                                  ), // Darker yellow for 3D effect
-                                  offset: Offset(0, 5),
+                                  color: PCColors.yellowDark, // Darker yellow for 3D effect
+                                  offset: const Offset(0, 5),
                                   blurRadius: 0,
                                 ),
                                 BoxShadow(
@@ -245,7 +244,7 @@ class _StreakScreenState extends State<StreakScreen>
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFffc226),
+                                backgroundColor: PCColors.yellow,
                                 foregroundColor: Colors.black,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
