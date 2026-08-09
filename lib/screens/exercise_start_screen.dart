@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import '../models/exercise_item.dart';
@@ -85,7 +87,7 @@ class ExerciseStartScreen extends StatefulWidget {
   final String exerciseName;
   final String? description;
   final int streak;
-  final int lifetimeTotal;
+  final int monthlyTotal;
   final int defaultReps;
   final int defaultTimer;
   final String unit;
@@ -101,7 +103,7 @@ class ExerciseStartScreen extends StatefulWidget {
     required this.exerciseName,
     this.description,
     required this.streak,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
     this.defaultReps = 10,
     this.defaultTimer = 30,
     this.unit = 'reps',
@@ -219,7 +221,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             exerciseDef: widget.exerciseDef,
             challengeSeconds: widget.defaultTimer,
             streak: widget.streak,
-            lifetimeTotal: widget.lifetimeTotal,
+            monthlyTotal: widget.monthlyTotal,
             defaultReps: widget.defaultReps,
             sessionQueue: widget.sessionQueue,
             exerciseIndex: widget.exerciseIndex,
@@ -443,192 +445,279 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ── Ready Time widget ─────────────────────────────────────────────────────
-  Widget _buildReadyTimeWidget() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        horizontal: _PCSpacing.lg,
-        vertical: _PCSpacing.md,
+  void _showReadyTimeBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(_PCRadii.md),
-        border: Border.all(
-          color: PCColors.brown.withValues(alpha: 0.25),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Icon(
-                  Icons.hourglass_top_rounded,
-                  size: 20,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-                const SizedBox(width: _PCSpacing.xs),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'ready_time_label'.tr(),
-                      style: _PCTextStyles.sectionLabel(
-                        context,
-                      ).copyWith(fontSize: 16),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ready_time_label'.tr(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: Text(
+                      'Enable Ready Time',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    value: _wantsReadyTime,
+                    activeColor: PCColors.green,
+                    onChanged: (val) {
+                      setSheetState(() => _wantsReadyTime = val);
+                      setState(() => _wantsReadyTime = val);
+                      _saveWantsReadyTime(val);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  if (_wantsReadyTime) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Duration',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      children: [3, 5, 10, 15].map((seconds) {
+                        final isSelected = _readyTimeSeconds == seconds;
+                        return ChoiceChip(
+                          label: Text('${seconds}s'),
+                          selected: isSelected,
+                          selectedColor: PCColors.yellow,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.black
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontWeight: isSelected
+                                ? FontWeight.w900
+                                : FontWeight.w600,
+                          ),
+                          onSelected: (selected) {
+                            if (selected) {
+                              setSheetState(() => _readyTimeSeconds = seconds);
+                              setState(() => _readyTimeSeconds = seconds);
+                              _saveTime(seconds);
+                            }
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Ready Time widget ─────────────────────────────────────────────────────
+  Widget _buildReadyTimeWidget() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0, bottom: 12.0),
+          child: Text(
+            'PARAMÈTRES',
+            style: _PCTextStyles.sectionLabel(context).copyWith(
+              fontSize: 14,
+              letterSpacing: 0,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: _showReadyTimeBottomSheet,
+          borderRadius: BorderRadius.circular(_PCRadii.md),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: _PCSpacing.lg,
+              vertical: _PCSpacing.lg,
+            ),
+            decoration: BoxDecoration(
+              color:
+                  Theme.of(context).cardTheme.color ??
+                  Theme.of(context).cardColor,
+              borderRadius: BorderRadius.circular(_PCRadii.md),
+              border: Border.all(
+                color: PCColors.brown.withValues(alpha: 0.2),
+                width: 1.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.tune_rounded,
+                      size: 24,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    const SizedBox(width: _PCSpacing.md),
+                    Text(
+                      'ready_time_label'.tr(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      _wantsReadyTime
+                          ? '${_readyTimeSeconds}s'
+                          : 'off_label'.tr(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        color: _wantsReadyTime
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 24,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: _PCSpacing.md),
-          Container(
-            width: 1.5,
-            height: 24,
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
-          ),
-          const SizedBox(width: _PCSpacing.md),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _wantsReadyTime ? '${_readyTimeSeconds}s' : 'off_label'.tr(),
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: _wantsReadyTime
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-              const SizedBox(width: 2),
-              Checkbox(
-                value: _wantsReadyTime,
-                activeColor: PCColors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                side: const BorderSide(color: PCColors.brown, width: 1.5),
-                onChanged: (val) {
-                  if (val != null) {
-                    setState(() => _wantsReadyTime = val);
-                    _saveWantsReadyTime(val);
-                  }
-                },
-              ),
-              if (_wantsReadyTime) ...[
-                const SizedBox(width: _PCSpacing.sm),
-                GestureDetector(
-                  key: _timerKey,
-                  onTap: _showTimerMenu,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: _PCSpacing.md,
-                      vertical: _PCSpacing.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(_PCRadii.sm),
-                      border: Border.all(
-                        color: PCColors.brown.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Icon(
-                      Icons.arrow_drop_down_rounded,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   // ── Start Button ──────────────────────────────────────────────────────────
   Widget _buildStartButton() {
-    return InkWell(
-      onTap: _isCountingDown ? _stopCountdown : _startCountdown,
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 180,
-        height: 180,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            colors: [PCColors.green, PCColors.greenDark],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+      child: InkWell(
+        onTap: _isCountingDown ? _stopCountdown : _startCountdown,
+        borderRadius: BorderRadius.circular(32),
+        child: Container(
+          width: double.infinity,
+          height: 64,
+          decoration: BoxDecoration(
+            color: PCColors.yellow,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: const [
+              BoxShadow(
+                color: PCColors.yellowDark,
+                offset: Offset(0, 6),
+                blurRadius: 0,
+              ),
+              BoxShadow(
+                color: Colors.black12,
+                offset: Offset(0, 10),
+                blurRadius: 8,
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: PCColors.greenDark.withValues(alpha: 0.5),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-            BoxShadow(
-              color: PCColors.green.withValues(alpha: 0.3),
-              blurRadius: 48,
-              offset: const Offset(0, 0),
-            ),
-          ],
-          border: Border.all(color: Colors.white, width: 4),
-        ),
-        alignment: Alignment.center,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, animation) =>
-              ScaleTransition(scale: animation, child: child),
-          child: _isCountingDown
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$_currentCount',
-                      key: const ValueKey('count'),
-                      style: _PCTextStyles.countdownNumber,
-                    ),
-                    Text(
-                      'cancel_btn'.tr().toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
+          alignment: Alignment.center,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, animation) =>
+                ScaleTransition(scale: animation, child: child),
+            child: _isCountingDown
+                ? Row(
+                    key: const ValueKey('countdown_row'),
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$_currentCount',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                  ],
-                )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'start_now'.tr(),
-                          textAlign: TextAlign.center,
-                          style: _PCTextStyles.startButton,
+                      const SizedBox(width: 12),
+                      Text(
+                        'cancel_btn'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
                         ),
-                        const Icon(
-                          Icons.play_arrow_rounded,
-                          size: 48,
-                          color: Colors.white,
+                      ),
+                    ],
+                  )
+                : Row(
+                    key: const ValueKey('start_row'),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 32,
+                        color: Colors.black,
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'start_btn'.tr().toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.black,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
+          ),
         ),
       ),
     );
@@ -637,45 +726,124 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1,
+        onTap: (index) {
+          Navigator.pop(context);
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: PCColors.yellow,
+        unselectedItemColor: Colors.grey,
+        showUnselectedLabels: true,
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
+          letterSpacing: 0.2,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.local_fire_department_rounded),
+            label: 'streaks_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.fitness_center_rounded),
+            label: 'exercise_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.leaderboard_rounded),
+            label: 'rankings_tab'.tr(),
+          ),
+          BottomNavigationBarItem(
+            label: 'social_tab'.tr(),
+            icon: StreamBuilder<QuerySnapshot>(
+              stream: user == null
+                  ? const Stream.empty()
+                  : FirebaseFirestore.instance
+                        .collection('friendRequests')
+                        .where('toUid', isEqualTo: user.uid)
+                        .where('status', isEqualTo: 'pending')
+                        .snapshots(),
+              builder: (context, snap) {
+                final hasPending = (snap.data?.docs.isNotEmpty) == true;
+                return Badge(
+                  isLabelVisible: hasPending,
+                  backgroundColor: Colors.red,
+                  smallSize: 8,
+                  child: const Icon(Icons.people_rounded),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
       appBar: AppBar(
-        backgroundColor: PCColors.yellow,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.black,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: const [SizedBox(width: 8)],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Column(
-            children: [
-              // ── Header Section ──────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  _PCSpacing.xl,
-                  _PCSpacing.lg,
-                  _PCSpacing.xl,
-                  _PCSpacing.sm,
-                ),
-                child: Column(
-                  children: [
-                    // Exercise name
-                    Text(
-                      widget.exerciseName.toUpperCase(),
-                      style: _PCTextStyles.screenTitle(context),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (widget.description != null &&
-                        widget.description!.isNotEmpty) ...[
-                      const SizedBox(height: _PCSpacing.sm),
-                      Text(
-                        widget.description!,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // ── Header Section ──────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                _PCSpacing.xl,
+                _PCSpacing.lg,
+                _PCSpacing.xl,
+                _PCSpacing.sm,
+              ),
+              child: Column(
+                children: [
+                  // Exercise name
+                  Text(
+                    widget.exerciseName.toUpperCase(),
+                    style: _PCTextStyles.screenTitle(context),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: _PCSpacing.sm),
+                  Builder(
+                    builder: (context) {
+                      String displayDesc = '';
+                      final langCode = context.locale.languageCode;
+                      
+                      if (widget.exerciseDef != null) {
+                         final def = widget.exerciseDef!;
+                         if (def.descriptions != null && def.descriptions!.containsKey(langCode) && def.descriptions![langCode]!.isNotEmpty) {
+                           displayDesc = def.descriptions![langCode]!;
+                         } else if (def.description != null && def.description!.isNotEmpty) {
+                           displayDesc = def.description!;
+                         }
+                      }
+                      
+                      if (displayDesc.isEmpty) {
+                        final fallbacks = [
+                          'Get ready to crush this exercise! 💪',
+                          'Push yourself to the limit! 🔥',
+                          'Consistency is key to results! 💯',
+                          'Let\'s make every rep count! 🎯',
+                        ];
+                        // Consistent pseudo-random based on exercise name
+                        displayDesc = fallbacks[widget.exerciseName.hashCode.abs() % fallbacks.length];
+                      }
+
+                      return Text(
+                        displayDesc,
                         style: _PCTextStyles.bodyText(context).copyWith(
                           color: Theme.of(
                             context,
@@ -684,118 +852,130 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
+                      );
+                    },
+                  ),
+                ],
               ),
+            ),
 
-              const SizedBox(height: _PCSpacing.lg),
+            const SizedBox(height: _PCSpacing.lg),
 
-              // ── Stats Bar ───────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(_PCRadii.lg),
-                    gradient: const LinearGradient(
-                      colors: [PCColors.yellow, PCColors.yellowDark],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+            // ── Stats Bar ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color:
+                      Theme.of(context).cardTheme.color ??
+                      Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(_PCRadii.lg),
+                  border: Border.all(
+                    color: PCColors.brown.withValues(alpha: 0.2),
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    border: Border.all(color: PCColors.brown, width: 1.5),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 8,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: _PCSpacing.lg,
-                    vertical: _PCSpacing.md,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _StatPill(
-                        icon: '🔥',
-                        label: 'day_streak_count'.tr(
-                          args: [widget.streak.toString()],
-                        ),
-                      ),
-                      Container(
-                        width: 1,
-                        height: 28,
-                        color: PCColors.brown.withValues(alpha: 0.35),
-                      ),
-                      _StatPill(
-                        icon: '💪',
-                        label: 'lifetime_total_count'.tr(
-                          args: [widget.lifetimeTotal.toString()],
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
-              ),
-
-              const SizedBox(height: _PCSpacing.xl),
-
-              // ── Detail Cards ─────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
-                child: Column(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: _PCSpacing.lg,
+                  vertical: _PCSpacing.md,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (widget.defaultReps > 0 || widget.defaultTimer > 0) ...[
-                      Row(
-                        children: [
-                          if (widget.defaultReps > 0)
-                            Expanded(child: _buildRepCounter()),
-                          if (widget.defaultReps > 0 && widget.defaultTimer > 0)
-                            const SizedBox(width: _PCSpacing.md),
-                          if (widget.defaultTimer > 0)
-                            Expanded(child: _buildExerciseTimer()),
-                        ],
+                    _StatPill(
+                      icon: '🔥',
+                      label: 'day_streak_count'.tr(
+                        args: [widget.streak.toString()],
                       ),
-                      const SizedBox(height: _PCSpacing.md),
-                    ],
-                    _buildReadyTimeWidget(),
+                    ),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: PCColors.brown.withValues(alpha: 0.35),
+                    ),
+                    _StatPill(
+                      icon: '🏆',
+                      label: 'this_month_count'.tr(
+                        args: [widget.monthlyTotal.toString()],
+                      ),
+                    ),
                   ],
                 ),
               ),
+            ),
 
-              // ── Random Image Spacer ───────────────────────────────────────────
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: _PCSpacing.md,
-                    horizontal: _PCSpacing.xl,
-                  ),
-                  child: (widget.exerciseDef != null && widget.exerciseDef!.mediaItems.isNotEmpty)
-                      ? CachedNetworkImage(
-                          imageUrl: widget.exerciseDef!.mediaItems.first.url,
-                          fit: BoxFit.contain,
-                          placeholder: (context, url) => const Center(
-                            child: CircularProgressIndicator(color: PCColors.yellow),
+            const SizedBox(height: _PCSpacing.xl),
+
+            // ── Detail Cards ─────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+              child: Column(
+                children: [
+                  if (widget.defaultReps > 0 || widget.defaultTimer > 0) ...[
+                    Row(
+                      children: [
+                        if (widget.defaultReps > 0)
+                          Expanded(child: _buildRepCounter()),
+                        if (widget.defaultReps > 0 && widget.defaultTimer > 0)
+                          const SizedBox(width: _PCSpacing.md),
+                        if (widget.defaultTimer > 0)
+                          Expanded(child: _buildExerciseTimer()),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // ── Random Image Spacer ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: _PCSpacing.xl,
+                horizontal: _PCSpacing.xl,
+              ),
+              child: SizedBox(
+                height: 220,
+                child:
+                    (widget.exerciseDef != null &&
+                        widget.exerciseDef!.mediaItems.isNotEmpty)
+                    ? CachedNetworkImage(
+                        imageUrl: widget.exerciseDef!.mediaItems.first.url,
+                        fit: BoxFit.contain,
+                        placeholder: (context, url) => const Center(
+                          child: CircularProgressIndicator(
+                            color: PCColors.yellow,
                           ),
-                          errorWidget: (context, url, error) =>
-                              Image.asset(_randomImage, fit: BoxFit.contain),
-                        )
-                      : Image.asset(_randomImage, fit: BoxFit.contain),
-                ),
+                        ),
+                        errorWidget: (context, url, error) =>
+                            Image.asset(_randomImage, fit: BoxFit.contain),
+                      )
+                    : Image.asset(_randomImage, fit: BoxFit.contain),
               ),
+            ),
 
-              // ── Large Start Button ──────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.only(bottom: _PCSpacing.xxxl),
-                child: _buildStartButton(),
-              ),
-            ],
-          );
-        },
+            // ── Ready Time Widget ───────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
+              child: _buildReadyTimeWidget(),
+            ),
+
+            const SizedBox(height: _PCSpacing.xl),
+
+            // ── Large Start Button ──────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.only(bottom: _PCSpacing.xl),
+              child: _buildStartButton(),
+            ),
+          ],
+        ),
       ),
     );
   }
