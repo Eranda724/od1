@@ -26,7 +26,7 @@ class ActiveSessionScreen extends StatefulWidget {
   final ExerciseItem? exerciseDef;
   final int challengeSeconds;
   final int streak;
-  final int lifetimeTotal;
+  final int monthlyTotal;
   final int defaultReps;
   final List<SessionItem>? sessionQueue;
   final int? exerciseIndex;
@@ -41,7 +41,7 @@ class ActiveSessionScreen extends StatefulWidget {
     this.exerciseDef,
     required this.challengeSeconds,
     required this.streak,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
     required this.defaultReps,
     this.sessionQueue,
     this.exerciseIndex,

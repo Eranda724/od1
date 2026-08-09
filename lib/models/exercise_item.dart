@@ -18,7 +18,8 @@ class ExerciseMedia {
 class ExerciseItem {
   final String id;
   final String name;
-  final String? description; // Optional description added by admin
+  final String? description; // Optional legacy single description
+  final Map<String, String>? descriptions; // Localized descriptions
   final String icon;
   final String unit;
   final int defaultReps;
@@ -33,6 +34,7 @@ class ExerciseItem {
     required this.id,
     required this.name,
     this.description,
+    this.descriptions,
     required this.icon,
     required this.unit,
     this.defaultReps = 0,
@@ -66,10 +68,16 @@ class ExerciseItem {
       }
     }
 
+    Map<String, String>? parsedDescriptions;
+    if (data['descriptions'] != null) {
+      parsedDescriptions = Map<String, String>.from(data['descriptions']);
+    }
+
     return ExerciseItem(
       id: id,
       name: data['name'] ?? '',
       description: data['description'] as String?,
+      descriptions: parsedDescriptions,
       icon: data['icon'] ?? '💪',
       unit: data['unit'] ?? 'reps',
       defaultReps: (data['defaultReps'] as num?)?.toInt() ?? 0,
@@ -82,6 +90,7 @@ class ExerciseItem {
   Map<String, dynamic> toMap() => {
         'name': name,
         if (description != null) 'description': description,
+        if (descriptions != null) 'descriptions': descriptions,
         'icon': icon,
         'unit': unit,
         'defaultReps': defaultReps,

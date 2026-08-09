@@ -8,6 +8,7 @@ import '../models/exercise_item.dart';
 import '../models/exercise_icons.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:translator/translator.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
   final ExerciseItem? existing;
@@ -82,6 +83,28 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final originalDesc = _descController.text.trim();
+      Map<String, String>? descMap;
+
+      if (originalDesc.isNotEmpty) {
+        descMap = {};
+        final translator = GoogleTranslator();
+        // Translate to 'en' to detect the source language
+        final translationResult = await translator.translate(originalDesc, to: 'en');
+        final sourceCode = translationResult.sourceLanguage.code;
+        
+        final targetLangs = ['en', 'fr', 'es'];
+        
+        for (final lang in targetLangs) {
+          if (sourceCode == lang) {
+            descMap[lang] = originalDesc;
+          } else {
+            final result = await translator.translate(originalDesc, to: lang);
+            descMap[lang] = result.text;
+          }
+        }
+      }
+
       List<ExerciseMedia> media = widget.existing?.mediaItems.toList() ?? [];
 
       // If a new image was selected from gallery, upload it
@@ -99,7 +122,8 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
       final item = ExerciseItem(
         id: id,
         name: name,
-        description: _descController.text.trim(),
+        description: originalDesc,
+        descriptions: descMap,
         icon: _selectedIcon,
         unit: 'reps',
         defaultReps: _isDetailsCustom ? (int.tryParse(_repsController.text.trim()) ?? 0) : 0,

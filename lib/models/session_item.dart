@@ -5,7 +5,7 @@ class SessionItem {
   final String exerciseName;
   final String? description;
   final int streak;
-  final int lifetimeTotal;
+  final int monthlyTotal;
   final int defaultReps;
   final int defaultTimer;
   final String unit;
@@ -16,7 +16,7 @@ class SessionItem {
     required this.exerciseName,
     this.description,
     required this.streak,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
     required this.defaultReps,
     required this.defaultTimer,
     required this.unit,

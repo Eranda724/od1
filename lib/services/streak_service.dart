@@ -115,6 +115,15 @@ class StreakService {
 
       // ── Exercise-specific stats ──
       final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
+      
+      final currentMonthStr = today.substring(0, 7); // e.g. '2026-08'
+      final lastMonthStr = exerciseData['lastMonthStr'] as String?;
+      int prevMonthly = (exerciseData['monthlyTotal'] ?? 0) as int;
+      if (lastMonthStr != currentMonthStr) {
+        prevMonthly = 0;
+      }
+      final newMonthly = prevMonthly + reps;
+      
       final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
       final lastDate = exerciseData['lastCompletedDate'] as String?;
       final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
@@ -168,6 +177,8 @@ class StreakService {
 
       tx.set(exRef, {
         'lifetimeTotal': newLifetime,
+        'monthlyTotal': newMonthly,
+        'lastMonthStr': currentMonthStr,
         'currentStreak': newStreak,
         'lastCompletedDate': today,
         'lastEvaluatedDate': today,
@@ -257,6 +268,7 @@ class StreakService {
 
       return {
         'lifetimeTotal': newLifetime,
+        'monthlyTotal': newMonthly,
         'currentStreak': newStreak,
         'todayReps': newTodayReps,
         'overallStreak': newOverallStreak,

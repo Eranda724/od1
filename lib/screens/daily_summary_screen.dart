@@ -14,14 +14,14 @@ class ExerciseDaySummary {
   final String unit;
   final int todayReps;
   final int currentStreak;
-  final int lifetimeTotal;
+  final int monthlyTotal;
 
   const ExerciseDaySummary({
     required this.exerciseName,
     required this.unit,
     required this.todayReps,
     required this.currentStreak,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
   });
 }
 
@@ -346,7 +346,7 @@ class _ExerciseSummaryCard extends StatelessWidget {
           _MiniStat(label: 'today_label'.tr(), value: '${item.todayReps}'),
           const SizedBox(width: 16),
           // Lifetime total
-          _MiniStat(label: 'lifetime_label'.tr(), value: '${item.lifetimeTotal}', highlight: true),
+          _MiniStat(label: 'this_month_label'.tr(), value: '${item.monthlyTotal}', highlight: true),
         ],
       ),
     );

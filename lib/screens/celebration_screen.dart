@@ -14,7 +14,7 @@ class CelebrationScreen extends StatefulWidget {
   final String exerciseName;
   final int dayStreak;
   final int todayReps;
-  final int lifetimeTotal;
+  final int monthlyTotal;
   final int overallStreak;
   final String unit;
   final int? exerciseIndex;
@@ -27,7 +27,7 @@ class CelebrationScreen extends StatefulWidget {
     required this.exerciseName,
     required this.dayStreak,
     required this.todayReps,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
     this.overallStreak = 0,
     this.unit = 'reps',
     this.exerciseIndex,
@@ -129,7 +129,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
           exerciseName: widget.exerciseName,
           dayStreak: widget.dayStreak,
           todayReps: widget.todayReps,
-          lifetimeTotal: widget.lifetimeTotal,
+          monthlyTotal: widget.monthlyTotal,
           unit: widget.unit,
           exerciseIndex: widget.exerciseIndex,
           totalExercises: widget.totalExercises,

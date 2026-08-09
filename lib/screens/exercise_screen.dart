@@ -199,7 +199,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   String targetDisplayName,
                   ExerciseItem? targetDef,
                   int targetStreak,
-                  int targetLifetime,
+                  int targetMonthlyTotal,
                   String targetUnit,
                 ) {
                   List<SessionItem> queue = [];
@@ -224,7 +224,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ? nDef!.description
                                 : 'default_exercise_description'.tr(),
                             streak: nEx['currentStreak'] ?? 0,
-                            lifetimeTotal: nEx['lifetimeTotal'] ?? 0,
+                            monthlyTotal: nEx['monthlyTotal'] ?? 0,
                             defaultReps: nDef?.defaultReps ?? 0,
                             defaultTimer: nDef?.defaultTimer ?? 0,
                             unit: nDef?.unit ?? 'reps',
@@ -246,7 +246,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             ? targetDef!.description
                             : 'default_exercise_description'.tr(),
                         streak: targetStreak,
-                        lifetimeTotal: targetLifetime,
+                        monthlyTotal: targetMonthlyTotal,
                         defaultReps: targetDef?.defaultReps ?? 0,
                         defaultTimer: targetDef?.defaultTimer ?? 0,
                         unit: targetUnit,
@@ -268,7 +268,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     exercises[id] ?? {},
                   );
                   final streak = exerciseData['currentStreak'] ?? 0;
-                  final lifetime = exerciseData['lifetimeTotal'] ?? 0;
+                  final monthly = exerciseData['monthlyTotal'] ?? 0;
                   final todayReps = exerciseData['todayReps'] ?? 0;
                   final def = exerciseDefs[id];
                   if (def == null) return const SizedBox.shrink();
@@ -385,7 +385,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           displayName,
                                           def,
                                           streak,
-                                          lifetime,
+                                          monthly,
                                           unit,
                                         ),
                                         style: ElevatedButton.styleFrom(
@@ -526,7 +526,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         displayName,
                                         def,
                                         streak,
-                                        lifetime,
+                                        monthly,
                                         unit,
                                       ),
                                       style: ElevatedButton.styleFrom(
@@ -565,7 +565,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 displayName,
                                 def,
                                 streak,
-                                lifetime,
+                                monthly,
                                 unit,
                               ),
                       child: content,

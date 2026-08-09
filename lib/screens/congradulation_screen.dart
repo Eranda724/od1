@@ -18,7 +18,7 @@ class CongratulationScreen extends StatefulWidget {
   final String exerciseName;
   final int dayStreak;
   final int todayReps;
-  final int lifetimeTotal;
+  final int monthlyTotal;
   final String unit;
   final int overallStreak; // NEW: consecutive days any exercise was done
 
@@ -36,7 +36,7 @@ class CongratulationScreen extends StatefulWidget {
     required this.exerciseName,
     required this.dayStreak,
     required this.todayReps,
-    required this.lifetimeTotal,
+    required this.monthlyTotal,
     this.unit = 'reps',
     this.overallStreak = 0,
     this.exerciseIndex,
@@ -224,8 +224,8 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatCard(
-                          label: 'lifetime_label'.tr(),
-                          value: '${widget.lifetimeTotal}',
+                          label: 'this_month_label'.tr(),
+                          value: '${widget.monthlyTotal}',
                           sub: widget.unit,
                           highlight: true,
                         ),

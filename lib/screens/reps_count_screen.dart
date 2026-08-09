@@ -111,7 +111,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             exerciseName: next.exerciseName,
             description: next.description,
             streak: next.streak,
-            lifetimeTotal: next.lifetimeTotal,
+            monthlyTotal: next.monthlyTotal,
             defaultReps: next.defaultReps,
             defaultTimer: next.defaultTimer,
             unit: next.unit,
@@ -144,7 +144,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                 unit: widget.unit, // Assuming similar units or using the last one
                 todayReps: data['todayReps'] ?? 0,
                 currentStreak: data['currentStreak'] ?? 0,
-                lifetimeTotal: data['lifetimeTotal'] ?? 0,
+                monthlyTotal: data['monthlyTotal'] ?? 0,
              ));
           }
         }
@@ -214,7 +214,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             exerciseName: widget.exerciseName,
             dayStreak: result['currentStreak']!,
             todayReps: result['todayReps']!,
-            lifetimeTotal: result['lifetimeTotal']!,
+            monthlyTotal: result['monthlyTotal']!,
             overallStreak: result['overallStreak']!,
             unit: widget.unit,
             exerciseIndex: widget.exerciseIndex,
