@@ -368,5 +368,7 @@
   "upgrade_for_price": "Mejorar por {}",
   "loading_price": "Cargando precio...",
   "restore_purchases": "Restaurar Compras",
-  "exercise_week_streak": "Racha semanal de {}"
+  "exercise_week_streak": "Racha de {} Semanas",
+  "this_month_label": "ESTE MES",
+  "this_month_count": "{} Este Mes"
 }

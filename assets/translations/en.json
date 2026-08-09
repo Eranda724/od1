@@ -368,5 +368,7 @@
   "upgrade_for_price": "Upgrade for {}",
   "loading_price": "Loading price...",
   "restore_purchases": "Restore Purchases",
-  "exercise_week_streak": "{} Week Streak"
+  "exercise_week_streak": "{} Week Streak",
+  "this_month_label": "THIS MONTH",
+  "this_month_count": "{} This Month"
 }

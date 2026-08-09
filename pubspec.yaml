@@ -33,6 +33,7 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   easy_localization: ^3.0.8
   url_launcher: ^6.3.2
+  translator: ^1.0.1
 
 dev_dependencies:
   flutter_test:
