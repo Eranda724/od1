@@ -88,16 +88,18 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       final doc = await FirebaseFirestore.instance.collection('app_config').doc('session_assets').get();
       final data = doc.data() ?? {};
       
-      final rawImages = data['images'] as List<dynamic>? ?? kDefaultSessionImages;
+      final rawImages = data['images'] as List<dynamic>? ?? [];
       final rawTips = data['tips'] as List<dynamic>? ?? kDefaultSessionTips;
 
-      final enabledImages = rawImages.where((i) => i['enabled'] == true).toList();
+      final enabledImages = rawImages.where((i) => i['enabled'] == true && i['isAsset'] != true).toList();
       final enabledTips = rawTips.where((t) => t['enabled'] == true).map((t) => t as Map<String, dynamic>).toList();
 
       if (enabledImages.isNotEmpty) {
         final img = enabledImages[Random().nextInt(enabledImages.length)];
         _randomSessionImage = img['url'];
         _isAssetImage = img['isAsset'] == true;
+      } else {
+        _randomSessionImage = null; // Use gradient
       }
 
       if (enabledTips.isNotEmpty) {
@@ -106,9 +108,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
     } catch (e) {
       // Fallback
       _activeTips = kDefaultSessionTips;
-      final img = kDefaultSessionImages[Random().nextInt(kDefaultSessionImages.length)];
-      _randomSessionImage = img['url'];
-      _isAssetImage = true;
+      _randomSessionImage = null;
     }
 
     if (mounted) {
@@ -263,56 +263,116 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       );
     }
 
+    final textColor = _randomSessionImage == null ? Colors.black87 : Colors.white;
+
     return Scaffold(
       backgroundColor: PCColors.brownDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Background image ──────────────────────────────────────────
+          // ── Background Gradient (Default) ─────────────────────────────
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [PCColors.yellow, PCColors.yellowDark],
+              ),
+            ),
+          ),
+          // ── Background image (Admin Override) ──────────────────────────
           if (_randomSessionImage != null)
             _isAssetImage
                 ? Image.asset(
                     _randomSessionImage!,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [PCColors.brown, PCColors.brownDark],
-                        ),
-                      ),
-                    ),
+                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                   )
                 : CachedNetworkImage(
                     imageUrl: _randomSessionImage!,
                     fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [PCColors.brown, PCColors.brownDark],
-                        ),
-                      ),
-                    ),
+                    errorWidget: (context, url, error) => const SizedBox.shrink(),
                   ),
 
-          // ── Dark scrim for text legibility ────────────────────────────
-          Container(color: Colors.black.withValues(alpha: 0.45)),
+          // ── Dark scrim for text legibility (Only for image) ────────────
+          if (_randomSessionImage != null)
+            Container(color: Colors.black.withValues(alpha: 0.45)),
 
           // ── Foreground content ────────────────────────────────────────
           SafeArea(
             child: Column(
               children: [
+                // Header (Back arrow and Bell)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_back_ios, color: textColor),
+                        onPressed: _stopSession,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.notifications_none, color: textColor),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Tips Text
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: Column(
+                    children: [
+                      Text(
+                        'quick_tip'.tr().toUpperCase(),
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        transitionBuilder: (child, animation) =>
+                            FadeTransition(
+                              opacity: CurvedAnimation(
+                                parent: animation,
+                                curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+                              ),
+                              child: child,
+                            ),
+                        child: Text(
+                          _activeTips.isNotEmpty
+                              ? (_activeTips[_tipIndex]['isKey'] == true
+                                  ? (_activeTips[_tipIndex]['text'] as String).tr()
+                                  : _activeTips[_tipIndex]['text'] as String)
+                              : '',
+                          key: ValueKey(_tipIndex),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            height: 1.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Exercise name
                 Padding(
-                  padding: const EdgeInsets.only(top: 16),
+                  padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     widget.exerciseName.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 24,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
                     ),
@@ -322,111 +382,57 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                 if (widget.exerciseDef != null &&
                     widget.exerciseDef!.mediaItems.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 16),
+                    padding: const EdgeInsets.only(top: 8),
                     child: buildExerciseVisual(
                       widget.exerciseDef!,
-                      size: 64,
-                      iconColor: Colors.white,
+                      size: 48,
+                      iconColor: textColor,
                     ),
                   ),
 
                 const Spacer(),
 
-                // Big timer
-                Text(
-                  _formatRemaining(_seconds),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 64,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.challengeSeconds > 0
-                      ? 'time_remaining'.tr()
-                      : 'time_elapsed'.tr(),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Rotating tip — styled as a prominent tip card
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 20,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: PCColors.yellow.withValues(alpha: 0.3),
-                        width: 1.5,
+                // Big timer with Progress Ring
+                SizedBox(
+                  width: 250,
+                  height: 250,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(
+                        value: widget.challengeSeconds > 0
+                            ? (_seconds / widget.challengeSeconds)
+                            : ((_seconds % 60) / 60.0),
+                        strokeWidth: 12,
+                        backgroundColor: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white,
                       ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.lightbulb_outline_rounded,
-                              color: PCColors.yellow,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'quick_tip'.tr(),
-                              style: TextStyle(
-                                color: PCColors.yellow.withValues(alpha: 0.9),
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 1.5,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (child, animation) =>
-                              FadeTransition(opacity: animation, child: child),
-                          child: Text(
-                            _activeTips.isNotEmpty
-                                ? (_activeTips[_tipIndex]['isKey'] == true
-                                    ? (_activeTips[_tipIndex]['text'] as String).tr()
-                                    : _activeTips[_tipIndex]['text'] as String)
-                                : '',
-                            key: ValueKey(_tipIndex),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
-                              fontStyle: FontStyle.italic,
-                              height: 1.3,
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _formatRemaining(_seconds),
+                            style: TextStyle(
+                              color: textColor,
+                              fontSize: 64,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.challengeSeconds > 0
+                                ? 'time_remaining'.tr()
+                                : 'time_elapsed'.tr(),
+                            style: TextStyle(
+                              color: textColor.withValues(alpha: 0.8),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
 
@@ -434,49 +440,45 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
                 // Stop button
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
                   child: InkWell(
                     onTap: _stopSession,
-                    customBorder: const CircleBorder(),
+                    borderRadius: BorderRadius.circular(30),
                     child: Container(
-                      width: 110,
-                      height: 110,
+                      width: double.infinity,
+                      height: 60,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        // Only non-PCColors color in this file — a clear
-                        // "stop" red. Swap for PCColors.brown if you want
-                        // to stay strictly on-palette.
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFE25C5C), Color(0xFFB23A3A)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
+                        color: const Color(0xFFE25C5C),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: const [
                           BoxShadow(
-                            color: const Color(
-                              0xFFB23A3A,
-                            ).withValues(alpha: 0.5),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
+                            color: Color(0xFFB23A3A), // Darker red for 3D effect
+                            offset: Offset(0, 5),
+                            blurRadius: 0,
+                          ),
+                          BoxShadow(
+                            color: Colors.black12,
+                            offset: Offset(0, 8),
+                            blurRadius: 6,
                           ),
                         ],
                       ),
                       alignment: Alignment.center,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'stop_btn'.tr(),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.stop_rounded, color: Colors.white, size: 28),
+                          const SizedBox(width: 8),
+                          Text(
+                            'stop_btn'.tr().toUpperCase(),
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 22,
+                              fontSize: 20,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 1.5,
                             ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ),
