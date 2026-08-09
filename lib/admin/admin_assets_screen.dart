@@ -7,18 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../app_settings.dart';
 
-const List<Map<String, dynamic>> kDefaultSessionImages = [
-  {"url": "assets/images/screen1.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen2.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen3.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen4.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen5.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen6.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen7.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen8.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen9.png", "isAsset": true, "enabled": true},
-  {"url": "assets/images/screen10.png", "isAsset": true, "enabled": true},
-];
+const List<Map<String, dynamic>> kDefaultSessionImages = [];
 
 const List<Map<String, dynamic>> kDefaultSessionTips = [
   {"text": "couch_tip_1", "isKey": true, "enabled": true},
@@ -43,7 +32,13 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   bool _isUploading = false;
 
   Future<void> _updateArray(String field, List<dynamic> newList) async {
-    await _docRef.set({field: newList}, SetOptions(merge: true));
+    try {
+      await _docRef.set({field: newList}, SetOptions(merge: true));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+      }
+    }
   }
 
   Future<void> _uploadImage(List<dynamic> currentImages) async {
@@ -178,17 +173,69 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
         onPressed: _isUploading ? null : () => _showAddImageOptions(images),
         child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
       ),
-      body: GridView.builder(
-        padding: const EdgeInsets.all(16),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              "Enabled images override the default solid gradient during an active session. If multiple are enabled, one is chosen at random.",
+              style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+            ),
+          ),
+          Expanded(
+            child: GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           childAspectRatio: 0.8,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
         ),
-        itemCount: images.length,
+        itemCount: images.length + 1,
         itemBuilder: (context, index) {
-          final item = images[index] as Map<String, dynamic>;
+          if (index == 0) {
+            final noImagesActive = images.where((i) => i['enabled'] == true).isEmpty;
+            return Card(
+              clipBehavior: Clip.antiAlias,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: noImagesActive ? PCColors.green : Colors.grey,
+                  width: noImagesActive ? 2 : 1,
+                ),
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [PCColors.yellow, PCColors.yellowDark],
+                      ),
+                    ),
+                  ),
+                  if (!noImagesActive)
+                    Container(color: Colors.black.withValues(alpha: 0.5)),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      color: Colors.black54,
+                      child: const Text(
+                        'Default Gradient',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final imageIndex = index - 1;
+          final item = images[imageIndex] as Map<String, dynamic>;
           final url = item['url'] as String? ?? '';
           final isAsset = item['isAsset'] as bool? ?? false;
           final enabled = item['enabled'] as bool? ?? true;
@@ -221,12 +268,6 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                     iconSize: 20,
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      if (images.length <= 1) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('at_least_one_image_required'.tr())),
-                        );
-                        return;
-                      }
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (c) => AlertDialog(
@@ -239,7 +280,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                         ),
                       );
                       if (confirm == true) {
-                        final newList = List<dynamic>.from(images)..removeAt(index);
+                        final newList = List<dynamic>.from(images)..removeAt(imageIndex);
                         _updateArray('images', newList);
                       }
                     },
@@ -265,7 +306,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                     ),
                     onPressed: () {
                       final newList = List<dynamic>.from(images);
-                      newList[index] = Map<String, dynamic>.from(item)..['enabled'] = !enabled;
+                      newList[imageIndex] = Map<String, dynamic>.from(item)..['enabled'] = !enabled;
                       _updateArray('images', newList);
                     },
                   ),
@@ -274,6 +315,9 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
             ),
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }
@@ -308,12 +352,6 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                     iconSize: 20,
                     icon: const Icon(Icons.delete, color: Colors.red),
                     onPressed: () async {
-                      if (tips.length <= 1) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('at_least_one_tip_required'.tr())),
-                        );
-                        return;
-                      }
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (c) => AlertDialog(
@@ -359,10 +397,10 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Image & Tips Bank'),
+          title: const Text('Session Backgrounds & Tips'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Images'),
+              Tab(text: 'Background Overrides'),
               Tab(text: 'Tips'),
             ],
           ),
@@ -379,8 +417,8 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
 
             final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
             
-            // If data is empty, initialize it implicitly with defaults for the UI
-            final images = data['images'] as List<dynamic>? ?? kDefaultSessionImages;
+            final rawImages = data['images'] as List<dynamic>? ?? [];
+            final images = rawImages.where((i) => i['isAsset'] != true).toList();
             final tips = data['tips'] as List<dynamic>? ?? kDefaultSessionTips;
 
             return TabBarView(
