@@ -25,7 +25,8 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Set<String> _friendUids = {};
   StreamSubscription? _friendsSub;
-  final Set<String> _sentRequests = {}; // To track sent state locally for UI
+  Set<String> _sentRequests = {}; // To track sent state locally for UI
+  StreamSubscription? _requestsSub;
 
   @override
   void initState() {
@@ -48,6 +49,23 @@ class _SocialScreenState extends State<SocialScreen> {
               });
             }
           });
+
+      _requestsSub = FirebaseFirestore.instance
+          .collection('friendRequests')
+          .where('fromUid', isEqualTo: uid)
+          .where('status', isEqualTo: 'pending')
+          .snapshots()
+          .listen((snapshot) {
+            if (mounted) {
+              final sent = <String>{};
+              for (var doc in snapshot.docs) {
+                sent.add(doc.data()['toUid'] as String);
+              }
+              setState(() {
+                _sentRequests = sent;
+              });
+            }
+          });
     }
   }
 
@@ -56,6 +74,7 @@ class _SocialScreenState extends State<SocialScreen> {
     _searchController.dispose();
     _debounce?.cancel();
     _friendsSub?.cancel();
+    _requestsSub?.cancel();
     super.dispose();
   }
 
@@ -267,15 +286,45 @@ class _SocialScreenState extends State<SocialScreen> {
                     final userId = user['uid'] as String;
                     final isSent = _sentRequests.contains(userId);
 
-                    return _UserSearchResultRow(
-                      uid: userId,
-                      name: user['display_name_resolved'] as String,
-                      photoUrl: user['photoUrl'] as String?,
-                      streak: (user['overallStreak'] as num?)?.toInt() ?? 0,
-                      isSent: isSent,
-                      onAdd: () => _sendFriendRequest(
-                        userId,
-                        user['display_name_resolved'],
+                    return GestureDetector(
+                      onTap: () {
+                        final currentUid =
+                            FirebaseAuth.instance.currentUser?.uid ?? '';
+                        final f = FriendInfo(
+                          uid: userId,
+                          displayName: user['display_name_resolved'] as String,
+                          overallStreak:
+                              (user['overallStreak'] as num?)?.toInt() ?? 0,
+                          yearlyActiveDays:
+                              (user['activeDates'] as List?)?.length ?? 0,
+                          sharedStreak: 0,
+                          friendDoneToday: false,
+                          pairId: FriendsService.getPairId(currentUid, userId),
+                          photoUrl: user['photoUrl'] as String?,
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => FriendProfileScreen(
+                              friend: f,
+                              isFriend: false, // Not friends since they appeared in search
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        color: Colors.transparent, // Ensure the whole row is clickable
+                        child: _UserSearchResultRow(
+                          uid: userId,
+                          name: user['display_name_resolved'] as String,
+                          photoUrl: user['photoUrl'] as String?,
+                          streak: (user['overallStreak'] as num?)?.toInt() ?? 0,
+                          isSent: isSent,
+                          onAdd: () => _sendFriendRequest(
+                            userId,
+                            user['display_name_resolved'],
+                          ),
+                        ),
                       ),
                     );
                   },

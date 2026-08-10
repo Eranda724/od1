@@ -529,8 +529,24 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
         final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
-          return SizedBox(
+          return Container(
             width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.shade200,
+                  offset: const Offset(0, 5),
+                  blurRadius: 0,
+                ),
+                const BoxShadow(
+                  color: Colors.black12,
+                  offset: Offset(0, 8),
+                  blurRadius: 6,
+                ),
+              ],
+            ),
             child: ElevatedButton.icon(
               onPressed: _isLoading
                   ? null
@@ -579,17 +595,18 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                       ),
                     )
                   : Text(
-                      'remove_friend_title'.tr(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      'remove_friend_title'.tr().toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.red,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  side: const BorderSide(color: Colors.red, width: 1),
+                  borderRadius: BorderRadius.circular(28),
                 ),
               ),
             ),

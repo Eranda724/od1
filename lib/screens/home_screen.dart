@@ -110,7 +110,7 @@ class _HomeScreenState extends State<HomeScreen>
           _tabController.animateTo(index);
         },
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: PCColors.yellow,
+        selectedItemColor: const Color.fromARGB(255, 224, 138, 58),
         unselectedItemColor: Colors.grey,
         showSelectedLabels: true,
         showUnselectedLabels: false,
