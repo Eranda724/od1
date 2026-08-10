@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -156,6 +156,10 @@ class _HomeScreenState extends State<HomeScreen>
               },
             ),
           ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.person_rounded),
+            label: 'profile_menu'.tr(),
+          ),
         ],
       ),
       body: TabBarView(
@@ -170,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen>
           ExerciseScreen(user: user),
           LeaderboardScreen(currentUid: user?.uid),
           const SocialScreen(),
+          const ProfileScreen(isTab: true),
         ],
       ),
     );

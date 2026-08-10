@@ -13,7 +13,8 @@ import 'onboarding_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool isTab;
+  const ProfileScreen({super.key, this.isTab = false});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -428,13 +429,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text('profile_menu'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: widget.isTab 
+          ? null 
+          : AppBar(
+              title: Text('profile_menu'.tr()),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
