@@ -253,6 +253,15 @@ class StreakService {
         
         newTodayTimeSpent = timeSpentSeconds; // Reset for the new day
 
+        final currentYear = todayObj.year.toString();
+        final lastActiveYear = userData['lastActiveYear'] as String?;
+        int prevYearlyActiveDays = (userData['yearlyActiveDays'] ?? 0) as int;
+        
+        if (lastActiveYear != currentYear) {
+          prevYearlyActiveDays = 0;
+        }
+        final newYearlyActiveDays = prevYearlyActiveDays + 1;
+
         overallStreakUpdate = {
           'scores': newScores,
           'todayTimeSpent': newTodayTimeSpent,
@@ -262,6 +271,8 @@ class StreakService {
           'freezesAvailable': 2,
           'activeDates': activeDates,
           'frozenDates': frozenDates,
+          'yearlyActiveDays': newYearlyActiveDays,
+          'lastActiveYear': currentYear,
         };
       }
 

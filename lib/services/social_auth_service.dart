@@ -173,6 +173,8 @@ class SocialAuthService {
         'monthly': 0,
         'lifetime': 0,
       };
+      data['yearlyActiveDays'] = 0;
+      data['lastActiveYear'] = DateTime.now().year.toString();
     }
 
     if (data.isNotEmpty) {

@@ -182,6 +182,7 @@ class FriendsService {
           uid: friendUid,
           displayName: friendName,
           overallStreak: overallStreak,
+          yearlyActiveDays: (fData['yearlyActiveDays'] as num?)?.toInt() ?? 0,
           sharedStreak: math.min(currentUserStreak, overallStreak),
           sharedLastDate: null,
           friendDoneToday: friendDoneToday,

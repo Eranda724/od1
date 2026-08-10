@@ -2,6 +2,7 @@ class FriendInfo {
   final String uid;
   final String displayName;
   final int overallStreak;
+  final int yearlyActiveDays;
   final int sharedStreak;
   final String? sharedLastDate;
   final bool friendDoneToday;
@@ -12,6 +13,7 @@ class FriendInfo {
     required this.uid,
     required this.displayName,
     required this.overallStreak,
+    required this.yearlyActiveDays,
     required this.sharedStreak,
     this.sharedLastDate,
     required this.friendDoneToday,
