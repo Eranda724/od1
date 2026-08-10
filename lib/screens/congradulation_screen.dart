@@ -11,16 +11,18 @@ import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
 
 /// Shown right after a user submits reps for one exercise.
-/// Celebrates the streak, shows today's + lifetime stats, then either
-/// moves to the next selected exercise or to the final daily summary.
+/// Celebrates the streak with mascot, confetti, and sound, displays 3-column
+/// stats (streak, today, this month), the live 7-day week streak row, and
+/// a 3D yellow button to advance to the next exercise or summary.
 class CongratulationScreen extends StatefulWidget {
   final String exerciseId;
   final String exerciseName;
   final int dayStreak;
   final int todayReps;
   final int monthlyTotal;
+  final int lifetimeTotal;
   final String unit;
-  final int overallStreak; // NEW: consecutive days any exercise was done
+  final int overallStreak;
 
   /// 1-based index of this exercise in the user's session (e.g. 2 of 3).
   /// Pass null (or totalExercises == 1) to hide the progress indicator.
@@ -37,6 +39,7 @@ class CongratulationScreen extends StatefulWidget {
     required this.dayStreak,
     required this.todayReps,
     required this.monthlyTotal,
+    this.lifetimeTotal = 0,
     this.unit = 'reps',
     this.overallStreak = 0,
     this.exerciseIndex,
@@ -59,20 +62,16 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
   AudioPlayer? _player;
-  late final String _heroImage;
 
   @override
   void initState() {
     super.initState();
-    final rng = math.Random();
-    const images = ['assets/images/po1.png', 'assets/images/po2.png', 'assets/images/po3.png'];
-    _heroImage = images[rng.nextInt(images.length)];
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    // Slight overshoot then settle — a small "pop" on the streak number.
+    // Slight overshoot then settle — a small "pop" on the hero mascot & badge.
     _scale = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(
@@ -96,7 +95,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     );
     _confettiController.play(); // fireworks start immediately
 
-    // ── Play sound immediately ──────────────────────────────────────────────
     _playSound();
   }
 
@@ -133,66 +131,236 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Hero Graphic (Potato) ───────────────────────────────────
+                  // ── Hero Graphic (Potato Mascot + Star Badge) ─────────────
                   ScaleTransition(
                     scale: _scale,
-                    child: Image.asset(
-                      _heroImage,
-                      height: 180,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ── Exercise Name ───────────────────────────────────────────
-                  Text(
-                    widget.exerciseName.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: PCColors.yellow,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  // ── Huge Streak Number ──────────────────────────────────────
-                  ScaleTransition(
-                    scale: _scale,
-                    child: Text(
-                      '${widget.dayStreak}',
-                      style: TextStyle(
-                        fontSize: 100,
-                        height: 0.95,
-                        fontWeight: FontWeight.w900,
-                        color: PCColors.yellow,
-                        shadows: [
-                          Shadow(
-                            color: PCColors.yellow.withValues(alpha: 0.4),
-                            blurRadius: 24,
+                    child: SizedBox(
+                      height: 290,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          Image.asset(
+                            'assets/images/congrads_po.png',
+                            height: 280,
+                            fit: BoxFit.contain,
+                          ),
+                          Positioned(
+                            right: 4,
+                            top: 76,
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFFFFB800),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFD49C19,
+                                    ).withValues(alpha: 0.8),
+                                    offset: const Offset(0, 3),
+                                    blurRadius: 0,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.15),
+                                    offset: const Offset(0, 4),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.star_rounded,
+                                  color: Colors.white,
+                                  size: 38,
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 12),
 
-                  // ── "Day Streak!" ───────────────────────────────────────────
+                  // ── Headline: "EXCELLENT !" + Exercise Name ───────────────
                   Text(
-                    'day streak!',
+                    'excellent_title'.tr(),
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 32,
                       fontWeight: FontWeight.w900,
                       color: context.textPrimary,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.exerciseName.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: context.textSecondary,
+                      letterSpacing: 1.2,
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
+
+                  // ── Unified 3-Column Stats Card ───────────────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 20,
+                      horizontal: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.cardColor,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: context.borderColor,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          // 1. Overall Day Streak (Left Box)
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/fire_3d.png',
+                                  height: 28,
+                                  width: 28,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${widget.overallStreak > 0 ? widget.overallStreak : widget.dayStreak}',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'days_streak_text'.tr(),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          VerticalDivider(
+                            color: context.borderColor,
+                            thickness: 1,
+                            indent: 6,
+                            endIndent: 6,
+                          ),
+                          // 2. Individual Exercise Streak (Middle Box)
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/dumbell.png',
+                                  height: 28,
+                                  width: 28,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${widget.dayStreak}',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'exercise_streak_sub'.tr(
+                                    args: [widget.exerciseName],
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          VerticalDivider(
+                            color: context.borderColor,
+                            thickness: 1,
+                            indent: 6,
+                            endIndent: 6,
+                          ),
+                          // 3. Lifetime Reps Total (Right Box)
+                          Expanded(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/bicep.png',
+                                  height: 28,
+                                  width: 28,
+                                  fit: BoxFit.contain,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${widget.lifetimeTotal}',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w900,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${'total_label'.tr()} ${widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time' ? 'seconds_count'.tr(args: ['']).trim() : 'repetitions'.tr()}',
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Live 7-Day Activity Row ───────────────────────────────
                   Text(
-                    'exercise_week_streak'.tr(args: [widget.exerciseName]).toUpperCase(),
+                    'exercise_week_streak'
+                        .tr(args: [widget.exerciseName])
+                        .toUpperCase(),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
@@ -201,54 +369,38 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // ── Live 7-Day Activity Row ─────────────────────────────────
                   _buildLiveWeekStreakRow(),
-
-                  const SizedBox(height: 32),
-                  
-                  Divider(color: context.borderColor.withValues(alpha: 0.3), thickness: 1),
-                  
-                  const SizedBox(height: 20),
-
-                  // ── Stats row: today's reps / lifetime total ────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          label: 'today_label'.tr(),
-                          value: '${widget.todayReps}',
-                          sub: widget.unit,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _StatCard(
-                          label: 'this_month_label'.tr(),
-                          value: '${widget.monthlyTotal}',
-                          sub: widget.unit,
-                          highlight: true,
-                        ),
-                      ),
-                    ],
-                  ),
 
                   const Spacer(flex: 2),
 
-                  // ── Continue button ──────────────────────────────────────────
-                  SizedBox(
+                  // ── 3D Yellow Action Button ───────────────────────────────
+                  Container(
                     width: double.infinity,
                     height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: PCColors
+                              .yellowDark, // Darker yellow for 3D effect
+                          offset: Offset(0, 5),
+                          blurRadius: 0,
+                        ),
+                        BoxShadow(
+                          color: Colors.black12,
+                          offset: Offset(0, 8),
+                          blurRadius: 6,
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: () => widget.onContinue(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLast ? PCColors.yellow : PCColors.green,
-                        foregroundColor: isLast ? PCColors.brownDark : Colors.white,
-                        elevation: 4,
-                        shadowColor: (isLast ? PCColors.yellow : PCColors.green)
-                            .withValues(alpha: 0.5),
+                        backgroundColor: PCColors.yellow,
+                        foregroundColor: Colors.black,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100), // Pill shape
+                          borderRadius: BorderRadius.circular(28),
                         ),
                       ),
                       child: Text(
@@ -258,7 +410,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 1.2,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -294,7 +446,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
   /// A custom Path to paint stars.
   Path drawStar(Size size) {
-    // Method to convert degree to radians
     double degToRad(double deg) => deg * (math.pi / 180.0);
 
     const numberOfPoints = 5;
@@ -338,7 +489,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
         }
 
         final exData = snapshot.data!.data() as Map<String, dynamic>;
-        
+
         final rawCurrentStreak = (exData['currentStreak'] ?? 0) as int;
         final rawFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
         final rawFrozenDates = List<String>.from(exData['frozenDates'] ?? []);
@@ -360,72 +511,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
           streak: effectiveData.streak,
         );
       },
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stat card — same white-card + border language used across the app.
-// ─────────────────────────────────────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String sub;
-  final bool highlight;
-
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.sub,
-    this.highlight = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      decoration: BoxDecoration(
-        color: highlight
-            ? PCColors.yellow.withValues(alpha: 0.2)
-            : context.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: highlight
-              ? PCColors.yellow.withValues(alpha: 0.6)
-              : context.borderColor,
-          width: highlight ? 1.8 : 1.5,
-        ),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: context.textSecondary,
-              letterSpacing: 1,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
-              color: context.textPrimary,
-            ),
-          ),
-          Text(
-            sub,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: context.textSecondary,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

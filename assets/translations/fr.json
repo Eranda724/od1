@@ -370,5 +370,10 @@
   "restore_purchases": "Restaurer les achats",
   "exercise_week_streak": "Série de {} Semaines",
   "this_month_label": "CE MOIS",
-  "this_month_count": "{} Ce Mois"
+  "this_month_count": "{} Ce Mois",
+  "excellent_title": "EXCELLENT !",
+  "days_streak_text": "jours de streak",
+  "today_text": "aujourd'hui",
+  "this_month_text": "ce mois",
+  "repetitions": "répétitions"
 }

@@ -16,6 +16,7 @@ class CelebrationScreen extends StatefulWidget {
   final int todayReps;
   final int monthlyTotal;
   final int overallStreak;
+  final int lifetimeTotal;
   final String unit;
   final int? exerciseIndex;
   final int? totalExercises;
@@ -29,6 +30,7 @@ class CelebrationScreen extends StatefulWidget {
     required this.todayReps,
     required this.monthlyTotal,
     this.overallStreak = 0,
+    this.lifetimeTotal = 0,
     this.unit = 'reps',
     this.exerciseIndex,
     this.totalExercises,
@@ -43,18 +45,13 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     with SingleTickerProviderStateMixin {
   // ── Image pool ────────────────────────────────────────────────────────────
   static const _images = [
-    'assets/images/po1.png',
-    'assets/images/po2.png',
-    'assets/images/po3.png',
-    'assets/images/bascket.png',
-    'assets/images/bicy.png',
-    'assets/images/dance.png',
-    'assets/images/foot.png',
-    'assets/images/jump.png',
-    'assets/images/plank.png',
-    'assets/images/put.png',
-    'assets/images/tennis.png',
-    'assets/images/weight.png',
+    'assets/images/p1.png',
+    'assets/images/p2.png',
+    'assets/images/p3.png',
+    'assets/images/p4.png',
+    'assets/images/p5.png',
+    'assets/images/p6.png',
+    'assets/images/p7.png',
   ];
 
   // ── Fun messages ──────────────────────────────────────────────────────────
@@ -91,11 +88,17 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     );
     _scale = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 0.5, end: 1.1).chain(CurveTween(curve: Curves.easeOutBack)),
+        tween: Tween(
+          begin: 0.5,
+          end: 1.1,
+        ).chain(CurveTween(curve: Curves.easeOutBack)),
         weight: 70,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.1, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(
+          begin: 1.1,
+          end: 1.0,
+        ).chain(CurveTween(curve: Curves.easeOut)),
         weight: 30,
       ),
     ]).animate(_scaleCtrl);
@@ -130,6 +133,8 @@ class _CelebrationScreenState extends State<CelebrationScreen>
           dayStreak: widget.dayStreak,
           todayReps: widget.todayReps,
           monthlyTotal: widget.monthlyTotal,
+          overallStreak: widget.overallStreak,
+          lifetimeTotal: widget.lifetimeTotal,
           unit: widget.unit,
           exerciseIndex: widget.exerciseIndex,
           totalExercises: widget.totalExercises,
@@ -177,11 +182,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
               // ── Animated potato image ──────────────────────────────────
               ScaleTransition(
                 scale: _scale,
-                child: Image.asset(
-                  _image,
-                  height: 260,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.asset(_image, height: 300, fit: BoxFit.contain),
               ),
 
               const SizedBox(height: 28),

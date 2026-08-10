@@ -5,14 +5,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../services/streak_service.dart';
 import '../services/notification_service.dart';
-import '../services/friends_service.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import 'celebration_screen.dart';
 import 'exercise_start_screen.dart';
 import 'daily_summary_screen.dart';
 import '../models/exercise_item.dart';
-import '../models/exercise_icons.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 /// Shown right after the user hits Stop on an exercise session.
@@ -227,6 +225,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             todayReps: result['todayReps']!,
             monthlyTotal: result['monthlyTotal']!,
             overallStreak: result['overallStreak']!,
+            lifetimeTotal: result['lifetimeTotal'] ?? 0,
             unit: widget.unit,
             exerciseIndex: widget.exerciseIndex,
             totalExercises: widget.totalExercises,

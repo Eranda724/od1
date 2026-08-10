@@ -370,5 +370,10 @@
   "restore_purchases": "Restaurar Compras",
   "exercise_week_streak": "Racha de {} Semanas",
   "this_month_label": "ESTE MES",
-  "this_month_count": "{} Este Mes"
+  "this_month_count": "{} Este Mes",
+  "excellent_title": "¡EXCELENTE!",
+  "days_streak_text": "días de racha",
+  "today_text": "hoy",
+  "this_month_text": "este mes",
+  "repetitions": "repeticiones"
 }

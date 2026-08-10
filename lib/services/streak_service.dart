@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'leaderboard_service.dart';
 
@@ -398,15 +399,16 @@ class StreakService {
   static Future<void> checkAndUpdateStreak(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
-    await FirebaseFirestore.instance.runTransaction<void>((tx) async {
-      final userSnap = await tx.get(userRef);
-      if (!userSnap.exists) return;
+    try {
+      await FirebaseFirestore.instance.runTransaction<void>((tx) async {
+        final userSnap = await tx.get(userRef);
+        if (!userSnap.exists) return;
 
-      final exercisesQuerySnap = await userRef.collection('exercises').get();
-      final exerciseDocs = <DocumentSnapshot>[];
-      for (final queryDoc in exercisesQuerySnap.docs) {
-        exerciseDocs.add(await tx.get(queryDoc.reference));
-      }
+        final exercisesQuerySnap = await userRef.collection('exercises').get();
+        final exerciseDocs = <DocumentSnapshot>[];
+        for (final queryDoc in exercisesQuerySnap.docs) {
+          exerciseDocs.add(await tx.get(queryDoc.reference));
+        }
 
       // ── LOGIC & WRITE PHASE ──
       final userData = userSnap.data() ?? {};
@@ -492,5 +494,8 @@ class StreakService {
         tx.set(userRef, updates, SetOptions(merge: true));
       }
     });
+    } catch (e) {
+      debugPrint('Error in checkAndUpdateStreak: $e');
+    }
   }
 }
