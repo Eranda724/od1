@@ -447,8 +447,11 @@ class _SocialScreenState extends State<SocialScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: friends.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 16),
+                      separatorBuilder: (context, index) => const Divider(
+                        color: Colors.black12,
+                        height: 32,
+                        thickness: 1,
+                      ),
                       itemBuilder: (context, index) {
                         final f = friends[index];
                         return GestureDetector(
