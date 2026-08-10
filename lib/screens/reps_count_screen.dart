@@ -23,7 +23,8 @@ class RepEntryScreen extends StatefulWidget {
   final String exerciseName;
   final String unit; // e.g. "reps"
   final ExerciseItem? exerciseDef;
-  final int defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
+  final int
+  defaultReps; // pre-fill suggestion (e.g. admin default or last entry)
 
   /// Optional — pass these through if you're tracking a multi-exercise session.
   final int? exerciseIndex;
@@ -126,35 +127,46 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       // Proceed to summary
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
-      
+
       try {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .get();
         final overallStreak = userDoc.data()?['overallStreak'] ?? 0;
-        
-        final exSnap = await FirebaseFirestore.instance.collection('users').doc(uid).collection('exercises').get();
+
+        final exSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('exercises')
+            .get();
         final now = DateTime.now();
-        final todayKey = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-        
+        final todayKey =
+            '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
         List<ExerciseDaySummary> summaryList = [];
         for (var doc in exSnap.docs) {
           final data = doc.data();
           if (data['lastCompletedDate'] == todayKey) {
-             summaryList.add(ExerciseDaySummary(
+            summaryList.add(
+              ExerciseDaySummary(
                 exerciseName: data['exerciseName'] ?? doc.id,
-                unit: widget.unit, // Assuming similar units or using the last one
+                unit:
+                    widget.unit, // Assuming similar units or using the last one
                 todayReps: data['todayReps'] ?? 0,
                 currentStreak: data['currentStreak'] ?? 0,
                 monthlyTotal: data['monthlyTotal'] ?? 0,
-             ));
+              ),
+            );
           }
         }
-        
+
         if (!navContext.mounted) return;
         Navigator.of(navContext).pushReplacement(
           MaterialPageRoute(
             builder: (_) => DailySummaryScreen(
-               completedExercises: summaryList,
-               overallStreak: overallStreak,
+              completedExercises: summaryList,
+              overallStreak: overallStreak,
             ),
           ),
         );
@@ -202,7 +214,6 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       // (Fire and forget, no need to await and block the UI)
       NotificationService.instance.cancelTodayEveningReminder();
 
-
       if (!mounted) return;
 
       widget.onSaved?.call();
@@ -241,10 +252,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
       appBar: AppBar(
         backgroundColor: context.surface,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close_rounded, color: context.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false, // Removed close cross
       ),
       body: SafeArea(
         child: Padding(
@@ -253,70 +261,62 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
             children: [
               const Spacer(),
 
+              // Exercise Name (kept per user request, large font)
               Text(
                 widget.exerciseName,
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: context.textSecondary,
-                  letterSpacing: 1,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                  letterSpacing: 0.5,
                 ),
               ),
-              if (widget.exerciseDef != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: buildExerciseVisual(widget.exerciseDef!, size: 48),
-                ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 24),
+
               Text(
                 'how_many_completed'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 22,
+                  fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: context.textPrimary,
+                  height: 1.2,
                 ),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 48),
 
-              // ── Big numeric input with +/- ──────────────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _RoundIconButton(
-                    icon: Icons.remove_rounded,
-                    onTap: () => _changeReps(-1),
-                  ),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    width: 120,
-                    child: TextField(
+              // ── Number Input & Unit Card ─────────────────────────────────
+              Container(
+                width: 220,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: context.cardColor,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: context.borderColor, width: 2),
+                ),
+                child: Column(
+                  children: [
+                    TextField(
                       controller: _controller,
                       textAlign: TextAlign.center,
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       style: TextStyle(
-                        fontSize: 48,
+                        fontSize: 64,
                         fontWeight: FontWeight.w900,
                         color: context.textPrimary,
                       ),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: context.cardColor,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide(color: context.borderColor, width: 2),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: BorderSide(color: context.borderColor, width: 2),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(18),
-                          borderSide: const BorderSide(color: PCColors.yellow, width: 2),
-                        ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
                       ),
                       onChanged: (val) {
                         final parsed = int.tryParse(val);
@@ -326,62 +326,99 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
                         });
                       },
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.unit.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: context.textSecondary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Stepper Buttons Below Card ──────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _RoundIconButton(
+                    icon: Icons.remove_rounded,
+                    onTap: () => _changeReps(-1),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 32),
                   _RoundIconButton(
                     icon: Icons.add_rounded,
                     onTap: () => _changeReps(1),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                widget.unit,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: context.textSecondary,
-                  letterSpacing: 1,
-                ),
-              ),
 
               if (_error != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
 
               const Spacer(flex: 2),
 
               // ── Submit button ────────────────────────────────────────────
-              SizedBox(
+              Container(
                 width: double.infinity,
                 height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: PCColors.yellowDark,
+                      offset: Offset(0, 5),
+                      blurRadius: 0,
+                    ),
+                    BoxShadow(
+                      color: Colors.black12,
+                      offset: Offset(0, 8),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
                   onPressed: _isSaving ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: PCColors.green,
-                    foregroundColor: Colors.white,
-                    elevation: 4,
-                    shadowColor: PCColors.green.withValues(alpha: 0.5),
+                    backgroundColor: PCColors.yellow,
+                    foregroundColor: Colors.black,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: PCColors.brown, width: 1.5),
                     ),
-                    disabledBackgroundColor: PCColors.green.withValues(alpha: 0.5),
+                    disabledBackgroundColor: PCColors.yellow.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                   child: _isSaving
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          child: CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 2.5,
+                          ),
                         )
                       : Text(
-                          'submit_btn'.tr(),
-                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+                          'continue_btn'.tr(),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
                 ),
               ),
@@ -405,16 +442,16 @@ class _RoundIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      customBorder: const CircleBorder(),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        width: 48,
-        height: 48,
+        width: 60,
+        height: 60,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: context.cardColor,
-          border: Border.all(color: context.borderColor, width: 1.5),
+          borderRadius: BorderRadius.circular(16),
+          color: context.surface,
+          border: Border.all(color: context.borderColor, width: 2),
         ),
-        child: Icon(icon, color: context.textPrimary, size: 24),
+        child: Icon(icon, color: context.textPrimary, size: 32),
       ),
     );
   }
