@@ -44,14 +44,7 @@ class FriendProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: context.background,
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.pop(context),
-        ),
-        backgroundColor: context.appBarColor,
-        elevation: 0,
-      ),
+
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -110,13 +103,22 @@ class FriendProfileScreen extends StatelessWidget {
               final bool doneToday = activeDays.contains(today);
               int displayFreezes = freezesAvailable;
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // ── USER DETAILS ──
-                    Row(
+              return SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // ── USER DETAILS ──
+                      Row(
                       children: [
                         CircleAvatar(
                           radius: 32,
@@ -395,7 +397,7 @@ class FriendProfileScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              );
+              ));
             },
           );
         },
