@@ -112,7 +112,8 @@ class _HomeScreenState extends State<HomeScreen>
         type: BottomNavigationBarType.fixed,
         selectedItemColor: PCColors.yellow,
         unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
+        showSelectedLabels: true,
+        showUnselectedLabels: false,
         selectedLabelStyle: const TextStyle(
           fontWeight: FontWeight.w800,
           fontSize: 11,

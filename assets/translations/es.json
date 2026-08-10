@@ -11,6 +11,7 @@
   "one_freeze_available": "1 Protector Disp.",
   "no_freezes_left": "¡Sin protectores!",
   "personal_streak_title": "Racha Personal",
+  "streak_days_label": "días de racha",
   "exercises_title": "Ejercicios",
   "start_my_routine": "Comenzar mi rutina",
   "login_title": "Bienvenido de nuevo",
@@ -376,5 +377,6 @@
   "streak_days_unit": "días de racha",
   "sent_caps": "ENVIADO",
   "add_caps": "AÑADIR",
-  "streak_days_param": "{} días"
+  "streak_days_param": "{} días",
+  "a_user": "Un usuario"
 }

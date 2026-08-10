@@ -11,6 +11,7 @@
   "one_freeze_available": "1 Freeze Available",
   "no_freezes_left": "No freezes left!",
   "personal_streak_title": "Personal Streak",
+  "streak_days_label": "streak days",
   "exercises_title": "Exercises",
   "start_my_routine": "Start My Routine",
   "login_title": "Welcome Back",
@@ -376,5 +377,6 @@
   "streak_days_unit": "streak days",
   "sent_caps": "SENT",
   "add_caps": "ADD",
-  "streak_days_param": "{} days"
+  "streak_days_param": "{} days",
+  "a_user": "A user"
 }

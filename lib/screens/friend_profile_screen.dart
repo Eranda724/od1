@@ -134,20 +134,34 @@ class FriendProfileScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 16),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                friend.displayName,
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: context.textPrimary,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            friend.displayName,
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: context.textPrimary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
+                        ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/fire_3d.png',
+                              width: 24,
+                              height: 24,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$overallStreak',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -164,237 +178,209 @@ class FriendProfileScreen extends StatelessWidget {
 
                         return Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [PCColors.brownDark, Color(0xFF3A2010)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: context.cardColor,
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 10,
-                                offset: Offset(0, 4),
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
                               ),
                             ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // TOP SECTION (Numbers)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Left Half: Current Streak
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        const Text(
-                                          '🔥',
-                                          style: TextStyle(fontSize: 28),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Text(
-                                          '$overallStreak',
-                                          style: const TextStyle(
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.w900,
-                                            color: PCColors.yellow,
-                                            height: 1,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'current_streak'.tr(),
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white54,
-                                            height: 1.2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
+                              // TOP YELLOW TIER (Personal Streak)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.only(
+                                  left: 24,
+                                  top: 24,
+                                  right: 16,
+                                  bottom: 24,
+                                ),
+                                decoration: const BoxDecoration(
+                                  color: PCColors.yellow,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
                                   ),
-
-                                  if (actuallyFriends) ...[
-                                    Container(
-                                      width: 1,
-                                      height: 100,
-                                      color: Colors.white12,
-                                    ),
-
-                                    // Right Half: Shared Streak
-                                    Expanded(
-                                      child: Column(
-                                        children: [
-                                          const Text(
-                                            '🤝',
-                                            style: TextStyle(fontSize: 28),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            '$liveSharedStreak',
-                                            style: const TextStyle(
-                                              fontSize: 48,
-                                              fontWeight: FontWeight.w900,
-                                              color: PCColors.yellow,
-                                              height: 1,
+                                ),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              'personal_streak_title'
+                                                  .tr()
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                                color: const Color(
+                                                  0xFF5A3D00,
+                                                ).withValues(alpha: 0.8),
+                                              ),
                                             ),
+                                            const SizedBox(height: 12),
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const SizedBox(width: 20),
+                                                Transform.translate(
+                                                  offset: const Offset(0, -30),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          right: 12.0,
+                                                        ),
+                                                    child: Image.asset(
+                                                      'assets/images/fire_3d.png',
+                                                      width: 48,
+                                                      height: 48,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Transform.translate(
+                                                  offset: const Offset(0, -30),
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        '$overallStreak',
+                                                        style: const TextStyle(
+                                                          fontSize: 48,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          color: Color(
+                                                            0xFF332200,
+                                                          ),
+                                                          height: 1.0,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        'streak_days_label'
+                                                            .tr(),
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          color: Color(
+                                                            0xFF5A3D00,
+                                                          ),
+                                                          height: 1.0,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Transform.translate(
+                                        offset: const Offset(0, -10),
+                                        child: Image.asset(
+                                          'assets/images/login.png',
+                                          height: 120,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // MIDDLE SECTION (Weekly Activity)
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: last7.map((day) {
+                                    final isActive = activeDays.contains(day);
+                                    final isToday = day == today;
+                                    bool isFrozen = frozenDates.contains(day);
+
+                                    return _DayDot(
+                                      label: _shortDay(context, day),
+                                      active: isActive,
+                                      isFrozen: isFrozen,
+                                      isToday: isToday,
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+
+                              // BOTTOM SECTION (Together Streak)
+                              if (actuallyFriends) ...[
+                                const Divider(
+                                  color: Colors.black12,
+                                  thickness: 1,
+                                  height: 1,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Image.asset(
+                                            'assets/images/handshake.png',
+                                            width: 30,
+                                            height: 30,
                                           ),
-                                          const SizedBox(height: 6),
+                                          const SizedBox(width: 8),
                                           Text(
-                                            'together_streak'.tr(),
-                                            textAlign: TextAlign.center,
+                                            'shared_streak_header'
+                                                .tr()
+                                                .toUpperCase(),
                                             style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white54,
-                                              height: 1.2,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w900,
+                                              color: PCColors.brownDark,
+                                              letterSpacing: 1.4,
                                             ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-
-                              if (actuallyFriends) ...[
-                                const SizedBox(height: 24),
-                                const Divider(
-                                  color: Colors.white12,
-                                  thickness: 1,
-                                ),
-                                const SizedBox(height: 24),
-
-                                // MIDDLE SECTION (Shared Context)
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Text(
-                                      '🤝',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'shared_streak_header'.tr().toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w900,
-                                        color: PCColors.yellow,
-                                        letterSpacing: 1.4,
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'shared_streak_sentence'.tr(
+                                          args: [
+                                            friend.displayName,
+                                            '$liveSharedStreak',
+                                          ],
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textPrimary,
+                                          height: 1.4,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'shared_streak_sentence'.tr(
-                                    args: [
-                                      friend.displayName,
-                                      '$liveSharedStreak',
                                     ],
-                                  ),
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white70,
-                                    height: 1.4,
                                   ),
                                 ),
                               ],
-
-                              const SizedBox(height: 24),
-                              const Divider(
-                                color: Colors.white12,
-                                thickness: 1,
-                              ),
-                              const SizedBox(height: 24),
-
-                              // BOTTOM SECTION (Weekly Activity)
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_month_rounded,
-                                    color: Colors.white54,
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'weekly_activity'.tr().toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white54,
-                                      letterSpacing: 1.4,
-                                    ),
-                                  ),
-                                  const Spacer(),
-                                  if (freezesAvailable > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.blueAccent.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color: Colors.blueAccent,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Transform.translate(
-                                            offset: const Offset(0, 1.5),
-                                            child: Image.asset(
-                                              'assets/images/ice_cube_3d.png',
-                                              width: 12,
-                                              height: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            '$displayFreezes/2',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.blueAccent,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: last7.map((day) {
-                                  final isActive = activeDays.contains(day);
-                                  final isToday = day == today;
-                                  bool isFrozen = frozenDates.contains(day);
-
-
-
-                                  return _DayDot(
-                                    label: _shortDay(context, day),
-                                    active: isActive,
-                                    isFrozen: isFrozen,
-                                    isToday: isToday,
-                                  );
-                                }).toList(),
-                              ),
                             ],
                           ),
                         );
@@ -478,21 +464,8 @@ class _DayDot extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.white12,
-          border: isToday ? Border.all(color: PCColors.yellow, width: 2) : null,
+          color: Colors.black.withValues(alpha: 0.05),
         ),
-        child: isToday
-            ? const Center(
-                child: Text(
-                  '•',
-                  style: TextStyle(
-                    color: PCColors.yellow,
-                    fontSize: 22,
-                    height: 1,
-                  ),
-                ),
-              )
-            : null,
       );
     }
 
@@ -503,9 +476,11 @@ class _DayDot extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w700,
-            color: active ? PCColors.yellow : Colors.white38,
+            fontSize: 11,
+            fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
+            color: isToday
+                ? Colors.red
+                : PCColors.brownDark.withValues(alpha: 0.5),
           ),
         ),
       ],
@@ -554,91 +529,70 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
         final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
-          return Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: const BorderSide(color: PCColors.brown, width: 2),
-                  ),
-                  child: Text(
-                    'back'.tr(),
-                    style: const TextStyle(
-                      color: PCColors.brownDark,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (c) => AlertDialog(
-                              title: Text('remove_friend_title'.tr()),
-                              content: Text('remove_friend_confirm_msg'.tr()),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(c, false),
-                                  child: Text('cancel'.tr()),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(c, true),
-                                  child: Text(
-                                    'remove'.tr(),
-                                    style: const TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
+          return SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (c) => AlertDialog(
+                          title: Text('remove_friend_title'.tr()),
+                          content: Text('remove_friend_confirm_msg'.tr()),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(c, false),
+                              child: Text('cancel'.tr()),
                             ),
-                          );
-                          if (confirm == true) {
-                            setState(() => _isLoading = true);
-                            try {
-                              await FriendsService.instance.removeFriend(
-                                widget.currentUid,
-                                widget.friend.uid,
-                              );
-                              if (context.mounted) Navigator.pop(context);
-                            } finally {
-                              if (mounted) setState(() => _isLoading = false);
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade100,
-                    foregroundColor: Colors.red,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.red,
-                          ),
-                        )
-                      : Text(
-                          'remove_friend_title'.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                            TextButton(
+                              onPressed: () => Navigator.pop(c, true),
+                              child: Text(
+                                'remove'.tr(),
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
                         ),
+                      );
+                      if (confirm == true) {
+                        setState(() => _isLoading = true);
+                        try {
+                          await FriendsService.instance.removeFriend(
+                            widget.currentUid,
+                            widget.friend.uid,
+                          );
+                          if (context.mounted) Navigator.pop(context);
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              label: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.red,
+                      ),
+                    )
+                  : Text(
+                      'remove_friend_title'.tr(),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.red,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  side: const BorderSide(color: Colors.red, width: 1),
                 ),
               ),
-            ],
+            ),
           );
         }
 
@@ -660,127 +614,101 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
             final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
-            return Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      side: const BorderSide(color: PCColors.brown, width: 2),
-                    ),
-                    child: Text(
-                      'back'.tr(),
-                      style: const TextStyle(
-                        color: PCColors.brownDark,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () async {
-                            setState(() => _isLoading = true);
-                            try {
-                              if (hasSentRequest) {
-                                await FriendsService.instance
-                                    .removeFriendRequest(
-                                      widget.currentUid,
-                                      widget.friend.uid,
-                                    );
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('request_removed'.tr()),
-                                      backgroundColor: Colors.grey,
-                                    ),
-                                  );
-                                }
-                              } else {
-                                final currentUser =
-                                    FirebaseAuth.instance.currentUser;
-                                if (currentUser != null) {
-                                  await FriendsService.instance
-                                      .sendFriendRequest(
-                                        fromUid: currentUser.uid,
-                                        fromName:
-                                            currentUser.displayName ?? 'A user',
-                                        toUsername: widget.friend.displayName,
-                                      );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'friend_request_sent'.tr(),
-                                        ),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  }
-                                }
-                              }
-                            } catch (e) {
+            return SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        setState(() => _isLoading = true);
+                        try {
+                          if (hasSentRequest) {
+                            await FriendsService.instance.removeFriendRequest(
+                              widget.currentUid,
+                              widget.friend.uid,
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('request_removed'.tr()),
+                                  backgroundColor: Colors.grey,
+                                ),
+                              );
+                            }
+                          } else {
+                            final currentUser =
+                                FirebaseAuth.instance.currentUser;
+                            if (currentUser != null) {
+                              await FriendsService.instance.sendFriendRequest(
+                                fromUid: currentUser.uid,
+                                fromName: currentUser.displayName ?? 'a_user'.tr(),
+                                toUsername: widget.friend.displayName,
+                              );
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
-                                    content: Text(
-                                      'error_msg'.tr(
-                                        args: [
-                                          e.toString().replaceFirst(
-                                            'Exception: ',
-                                            '',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    backgroundColor: Colors.red,
+                                    content: Text('friend_request_sent'.tr()),
+                                    backgroundColor: Colors.green,
                                   ),
                                 );
                               }
-                            } finally {
-                              if (mounted) setState(() => _isLoading = false);
                             }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: hasSentRequest
-                          ? Colors.grey.shade300
-                          : PCColors.yellow,
-                      foregroundColor: hasSentRequest
-                          ? Colors.black54
-                          : PCColors.brownDark,
-                      elevation: hasSentRequest ? 0 : 2,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'error_msg'.tr(
+                                    args: [
+                                      e.toString().replaceFirst(
+                                        'Exception: ',
+                                        '',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
+                      },
+                icon: Icon(
+                  hasSentRequest ? Icons.close : Icons.add,
+                  color: hasSentRequest ? Colors.grey : Colors.black87,
+                ),
+                label: _isLoading
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: hasSentRequest ? Colors.grey : Colors.black87,
+                        ),
+                      )
+                    : Text(
+                        hasSentRequest
+                            ? 'remove_request'.tr()
+                            : 'send_request'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                    ),
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: hasSentRequest
-                                  ? Colors.black54
-                                  : PCColors.brownDark,
-                            ),
-                          )
-                        : Text(
-                            hasSentRequest
-                                ? 'remove_request'.tr()
-                                : 'send_request'.tr(),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hasSentRequest
+                      ? Colors.grey.shade200
+                      : PCColors.yellow,
+                  foregroundColor: hasSentRequest
+                      ? Colors.grey
+                      : Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
                   ),
                 ),
-              ],
+              ),
             );
           },
         );
