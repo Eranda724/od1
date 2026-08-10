@@ -139,20 +139,13 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     _loadSavedPrefs();
 
     final images = [
-      'assets/images/po1.png',
-      'assets/images/po2.png',
-      'assets/images/po3.png',
-      'assets/images/login.png',
-      'assets/images/register.png',
-      'assets/images/bascket.png',
-      'assets/images/bicy.png',
-      'assets/images/dance.png',
-      'assets/images/foot.png',
-      'assets/images/jump.png',
-      'assets/images/plank.png',
-      'assets/images/put.png',
-      'assets/images/tennis.png',
-      'assets/images/weight.png',
+      'assets/images/p1.png',
+      'assets/images/p2.png',
+      'assets/images/p3.png',
+      'assets/images/p4.png',
+      'assets/images/p5.png',
+      'assets/images/p6.png',
+      'assets/images/p7.png',
     ];
     _randomImage = images[Random().nextInt(images.length)];
   }
