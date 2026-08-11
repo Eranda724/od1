@@ -37,7 +37,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
       await _docRef.set({field: newList}, SetOptions(merge: true));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('update_failed'.tr(args: [e.toString()]))));
       }
     }
   }
@@ -65,7 +65,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
       await _updateArray('images', newList);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('upload_failed'.tr(args: [e.toString()]))));
       }
     } finally {
       if (mounted) {
@@ -81,10 +81,10 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add Custom Tip'),
+        title: Text('add_custom_tip'.tr()),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(hintText: 'Enter tip text...'),
+          decoration: InputDecoration(hintText: 'enter_tip_text_hint'.tr()),
           maxLines: 3,
         ),
         actions: [
@@ -102,7 +102,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
               }
               Navigator.pop(ctx);
             },
-            child: const Text('Add'),
+            child: Text('add_btn'.tr()),
           ),
         ],
       ),
@@ -120,7 +120,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              "Enabled images override the default solid gradient during an active session. If multiple are enabled, one is chosen at random.",
+              'admin_enabled_images_desc'.tr(),
               style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
             ),
           ),
@@ -164,8 +164,8 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       color: Colors.black54,
-                      child: const Text(
-                        'Default Gradient',
+                      child: Text(
+                        'default_gradient_label'.tr(),
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
@@ -215,7 +215,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                           context: context,
                           builder: (c) => AlertDialog(
                             title: Text('delete_btn'.tr()),
-                            content: const Text('Are you sure you want to delete this image?'),
+                            content: Text('delete_image_confirm'.tr()),
                             actions: [
                               TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
                               TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
@@ -288,7 +288,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: ListTile(
               title: Text(displayText),
-              subtitle: Text(isKey ? 'Local Translation' : 'Custom Text', style: const TextStyle(fontSize: 12)),
+              subtitle: Text(isKey ? 'local_translation_label'.tr() : 'custom_text_label'.tr(), style: const TextStyle(fontSize: 12)),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -300,7 +300,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                         context: context,
                         builder: (c) => AlertDialog(
                           title: Text('delete_btn'.tr()),
-                          content: const Text('Are you sure you want to delete this tip?'),
+                          content: Text('delete_tip_confirm'.tr()),
                           actions: [
                             TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
                             TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),

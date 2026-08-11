@@ -35,7 +35,7 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
       await _docRef.set({field: newList}, SetOptions(merge: true));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('update_failed'.tr(args: [e.toString()]))));
       }
     }
   }
@@ -63,7 +63,7 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
       await _updateArray('images', newList);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('upload_failed'.tr(args: [e.toString()]))));
       }
     } finally {
       if (mounted) {
@@ -84,7 +84,7 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              "Add images to be shown on the celebration screen. They should be general and not contain exercise names. If none are enabled, default app assets will be used.",
+              'admin_celebration_assets_desc'.tr(),
               style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
             ),
           ),
@@ -138,7 +138,7 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
                                 context: context,
                                 builder: (c) => AlertDialog(
                                   title: Text('delete_btn'.tr()),
-                                  content: const Text('Are you sure you want to delete this image?'),
+                                  content: Text('delete_image_confirm'.tr()),
                                   actions: [
                                     TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
                                     TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),

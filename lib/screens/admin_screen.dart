@@ -364,9 +364,9 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
 
             const SizedBox(height: 32),
 
-            const Text(
-              'Streak Rules',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            Text(
+              'admin_streak_rules'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 16),
 
@@ -390,9 +390,9 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   vertical: 8,
                 ),
                 leading: Image.asset('assets/images/session.png', width: 32, height: 32),
-                title: const Text(
-                  'Session Theme and Tips Bank',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                title: Text(
+                  'admin_session_assets'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
                   'admin_manage_dynamic_session'.tr(),
@@ -416,13 +416,13 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   vertical: 8,
                 ),
                 leading: Image.asset('assets/images/congrads.png', width: 32, height: 32),
-                title: const Text(
-                  'Celebration Image Bank',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                title: Text(
+                  'admin_celebration_assets'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
-                subtitle: const Text(
-                  'Manage images shown after sessions',
-                  style: TextStyle(fontSize: 13),
+                subtitle: Text(
+                  'admin_manage_celebration'.tr(),
+                  style: const TextStyle(fontSize: 13),
                 ),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => Navigator.push(
@@ -459,23 +459,23 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
     final result = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Freeze Recharge Period (days)'),
+        title: Text('admin_freeze_recharge_period_days'.tr()),
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: const InputDecoration(hintText: 'e.g. 15'),
+          decoration: InputDecoration(hintText: 'admin_freeze_recharge_period_hint'.tr()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context), 
-            child: const Text('Cancel'),
+            child: Text('cancel_btn'.tr()),
           ),
           TextButton(
             onPressed: () {
               final val = int.tryParse(controller.text);
               Navigator.pop(context, val);
             },
-            child: const Text('Save'),
+            child: Text('save_btn'.tr()),
           ),
         ],
       ),
@@ -489,7 +489,7 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
         'freezeRechargePeriodDays': result,
       }, SetOptions(merge: true));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      messenger.showSnackBar(SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))));
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -508,9 +508,9 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             leading: Image.asset('assets/images/ice_cube_3d.png', width: 32, height: 32),
-            title: const Text(
-              'Freeze Recharge Period',
-              style: TextStyle(fontWeight: FontWeight.w700),
+            title: Text(
+              'admin_freeze_recharge_period'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: Text(
               '$period days',

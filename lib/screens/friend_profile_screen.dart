@@ -280,8 +280,8 @@ class FriendProfileScreen extends StatelessWidget {
                                                       ),
                                                     ),
                                                     const SizedBox(height: 2),
-                                                    const Text(
-                                                      'DAYS',
+                                                    Text(
+                                                      'days_caps'.tr(),
                                                       style: TextStyle(
                                                         fontSize: 16,
                                                         fontWeight:

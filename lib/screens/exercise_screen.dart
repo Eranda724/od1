@@ -655,9 +655,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       ScaffoldMessenger.of(context).clearSnackBars();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Exercise removed'),
+                          content: Text('exercise_removed'.tr()),
                           action: SnackBarAction(
-                            label: 'Undo',
+                            label: 'undo'.tr(),
                             onPressed: () {
                               FirebaseFirestore.instance
                                   .collection('users')
@@ -881,7 +881,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            "Today's Routine",
+                                            'todays_routine_title'.tr(),
                                             style: TextStyle(
                                               fontSize: 22,
                                               fontWeight: FontWeight.w900,
@@ -892,7 +892,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            '${todoExercises.length} Exercises',
+                                            'exercises_count'.tr(args: [todoExercises.length.toString()]),
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
@@ -949,8 +949,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                       BorderRadius.circular(20),
                                                 ),
                                               ),
-                                              child: const Text(
-                                                'START MY ROUTINE',
+                                              child: Text(
+                                                'start_my_routine'.tr().toUpperCase(),
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
@@ -960,8 +960,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 10),
-                                          const Text(
-                                            'Tap to finish your daily routine',
+                                          Text(
+                                            'tap_to_finish_routine'.tr(),
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontStyle: FontStyle.italic,

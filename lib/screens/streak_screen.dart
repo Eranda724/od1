@@ -556,9 +556,9 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
         final todayObj = DateTime.parse(widget.today);
         final diff = rechargeDate.difference(todayObj).inDays;
         if (diff > 0) {
-          countdownText = 'Next freeze in $diff days';
+          countdownText = 'next_freeze_in_days'.tr(args: [diff.toString()]);
         } else if (diff == 0) {
-          countdownText = 'Next freeze tomorrow';
+          countdownText = 'next_freeze_tomorrow'.tr();
         }
       } catch (_) {}
     }
