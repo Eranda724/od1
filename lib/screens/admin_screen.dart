@@ -362,6 +362,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
               ),
             ),
 
+            const SizedBox(height: 12),
+
+            // ── Freeze Recharge Period ───────────────────────────────────────
+            const _AdminFreezeSetting(),
+
             const SizedBox(height: 32),
 
             Text(
@@ -424,6 +429,102 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 12),
           ],
+        );
+      },
+    );
+  }
+}
+
+class _AdminFreezeSetting extends StatefulWidget {
+  const _AdminFreezeSetting();
+
+  @override
+  State<_AdminFreezeSetting> createState() => _AdminFreezeSettingState();
+}
+
+class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
+  final _db = FirebaseFirestore.instance;
+  bool _isSaving = false;
+
+  Future<void> _pickDays(BuildContext context, int currentDays) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final controller = TextEditingController(text: currentDays.toString());
+    
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Freeze Recharge Period (days)'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: 'e.g. 15'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text);
+              Navigator.pop(context, val);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    setState(() => _isSaving = true);
+    try {
+      await _db.collection('app_config').doc('settings').set({
+        'freezeRechargePeriodDays': result,
+      }, SetOptions(merge: true));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Save failed: $e')));
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: _db.collection('app_config').doc('settings').snapshots(),
+      builder: (context, snap) {
+        final data = snap.data?.data() as Map<String, dynamic>? ?? {};
+        final period = (data['freezeRechargePeriodDays'] as int?) ?? 15;
+
+        return AdminUI.buildCard(
+          context,
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            leading: Image.asset('assets/images/ice_cube_3d.png', width: 32, height: 32),
+            title: const Text(
+              'Freeze Recharge Period',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: Text(
+              '$period days',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            trailing: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : TextButton(
+                    onPressed: () => _pickDays(context, period),
+                    child: Text('change_btn'.tr()),
+                  ),
+          ),
         );
       },
     );
