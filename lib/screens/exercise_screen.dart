@@ -908,7 +908,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                   BorderRadius.circular(20),
                                               boxShadow: const [
                                                 BoxShadow(
-                                                  color: PCColors.yellowDark,
+                                                  color: Color(0xFF3D8B5D),
                                                   offset: Offset(0, 4),
                                                 ),
                                               ],
@@ -941,9 +941,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 }
                                               },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    PCColors.yellow,
-                                                foregroundColor: Colors.black,
+                                                backgroundColor: const Color(0xFF55AB78),
+                                                foregroundColor: Colors.white,
                                                 elevation: 0,
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
