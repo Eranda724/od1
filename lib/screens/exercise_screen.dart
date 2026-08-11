@@ -662,9 +662,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               FirebaseFirestore.instance
                                   .collection('users')
                                   .doc(widget.user!.uid)
-                                  .update({
-                                    'selectedExercises': oldSelected,
-                                  });
+                                  .update({'selectedExercises': oldSelected});
                             },
                           ),
                         ),
@@ -744,6 +742,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   bool isLibrary = false,
                   Widget? trailing,
                   String? subtitle,
+                  double bottomSpacing = 24.0,
                 }) {
                   if (ids.isEmpty) return const SizedBox();
                   return Column(
@@ -815,7 +814,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               .map((id) => buildCard(id, isLibrary: isLibrary))
                               .toList(),
                         ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: bottomSpacing),
                     ],
                   );
                 }
@@ -831,33 +830,150 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           child: ListView(
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
                             children: [
-                              // Grid/List toggle below start my routine button
-                              if (todoExercises.isNotEmpty ||
-                                  doneExercises.isNotEmpty ||
-                                  libraryIds.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    bottom: 8.0,
-                                    right: 8.0,
-                                  ),
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: IconButton(
-                                      tooltip: _settings.isGridView
-                                          ? 'switch_list_view'.tr()
-                                          : 'switch_grid_view'.tr(),
-                                      icon: Icon(
-                                        _settings.isGridView
-                                            ? Icons.view_list_rounded
-                                            : Icons.grid_view_rounded,
+                              // Routine Card
+                              if (todoExercises.isNotEmpty)
+                                Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 400,
+                                    ),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 12,
+                                        bottom: 0,
                                       ),
-                                      onPressed: () => _settings.setGridView(
-                                        !_settings.isGridView,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                        horizontal: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(context).cardColor
+                                            : const Color(0xFFF6F0E7),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Builder(
+                                            builder: (context) {
+                                              final hour = DateTime.now().hour;
+                                              String greeting = 'Good Morning';
+                                              if (hour >= 12 && hour < 17) {
+                                                greeting = 'Good Afternoon';
+                                              } else if (hour >= 17 &&
+                                                  hour < 21) {
+                                                greeting = 'Good Evening';
+                                              } else if (hour >= 21 ||
+                                                  hour < 5) {
+                                                greeting = 'Good Night';
+                                              }
+                                              return Text(
+                                                greeting,
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.grey,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            "Today's Routine",
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w900,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${todoExercises.length} Exercises',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF55AB78),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Container(
+                                            width: double.infinity,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: PCColors.yellowDark,
+                                                  offset: Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                if (todoExercises.isNotEmpty) {
+                                                  final targetId =
+                                                      todoExercises.first;
+                                                  final def =
+                                                      exerciseDefs[targetId];
+                                                  final exData =
+                                                      Map<String, dynamic>.from(
+                                                        exercises[targetId] ??
+                                                            {},
+                                                      );
+                                                  if (def != null) {
+                                                    startExercise(
+                                                      targetId,
+                                                      false,
+                                                      def.name,
+                                                      def,
+                                                      exData['currentStreak'] ??
+                                                          0,
+                                                      exData['monthlyTotal'] ??
+                                                          0,
+                                                      def.unit,
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    PCColors.yellow,
+                                                foregroundColor: Colors.black,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'START MY ROUTINE',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 1.2,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          const Text(
+                                            'Tap to finish your daily routine',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontStyle: FontStyle.italic,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 ),
-
                               if (isEmpty)
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -876,33 +992,62 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ),
                                 ),
 
+                              // Grid/List toggle & Today's Routine Title Header
                               if (todoExercises.isNotEmpty ||
-                                  doneExercises.isNotEmpty)
+                                  doneExercises.isNotEmpty ||
+                                  libraryIds.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                    top: 0.0,
-                                    bottom: 8.0,
+                                    top: 16.0,
+                                    bottom: 1.0,
                                   ),
-                                  child: Text(
-                                    'todays_routine_title'.tr(),
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      if (todoExercises.isNotEmpty ||
+                                          doneExercises.isNotEmpty)
+                                        Text(
+                                          'todays_routine_title'.tr(),
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                          ),
+                                        )
+                                      else
+                                        const SizedBox(),
+                                      IconButton(
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        tooltip: _settings.isGridView
+                                            ? 'switch_list_view'.tr()
+                                            : 'switch_grid_view'.tr(),
+                                        icon: Icon(
+                                          _settings.isGridView
+                                              ? Icons.view_list_rounded
+                                              : Icons.grid_view_rounded,
+                                        ),
+                                        onPressed: () => _settings.setGridView(
+                                          !_settings.isGridView,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               buildSection(
                                 '',
                                 todoExercises,
                                 Theme.of(context).colorScheme.onSurface,
+                                bottomSpacing: 0.0,
                               ),
                               buildSection(
                                 '',
                                 doneExercises,
                                 Theme.of(context).colorScheme.onSurface,
+                                bottomSpacing: 16.0,
                               ),
 
                               buildSection(

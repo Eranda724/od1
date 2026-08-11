@@ -8,6 +8,8 @@ import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
 import '../widgets/exercise_thumbnail.dart';
 import '../app_settings.dart';
+import 'exercise_start_screen.dart';
+import '../models/session_item.dart';
 
 class StreakScreen extends StatefulWidget {
   final VoidCallback? onStartRoutine;
@@ -239,7 +241,63 @@ class _StreakScreenState extends State<StreakScreen>
                             ),
                             child: ElevatedButton(
                               onPressed: () {
-                                if (widget.onStartRoutine != null) {
+                                if (todoExercises.isNotEmpty) {
+                                  final targetId = todoExercises.first;
+                                  final targetDef = defs[targetId];
+                                  if (targetDef != null) {
+                                    final targetExData = Map<String, dynamic>.from(exercisesMap[targetId] ?? {});
+                                    final targetStreak = targetExData['currentStreak'] ?? 0;
+                                    final targetMonthlyTotal = targetExData['monthlyTotal'] ?? 0;
+                                    
+                                    List<SessionItem> queue = [];
+                                    int totalTodos = todoExercises.length;
+                                    
+                                    for (int i = 1; i < todoExercises.length; i++) {
+                                      final nextId = todoExercises[i];
+                                      final nEx = Map<String, dynamic>.from(
+                                        exercisesMap[nextId] ?? {},
+                                      );
+                                      final nDef = defs[nextId];
+                                      queue.add(
+                                        SessionItem(
+                                          exerciseId: nextId,
+                                          exerciseName: nDef?.name ?? nextId,
+                                          description: (nDef?.description?.isNotEmpty == true)
+                                              ? nDef!.description
+                                              : 'default_exercise_description'.tr(),
+                                          streak: nEx['currentStreak'] ?? 0,
+                                          monthlyTotal: nEx['monthlyTotal'] ?? 0,
+                                          defaultReps: nDef?.defaultReps ?? 0,
+                                          defaultTimer: nDef?.defaultTimer ?? 0,
+                                          unit: nDef?.unit ?? 'reps',
+                                          exerciseDef: nDef,
+                                        ),
+                                      );
+                                    }
+                                    
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ExerciseStartScreen(
+                                          exerciseId: targetId,
+                                          exerciseName: targetDef.name,
+                                          description: (targetDef.description?.isNotEmpty == true)
+                                              ? targetDef.description
+                                              : 'default_exercise_description'.tr(),
+                                          streak: targetStreak,
+                                          monthlyTotal: targetMonthlyTotal,
+                                          defaultReps: targetDef.defaultReps,
+                                          defaultTimer: targetDef.defaultTimer,
+                                          unit: targetDef.unit,
+                                          exerciseDef: targetDef,
+                                          sessionQueue: queue,
+                                          exerciseIndex: 1,
+                                          totalExercises: totalTodos,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } else if (widget.onStartRoutine != null) {
                                   widget.onStartRoutine!();
                                 }
                               },
@@ -770,7 +828,7 @@ class _MiniWeekRow extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Per-exercise streak card
 // ─────────────────────────────────────────────────────────────────────────────
-class _ExerciseStreakCard extends StatefulWidget {
+class _ExerciseStreakCard extends StatelessWidget {
   final ExerciseItem def;
   final int streak;
   final int lifetime;
@@ -792,47 +850,29 @@ class _ExerciseStreakCard extends StatefulWidget {
   });
 
   @override
-  State<_ExerciseStreakCard> createState() => _ExerciseStreakCardState();
-}
-
-class _ExerciseStreakCardState extends State<_ExerciseStreakCard> {
-  bool _isExpanded = false;
-
-  @override
   Widget build(BuildContext context) {
-    int displayFreezes = widget.freezesAvailable;
+    int displayFreezes = freezesAvailable;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _isExpanded = !_isExpanded;
-        });
-      },
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color:
-              Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: AnimatedCrossFade(
-          duration: const Duration(milliseconds: 250),
-          crossFadeState: _isExpanded
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          firstChild: Row(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
               ExerciseThumbnail(
-                def: widget.def,
+                def: def,
                 width: 44,
                 height: 44,
                 iconSize: 24,
@@ -843,7 +883,7 @@ class _ExerciseStreakCardState extends State<_ExerciseStreakCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.def.name,
+                      def.name,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -852,149 +892,90 @@ class _ExerciseStreakCardState extends State<_ExerciseStreakCard> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${widget.streak} ${widget.streak == 1 ? 'day_unit'.tr() : 'days_unit'.tr()} streak',
+                      'total_streak_lifetime'.tr(
+                        args: [lifetime.toString(), def.unit],
+                      ),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-            ],
-          ),
-          secondChild: Column(
-            children: [
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  ExerciseThumbnail(
-                    def: widget.def,
-                    width: 44,
-                    height: 44,
-                    iconSize: 24,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.def.name,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'total_streak_lifetime'.tr(
-                            args: [widget.lifetime.toString(), widget.def.unit],
-                          ),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.6),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  Text(
+                    '$streak',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '${widget.streak}',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).colorScheme.onSurface,
+                  Text(
+                    streak == 1
+                        ? '${'day_unit'.tr()} streak'
+                        : '${'days_unit'.tr()} streak',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (freezesAvailable > 0) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.blueAccent.withValues(alpha: 0.5),
+                          width: 1,
                         ),
                       ),
-                      Text(
-                        widget.streak == 1
-                            ? '${'day_unit'.tr()} streak'
-                            : '${'days_unit'.tr()} streak',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (widget.freezesAvailable > 0) ...[
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.blueAccent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Colors.blueAccent.withValues(alpha: 0.5),
-                              width: 1,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Transform.translate(
+                            offset: const Offset(0, 1.5),
+                            child: Image.asset(
+                              'assets/images/ice_cube_3d.png',
+                              width: 12,
+                              height: 12,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Transform.translate(
-                                offset: const Offset(0, 1.5),
-                                child: Image.asset(
-                                  'assets/images/ice_cube_3d.png',
-                                  width: 12,
-                                  height: 12,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$displayFreezes/2',
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.blueAccent,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(width: 4),
+                          Text(
+                            '$displayFreezes/2',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.blueAccent,
+                            ),
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
-              ),
-              const SizedBox(height: 12),
-              _MiniWeekRow(
-                activeDates: widget.activeDates,
-                frozenDates: widget.frozenDates,
-                freezesAvailable: widget.freezesAvailable,
-                streak: widget.streak,
-              ),
-              const SizedBox(height: 4),
-              Icon(
-                Icons.keyboard_arrow_up_rounded,
-                size: 20,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.3),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          _MiniWeekRow(
+            activeDates: activeDates,
+            frozenDates: frozenDates,
+            freezesAvailable: freezesAvailable,
+            streak: streak,
+          ),
+        ],
       ),
     );
   }
