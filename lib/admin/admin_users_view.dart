@@ -5,6 +5,7 @@ import '../app_settings.dart';
 import 'admin_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'admin_ui.dart';
 
 class AdminUsersView extends StatefulWidget {
   const AdminUsersView({super.key});
@@ -102,11 +103,13 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                   final overallStreak = data['overallStreak'] ?? 0;
                   final freezes = data['freezesAvailable'] ?? 2;
                   
-                  return Card(
+                  return AdminUI.buildCard(
+                    context,
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    elevation: 1,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
                     child: ExpansionTile(
+                      shape: const Border(),
+                      collapsedShape: const Border(),
                       leading: CircleAvatar(
                         backgroundColor: Colors.amber.shade200,
                         backgroundImage: data['photoUrl'] != null 

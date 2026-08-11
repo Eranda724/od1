@@ -9,6 +9,7 @@ import '../models/exercise_icons.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:translator/translator.dart';
+import 'admin_ui.dart';
 
 class AdminExerciseScreen extends StatefulWidget {
   final ExerciseItem? existing;
@@ -231,11 +232,10 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
     final isEdit = widget.existing != null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          isEdit ? 'edit_exercise_title'.tr() : 'add_exercise_title'.tr(),
-        ),
-        backgroundColor: context.appBarColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AdminUI.buildAppBar(
+        context,
+        title: isEdit ? 'edit_exercise_title'.tr() : 'add_exercise_title'.tr(),
       ),
       body: Form(
         key: _formKey,

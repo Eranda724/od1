@@ -6,6 +6,8 @@ import '../admin/admin_exercise_screen.dart';
 import '../admin/admin_users_view.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../admin/admin_assets_screen.dart';
+import '../admin/admin_celebration_assets_screen.dart';
+import '../admin/admin_ui.dart';
 
 // Firestore path that stores admin-configurable notification times.
 // Document shape: { morningHour: int, morningMinute: int, eveningHour: int, eveningMinute: int }
@@ -19,10 +21,15 @@ class AdminScreen extends StatelessWidget {
     return DefaultTabController(
       length: 3,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('admin_panel'.tr()),
-          leading: BackButton(onPressed: () => Navigator.pop(context)),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AdminUI.buildAppBar(
+          context,
+          title: 'admin_panel'.tr(),
           bottom: TabBar(
+            indicatorColor: Colors.blueGrey,
+            labelColor: Theme.of(context).colorScheme.onSurface,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [
               Tab(text: 'exercises_tab'.tr()),
               Tab(text: 'users_tab'.tr()),
@@ -54,14 +61,23 @@ class AdminScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance.collection('exercises').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
+            return Center(
+              child: Text(
+                'error_loading'.tr(args: [snapshot.error.toString()]),
+              ),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
           final exercises = snapshot.data!.docs
-              .map((doc) => ExerciseItem.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+              .map(
+                (doc) => ExerciseItem.fromMap(
+                  doc.id,
+                  doc.data() as Map<String, dynamic>,
+                ),
+              )
               .toList();
 
           if (exercises.isEmpty) {
@@ -72,13 +88,11 @@ class AdminScreen extends StatelessWidget {
             itemCount: exercises.length,
             itemBuilder: (context, index) {
               final exercise = exercises[index];
-              return Card(
+              return AdminUI.buildCard(
+                context,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: ListTile(
                     leading: Container(
                       width: 48,
                       height: 48,
@@ -88,17 +102,31 @@ class AdminScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
-                        child: buildExerciseVisual(exercise, size: 26, width: 48, height: 48),
+                        child: buildExerciseVisual(
+                          exercise,
+                          size: 26,
+                          width: 48,
+                          height: 48,
+                        ),
                       ),
                     ),
-                    title: Text(exercise.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    title: Text(
+                      exercise.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 4.0),
                       child: Text(
                         'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : 'any_label'.tr()}\n'
                         'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : 'any_label'.tr()}\n'
                         'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : 'any_label'.tr()}',
-                        style: TextStyle(color: Colors.grey.shade700, height: 1.4),
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          height: 1.4,
+                        ),
                       ),
                     ),
                     isThreeLine: true,
@@ -110,23 +138,37 @@ class AdminScreen extends StatelessWidget {
                           onPressed: () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => AdminExerciseScreen(existing: exercise),
+                              builder: (_) =>
+                                  AdminExerciseScreen(existing: exercise),
                             ),
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          icon: const Icon(
+                            Icons.delete,
+                            color: Colors.redAccent,
+                          ),
                           onPressed: () async {
                             final confirm = await showDialog<bool>(
                               context: context,
                               builder: (c) => AlertDialog(
                                 title: Text('delete_exercise_title'.tr()),
-                                content: Text('delete_exercise_desc'.tr(args: [exercise.name])),
+                                content: Text(
+                                  'delete_exercise_desc'.tr(
+                                    args: [exercise.name],
+                                  ),
+                                ),
                                 actions: [
-                                  TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
                                   TextButton(
-                                    onPressed: () => Navigator.pop(c, true), 
-                                    child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red)),
+                                    onPressed: () => Navigator.pop(c, false),
+                                    child: Text('cancel_btn'.tr()),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(c, true),
+                                    child: Text(
+                                      'delete_btn'.tr(),
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -142,8 +184,7 @@ class AdminScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                ),
-              );
+                );
             },
           );
         },
@@ -176,8 +217,14 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
     return _db.collection(parts[0]).doc(parts[1]);
   }
 
-  Future<void> _pickTime(BuildContext context, String label,
-      int currentHour, int currentMinute, String hourField, String minuteField) async {
+  Future<void> _pickTime(
+    BuildContext context,
+    String label,
+    int currentHour,
+    int currentMinute,
+    String hourField,
+    String minuteField,
+  ) async {
     // Capture before first async gap
     final messenger = ScaffoldMessenger.of(context);
     final picked = await showTimePicker(
@@ -189,12 +236,14 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
 
     setState(() => _isSaving = true);
     try {
-      await _notifRef.set(
-        {hourField: picked.hour, minuteField: picked.minute},
-        SetOptions(merge: true),
-      );
+      await _notifRef.set({
+        hourField: picked.hour,
+        minuteField: picked.minute,
+      }, SetOptions(merge: true));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))));
+      messenger.showSnackBar(
+        SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))),
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -214,9 +263,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
       stream: _notifRef.snapshots(),
       builder: (context, snap) {
         final data = snap.data?.data() as Map<String, dynamic>? ?? {};
-        final morningHour = (data['morningHour'] as int?) ?? _defaultMorningHour;
+        final morningHour =
+            (data['morningHour'] as int?) ?? _defaultMorningHour;
         final morningMinute = (data['morningMinute'] as int?) ?? 0;
-        final eveningHour = (data['eveningHour'] as int?) ?? _defaultEveningHour;
+        final eveningHour =
+            (data['eveningHour'] as int?) ?? _defaultEveningHour;
         final eveningMinute = (data['eveningMinute'] as int?) ?? 0;
 
         return ListView(
@@ -229,24 +280,40 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             const SizedBox(height: 16),
 
             // ── Morning reminder ─────────────────────────────────────────────
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            AdminUI.buildCard(
+              context,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: const Text('🌅', style: TextStyle(fontSize: 28)),
-                title: Text('morning_reminder_label'.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text(_fmt(morningHour, morningMinute),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                leading: Image.asset('assets/images/sun.png', width: 32, height: 32),
+                title: Text(
+                  'morning_reminder_label'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  _fmt(morningHour, morningMinute),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
                 trailing: _isSaving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : TextButton(
                         onPressed: () => _pickTime(
                           context,
                           'morning_reminder_label'.tr(),
-                          morningHour, morningMinute,
-                          'morningHour', 'morningMinute',
+                          morningHour,
+                          morningMinute,
+                          'morningHour',
+                          'morningMinute',
                         ),
                         child: Text('change_btn'.tr()),
                       ),
@@ -255,32 +322,48 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             const SizedBox(height: 12),
 
             // ── Evening streak-saver ─────────────────────────────────────────
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            AdminUI.buildCard(
+              context,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: const Text('🌙', style: TextStyle(fontSize: 28)),
-                title: Text('evening_streak_saver_label'.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text(_fmt(eveningHour, eveningMinute),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blue)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                leading: Image.asset('assets/images/moon.png', width: 32, height: 32),
+                title: Text(
+                  'evening_streak_saver_label'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  _fmt(eveningHour, eveningMinute),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
+                  ),
+                ),
                 trailing: _isSaving
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : TextButton(
                         onPressed: () => _pickTime(
                           context,
                           'evening_streak_saver_label'.tr(),
-                          eveningHour, eveningMinute,
-                          'eveningHour', 'eveningMinute',
+                          eveningHour,
+                          eveningMinute,
+                          'eveningHour',
+                          'eveningMinute',
                         ),
                         child: Text('change_btn'.tr()),
                       ),
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             Text(
               'admin_appearance'.tr(),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
@@ -288,18 +371,54 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             const SizedBox(height: 16),
 
             // ── Session Assets Bank ───────────────────────────────────────────
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            AdminUI.buildCard(
+              context,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: const Text('🖼️', style: TextStyle(fontSize: 28)),
-                title: Text('admin_image_tips_bank'.tr(), style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('admin_manage_dynamic_session'.tr(), style: const TextStyle(fontSize: 13)),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                leading: Image.asset('assets/images/session.png', width: 32, height: 32),
+                title: const Text(
+                  'Session Theme and Tips Bank',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                  'admin_manage_dynamic_session'.tr(),
+                  style: const TextStyle(fontSize: 13),
+                ),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const AdminAssetsScreen()),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Celebration Image Bank ─────────────────────────────────────────
+            AdminUI.buildCard(
+              context,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                leading: Image.asset('assets/images/congrads.png', width: 32, height: 32),
+                title: const Text(
+                  'Celebration Image Bank',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: const Text(
+                  'Manage images shown after sessions',
+                  style: TextStyle(fontSize: 13),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminCelebrationAssetsScreen(),
+                  ),
                 ),
               ),
             ),

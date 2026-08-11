@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../app_settings.dart';
+import 'admin_ui.dart';
 
 const List<Map<String, dynamic>> kDefaultSessionImages = [];
 
@@ -73,66 +74,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
     }
   }
 
-  void _showAddImageOptions(List<dynamic> currentImages) {
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.upload_file),
-              title: const Text('Upload from Device'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _uploadImage(currentImages);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.link),
-              title: const Text('Add by URL'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _showAddImageDialog(currentImages);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showAddImageDialog(List<dynamic> currentImages) {
-    final ctrl = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Network Image'),
-        content: TextField(
-          controller: ctrl,
-          decoration: const InputDecoration(hintText: 'https://...'),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('cancel_btn'.tr())),
-          ElevatedButton(
-            onPressed: () {
-              if (ctrl.text.trim().isNotEmpty) {
-                final newList = List<dynamic>.from(currentImages);
-                newList.add({
-                  "url": ctrl.text.trim(),
-                  "isAsset": false,
-                  "enabled": true,
-                });
-                _updateArray('images', newList);
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Add by URL options removed
 
   void _showAddTipDialog(List<dynamic> currentTips) {
     final ctrl = TextEditingController();
@@ -170,7 +112,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   Widget _buildImagesGrid(List<dynamic> images) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
-        onPressed: _isUploading ? null : () => _showAddImageOptions(images),
+        onPressed: _isUploading ? null : () => _uploadImage(images),
         child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
       ),
       body: Column(
@@ -260,32 +202,33 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
                 if (!enabled)
                   Container(color: Colors.black.withValues(alpha: 0.5)),
 
-                // Top-left Delete
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  child: IconButton(
-                    iconSize: 20,
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (c) => AlertDialog(
-                          title: Text('delete_btn'.tr()),
-                          content: const Text('Are you sure you want to delete this image?'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
-                            TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        final newList = List<dynamic>.from(images)..removeAt(imageIndex);
-                        _updateArray('images', newList);
-                      }
-                    },
+                // Top-left Delete (Only for uploaded images)
+                if (!isAsset)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: IconButton(
+                      iconSize: 20,
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (c) => AlertDialog(
+                            title: Text('delete_btn'.tr()),
+                            content: const Text('Are you sure you want to delete this image?'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
+                              TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          final newList = List<dynamic>.from(images)..removeAt(imageIndex);
+                          _updateArray('images', newList);
+                        }
+                      },
+                    ),
                   ),
-                ),
                 
                 // Top-right Toggle (Round Tick)
                 Positioned(
@@ -339,9 +282,10 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
 
           final displayText = isKey ? text.tr() : text;
 
-          return Card(
-            elevation: 2,
+          return AdminUI.buildCard(
+            context,
             margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             child: ListTile(
               title: Text(displayText),
               subtitle: Text(isKey ? 'Local Translation' : 'Custom Text', style: const TextStyle(fontSize: 12)),
@@ -396,10 +340,16 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Session Backgrounds & Tips'),
-          bottom: const TabBar(
-            tabs: [
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AdminUI.buildAppBar(
+          context,
+          title: 'Session Backgrounds & Tips',
+          bottom: TabBar(
+            indicatorColor: Colors.blueGrey,
+            labelColor: Theme.of(context).colorScheme.onSurface,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+            tabs: const [
               Tab(text: 'Background Overrides'),
               Tab(text: 'Tips'),
             ],
