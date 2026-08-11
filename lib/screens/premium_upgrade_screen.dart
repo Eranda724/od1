@@ -1,9 +1,11 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/iap_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+
+import '../services/iap_service.dart';
 
 class PremiumUpgradeScreen extends StatefulWidget {
   const PremiumUpgradeScreen({super.key});
@@ -12,48 +14,79 @@ class PremiumUpgradeScreen extends StatefulWidget {
   State<PremiumUpgradeScreen> createState() => _PremiumUpgradeScreenState();
 }
 
-class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> with SingleTickerProviderStateMixin {
-  StreamSubscription<DocumentSnapshot>? _userSubscription;
+class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
+    with SingleTickerProviderStateMixin {
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _userSubscription;
+
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+
+  bool _premiumHandled = false;
+
+  static const Color _yellow = Color(0xFFFFC72C);
+  static const Color _yellowLight = Color(0xFFFFE066);
+  static const Color _yellowDark = Color(0xFFE6A700);
 
   @override
   void initState() {
     super.initState();
-    _listenForPremiumStatus();
-    
+
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(milliseconds: 1800),
     )..repeat(reverse: true);
-    
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+
+    _listenForPremiumStatus();
   }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PREMIUM STATUS
+  // ═══════════════════════════════════════════════════════════════════════
 
   void _listenForPremiumStatus() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      _userSubscription = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .snapshots()
-          .listen((snapshot) {
-        final isPremium = snapshot.data()?['isPremium'] == true;
-        if (isPremium) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('purchase_successful'.tr()),
-                backgroundColor: Colors.green,
+
+    if (user == null) return;
+
+    _userSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen((snapshot) {
+          if (_premiumHandled) return;
+
+          final data = snapshot.data();
+          final isPremium = data?['isPremium'] == true;
+
+          if (!isPremium) return;
+
+          _premiumHandled = true;
+
+          if (!mounted) return;
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('purchase_successful'.tr()),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-            );
-            Navigator.of(context).pop(); // Auto-navigate back
-          }
-        }
-      });
-    }
+            ),
+          );
+
+          // Give the SnackBar a moment to appear before leaving.
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
+          });
+        });
   }
 
   @override
@@ -63,194 +96,180 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> with Single
     super.dispose();
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ═══════════════════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
-    final isLightMode = Theme.of(context).brightness == Brightness.light;
-    final textColor = isLightMode ? Colors.black87 : Colors.white;
-    final secondaryTextColor = isLightMode ? Colors.black54 : Colors.white.withValues(alpha: 0.7);
+    final theme = Theme.of(context);
+    final isLightMode = theme.brightness == Brightness.light;
+
+    final textColor = isLightMode ? const Color(0xFF181818) : Colors.white;
+
+    final secondaryTextColor = isLightMode
+        ? const Color(0xFF6F6F6F)
+        : Colors.white.withValues(alpha: 0.65);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+
       appBar: AppBar(
-        title: Text('upgrade_to_premium'.tr()),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: theme.scaffoldBackgroundColor,
+
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
           onPressed: () => Navigator.of(context).pop(),
         ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: isLightMode
-                ? [
-                    const Color(0xFFFFF2C2), // Warm soft gold top
-                    Colors.white,
-                    const Color(0xFFFAFAFA),
-                  ]
-                : [
-                    const Color(0xFF332A00), // Dark gold hint at the top
-                    const Color(0xFF111111), // Deep black-grey
-                    const Color(0xFF0A0A0A), // Near black at bottom
-                  ],
+
+        title: Text(
+          'upgrade_to_premium'.tr(),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
           ),
         ),
-        child: SafeArea(
+      ),
+
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isLightMode
+                  ? const [
+                      Color(0xFFFFF7DA),
+                      Color(0xFFFFFBF0),
+                      Color(0xFFF8F7F3),
+                    ]
+                  : const [
+                      Color(0xFF211C08),
+                      Color(0xFF121212),
+                      Color(0xFF0B0B0B),
+                    ],
+            ),
+          ),
+
           child: ListenableBuilder(
             listenable: IapService.instance,
             builder: (context, _) {
               final iap = IapService.instance;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Spacer(flex: 1),
-                    // Animated Premium Star
-                    Center(
-                      child: ScaleTransition(
-                        scale: _pulseAnimation,
-                        child: Container(
-                          padding: const EdgeInsets.all(28),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFFFE066), Color(0xFFFDB931)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFFFD700).withValues(alpha: isLightMode ? 0.5 : 0.3),
-                                blurRadius: 40,
-                                spreadRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.star_rounded,
-                            size: 72,
-                            color: Colors.white,
-                          ),
-                        ),
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+
+                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 26,
                       ),
-                    ),
-                    const SizedBox(height: 48),
-                    Text(
-                      'potato_couch_premium'.tr(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
-                        color: textColor,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'unlock_ad_free'.tr(),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: secondaryTextColor,
-                        height: 1.4,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    
-                    // Benefits Card
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: isLightMode 
-                            ? Colors.black.withValues(alpha: 0.02)
-                            : Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isLightMode 
-                              ? Colors.black.withValues(alpha: 0.05)
-                              : Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
+
                       child: Column(
                         children: [
-                          _buildBenefitRow(Icons.block_rounded, 'permanently_remove_ads'.tr(), textColor),
-                          const SizedBox(height: 24),
-                          _buildBenefitRow(Icons.favorite_rounded, 'support_development'.tr(), textColor),
-                          const SizedBox(height: 24),
-                          _buildBenefitRow(Icons.offline_bolt_rounded, 'faster_workouts'.tr(), textColor),
+                          // ═════════════════════════════════════════════
+                          // PREMIUM ICON
+                          // ═════════════════════════════════════════════
+                          const SizedBox(height: 8),
+
+                          ScaleTransition(
+                            scale: _pulseAnimation,
+                            child: Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+
+                                gradient: const LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [_yellowLight, _yellow],
+                                ),
+
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _yellow.withValues(
+                                      alpha: isLightMode ? 0.28 : 0.20,
+                                    ),
+                                    blurRadius: 30,
+                                    spreadRadius: 3,
+                                  ),
+                                ],
+                              ),
+
+                              child: const Icon(
+                                Icons.star_rounded,
+                                size: 56,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+
+                          // ═════════════════════════════════════════════
+                          // TITLE
+                          // ═════════════════════════════════════════════
+                          Text(
+                            'potato_couch_premium'.tr(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 27,
+                              height: 1.1,
+                              fontWeight: FontWeight.w900,
+                              color: textColor,
+                              letterSpacing: -0.7,
+                            ),
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          Text(
+                            'unlock_ad_free'.tr(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.35,
+                              color: secondaryTextColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          // ═════════════════════════════════════════════
+                          // BENEFITS
+                          // ═════════════════════════════════════════════
+                          _benefitsCard(
+                            isLightMode: isLightMode,
+                            textColor: textColor,
+                          ),
+
+                          const SizedBox(height: 22),
+
+                          // ═════════════════════════════════════════════
+                          // PURCHASE
+                          // ═════════════════════════════════════════════
+                          if (iap.isLoading)
+                            _loadingWidget()
+                          else
+                            _purchaseSection(
+                              iap: iap,
+                              isLightMode: isLightMode,
+                            ),
+
+                          const SizedBox(height: 6),
                         ],
                       ),
                     ),
-                    
-                    const Spacer(flex: 2),
-
-                    if (iap.isLoading)
-                      const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
-                    else
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFFFE066), Color(0xFFFDB931)],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: (iap.isAvailable && iap.removeAdsProduct != null)
-                                  ? () => iap.buyRemoveAds()
-                                  : null,
-                              child: Text(
-                                iap.removeAdsProduct != null 
-                                    ? 'upgrade_for_price'.tr(args: [iap.removeAdsProduct!.price])
-                                    : 'loading_price'.tr(),
-                                style: const TextStyle(
-                                  fontSize: 18, 
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () => iap.restorePurchases(),
-                            style: TextButton.styleFrom(
-                              foregroundColor: isLightMode ? Colors.black54 : Colors.white.withValues(alpha: 0.5),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: Text(
-                              'restore_purchases'.tr(),
-                              style: const TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           ),
@@ -259,29 +278,269 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen> with Single
     );
   }
 
-  Widget _buildBenefitRow(IconData icon, String text, Color textColor) {
+  // ═══════════════════════════════════════════════════════════════════════
+  // BENEFITS CARD
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _benefitsCard({required bool isLightMode, required Color textColor}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+
+      decoration: BoxDecoration(
+        color: isLightMode
+            ? Colors.white.withValues(alpha: 0.72)
+            : Colors.white.withValues(alpha: 0.045),
+
+        borderRadius: BorderRadius.circular(18),
+
+        border: Border.all(
+          color: isLightMode
+              ? Colors.black.withValues(alpha: 0.055)
+              : Colors.white.withValues(alpha: 0.08),
+        ),
+      ),
+
+      child: Column(
+        children: [
+          _buildBenefitRow(
+            icon: Icons.block_rounded,
+            text: 'permanently_remove_ads'.tr(),
+            textColor: textColor,
+          ),
+
+          _benefitDivider(),
+
+          _buildBenefitRow(
+            icon: Icons.favorite_rounded,
+            text: 'support_development'.tr(),
+            textColor: textColor,
+          ),
+
+          _benefitDivider(),
+
+          _buildBenefitRow(
+            icon: Icons.offline_bolt_rounded,
+            text: 'faster_workouts'.tr(),
+            textColor: textColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // BENEFIT ROW
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _buildBenefitRow({
+    required IconData icon,
+    required String text,
+    required Color textColor,
+  }) {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          width: 40,
+          height: 40,
+
           decoration: BoxDecoration(
-            color: const Color(0xFFFFD700).withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(14),
+            color: _yellow.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, color: const Color(0xFFE6A700), size: 24),
+
+          child: Icon(icon, color: _yellowDark, size: 21),
         ),
-        const SizedBox(width: 16),
+
+        const SizedBox(width: 12),
+
         Expanded(
           child: Text(
             text,
             style: TextStyle(
-              fontSize: 16, 
-              fontWeight: FontWeight.w600,
+              fontSize: 13,
+              height: 1.25,
+              fontWeight: FontWeight.w700,
               color: textColor,
             ),
           ),
         ),
+
+        const SizedBox(width: 6),
+
+        const Icon(Icons.check_circle_rounded, color: _yellowDark, size: 19),
       ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // BENEFIT DIVIDER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _benefitDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+
+      child: Divider(
+        height: 1,
+        thickness: 0.7,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PURCHASE SECTION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _purchaseSection({
+    required IapService iap,
+    required bool isLightMode,
+  }) {
+    final product = iap.removeAdsProduct;
+
+    final canPurchase = iap.isAvailable && product != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // PURCHASE BUTTON
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+
+            boxShadow: [
+              BoxShadow(
+                color: _yellow.withValues(alpha: 0.20),
+                blurRadius: 18,
+                offset: const Offset(0, 7),
+              ),
+            ],
+          ),
+
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_yellowLight, _yellow],
+              ),
+
+              borderRadius: BorderRadius.circular(16),
+            ),
+
+            child: ElevatedButton(
+              onPressed: canPurchase
+                  ? () {
+                      iap.buyRemoveAds();
+                    }
+                  : null,
+
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                foregroundColor: Colors.black,
+                disabledForegroundColor: Colors.black45,
+
+                minimumSize: const Size.fromHeight(56),
+
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.star_rounded, size: 21),
+
+                  const SizedBox(width: 8),
+
+                  Flexible(
+                    child: Text(
+                      product != null
+                          ? 'upgrade_for_price'.tr(args: [product.price])
+                          : 'loading_price'.tr(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        // AVAILABILITY MESSAGE
+        if (!iap.isAvailable && product == null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 2),
+            child: Text(
+              'Premium purchase is currently unavailable.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 10,
+                color: isLightMode ? Colors.black45 : Colors.white38,
+              ),
+            ),
+          ),
+
+        // RESTORE
+        TextButton(
+          onPressed: () {
+            iap.restorePurchases();
+          },
+
+          style: TextButton.styleFrom(
+            foregroundColor: isLightMode ? Colors.black54 : Colors.white54,
+
+            minimumSize: const Size.fromHeight(42),
+
+            padding: const EdgeInsets.symmetric(vertical: 8),
+          ),
+
+          child: Text(
+            'restore_purchases'.tr(),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // LOADING
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _loadingWidget() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 25),
+      child: Column(
+        children: [
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: _yellowDark,
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Loading premium...',
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 }

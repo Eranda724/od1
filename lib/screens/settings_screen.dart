@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../app_settings.dart';
 import '../services/notification_service.dart';
 import '../services/iap_service.dart';
 import '../services/ad_service.dart';
 import 'premium_upgrade_screen.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -19,242 +20,796 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final _settings = AppSettings();
 
+  static const Color _yellow = Color(0xFFFFC72C);
+  static const Color _yellowDark = Color(0xFFE3A900);
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ═══════════════════════════════════════════════════════════════════════
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+
+      // ─────────────────────────────────────────────────────────────────
+      // APP BAR
+      // ─────────────────────────────────────────────────────────────────
       appBar: AppBar(
-        title: Text('settings'.tr()),
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
           onPressed: () => Navigator.pop(context),
         ),
+
+        title: Text(
+          'settings'.tr(),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -0.3,
+          ),
+        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          // ── APPEARANCE SECTION ──
-          _sectionHeader('appearance'.tr()),
-          const SizedBox(height: 8),
-          _card(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.grid_view_rounded),
-                  title: Text('exercise_grid_view'.tr()),
-                  value: _settings.isGridView,
-                  activeColor: const Color(0xFF4CAF7D), // PCColors.green
-                  onChanged: (v) async {
-                    await _settings.setGridView(v);
-                    setState(() {});
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.light_mode_rounded),
-                  title: Text('light_mode'.tr()),
-                  trailing: Radio<ThemeMode>(
-                    value: ThemeMode.light,
-                    groupValue: _settings.themeMode,
-                    onChanged: (v) async {
-                      await _settings.setThemeMode(v!);
-                      setState(() {});
-                    },
-                  ),
-                  onTap: () async {
-                    await _settings.setThemeMode(ThemeMode.light);
-                    setState(() {});
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.dark_mode_rounded),
-                  title: Text('dark_mode'.tr()),
-                  trailing: Radio<ThemeMode>(
-                    value: ThemeMode.dark,
-                    groupValue: _settings.themeMode,
-                    onChanged: (v) async {
-                      await _settings.setThemeMode(v!);
-                      setState(() {});
-                    },
-                  ),
-                  onTap: () async {
-                    await _settings.setThemeMode(ThemeMode.dark);
-                    setState(() {});
-                  },
-                ),
-              ],
-            ),
-          ),
 
-          const SizedBox(height: 24),
+      // ─────────────────────────────────────────────────────────────────
+      // BODY
+      // ─────────────────────────────────────────────────────────────────
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            // ═══════════════════════════════════════════════════════════
+            // APPEARANCE
+            // ═══════════════════════════════════════════════════════════
+            _sectionTitle('appearance'.tr(), Icons.palette_outlined),
 
-          // ── NOTIFICATIONS SECTION ──
-          _sectionHeader('notifications'.tr()),
-          const SizedBox(height: 8),
-          _card(
-            child: SwitchListTile(
-              secondary: const Icon(Icons.notifications_rounded),
-              title: Text('daily_reminders'.tr()),
-              subtitle: Text('daily_reminders_sub'.tr()),
-              value: _settings.notificationsEnabled,
-              activeColor: const Color(0xFFFFC72C),
-              onChanged: (v) async {
-                await _settings.setNotificationsEnabled(v);
-                if (v) {
-                  await NotificationService.instance.refreshSchedule();
-                } else {
-                  await NotificationService.instance.cancelAll();
-                }
-                setState(() {});
-              },
-            ),
-          ),
+            const SizedBox(height: 12),
 
-          const SizedBox(height: 24),
+            _settingsCard(
+              child: Column(
+                children: [
+                  // EXERCISE GRID
+                  _settingRow(
+                    icon: Icons.grid_view_rounded,
+                    iconBackground: _yellow.withValues(alpha: 0.14),
+                    iconColor: _yellowDark,
+                    title: 'exercise_grid_view'.tr(),
+                    subtitle: 'exercise_grid_subtitle'.tr(),
+                    trailing: Switch(
+                      value: _settings.isGridView,
+                      activeColor: _yellow,
+                      onChanged: (value) async {
+                        await _settings.setGridView(value);
 
-          // ── LANGUAGE SECTION ──
-          _sectionHeader('language_section'.tr()),
-          const SizedBox(height: 8),
-          _card(
-            child: Column(
-              children: AppSettings.supportedLanguages.entries.map((entry) {
-                final isSelected = context.locale.languageCode == entry.key;
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      title: Text(
-                        entry.value,
-                        style: TextStyle(
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.normal,
-                        ),
-                      ),
-                      trailing: isSelected
-                          ? const Icon(Icons.check_rounded,
-                              color: Color(0xFFFFC72C))
-                          : null,
-                      onTap: () async {
-                        await context.setLocale(Locale(entry.key));
-                        setState(() {});
+                        if (mounted) {
+                          setState(() {});
+                        }
                       },
                     ),
-                    if (entry.key !=
-                        AppSettings.supportedLanguages.keys.last)
-                      const Divider(height: 1),
-                  ],
-                );
-              }).toList(),
+                  ),
+
+                  _divider(),
+
+                  // THEME
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(13, 10, 13, 11),
+                    child: Row(
+                      children: [
+                        _iconBox(
+                          icon: Icons.brightness_6_rounded,
+                          color: Colors.blueGrey,
+                        ),
+
+                        const SizedBox(width: 11),
+
+                        Expanded(
+                          child: Text(
+                            'theme'.tr(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(13, 0, 13, 12),
+                    child: _themeSelector(),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // ── PREMIUM SECTION ──
-          _sectionHeader('premium_section'.tr()),
-          const SizedBox(height: 8),
-          _buildPremiumSection(),
+            // ═══════════════════════════════════════════════════════════
+            // NOTIFICATIONS
+            // ═══════════════════════════════════════════════════════════
+            _sectionTitle(
+              'notifications'.tr(),
+              Icons.notifications_none_rounded,
+            ),
 
-          const SizedBox(height: 24),
-          _card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_rounded, color: Colors.blue),
-                  title: Text('privacy_policy'.tr()),
-                  trailing: const Icon(Icons.open_in_new_rounded, size: 16, color: Colors.grey),
-                  onTap: () async {
-                    final Uri url = Uri.parse('https://sites.google.com/view/potato60secondroutine/privacy-policy?authuser=0'); // TODO: Replace with the actual URL
-                    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Could not launch privacy policy URL.')),
-                        );
-                      }
+            const SizedBox(height: 7),
+
+            _settingsCard(
+              child: _settingRow(
+                icon: Icons.notifications_active_outlined,
+                iconBackground: _yellow.withValues(alpha: 0.14),
+                iconColor: _yellowDark,
+                title: 'daily_reminders'.tr(),
+                subtitle: 'daily_reminders_sub'.tr(),
+                trailing: Switch(
+                  value: _settings.notificationsEnabled,
+                  activeColor: _yellow,
+                  onChanged: (value) async {
+                    await _settings.setNotificationsEnabled(value);
+
+                    if (value) {
+                      await NotificationService.instance.refreshSchedule();
+                    } else {
+                      await NotificationService.instance.cancelAll();
+                    }
+
+                    if (mounted) {
+                      setState(() {});
                     }
                   },
                 ),
-                if (AdService.instance.isPrivacyOptionsRequired) ...[
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.cookie_rounded, color: Colors.orange),
-                    title: const Text('Manage Privacy Options'),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
-                    onTap: () {
-                      AdService.instance.showPrivacyOptionsForm();
-                    },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ═══════════════════════════════════════════════════════════
+            // LANGUAGE
+            // ═══════════════════════════════════════════════════════════
+            _sectionTitle('language_section'.tr(), Icons.language_rounded),
+
+            const SizedBox(height: 7),
+
+            _settingsCard(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 13,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    _iconBox(
+                      icon: Icons.translate_rounded,
+                      color: Colors.indigo,
+                    ),
+
+                    const SizedBox(width: 11),
+
+                    Expanded(
+                      child: Text(
+                        'language_section'.tr(),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : const Color(0xFFF4F2EC),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _currentLanguageKey(),
+                          isDense: true,
+                          borderRadius: BorderRadius.circular(14),
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 19,
+                          ),
+                          items: AppSettings.supportedLanguages.entries
+                              .map(
+                                (entry) => DropdownMenuItem<String>(
+                                  value: entry.key,
+                                  child: Text(
+                                    entry.value,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (value) async {
+                            if (value == null) return;
+
+                            await context.setLocale(Locale(value));
+
+                            if (mounted) {
+                              setState(() {});
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // ═══════════════════════════════════════════════════════════
+            // PREMIUM
+            // ═══════════════════════════════════════════════════════════
+            _sectionTitle('premium_section'.tr(), Icons.star_outline_rounded),
+
+            const SizedBox(height: 7),
+
+            _buildPremiumSection(),
+
+            const SizedBox(height: 12),
+
+            // ═══════════════════════════════════════════════════════════
+            // PRIVACY
+            // ═══════════════════════════════════════════════════════════
+            _sectionTitle('privacy_and_data'.tr(), Icons.security_rounded),
+
+            const SizedBox(height: 7),
+
+            _settingsCard(
+              child: Column(
+                children: [
+                  _actionRow(
+                    icon: Icons.privacy_tip_outlined,
+                    iconColor: Colors.blue,
+                    title: 'privacy_policy'.tr(),
+                    trailing: Icons.open_in_new_rounded,
+                    onTap: _openPrivacyPolicy,
+                  ),
+
+                  if (AdService.instance.isPrivacyOptionsRequired) ...[
+                    _divider(),
+
+                    _actionRow(
+                      icon: Icons.cookie_outlined,
+                      iconColor: Colors.orange,
+                      title: 'manage_privacy_options'.tr(),
+                      trailing: Icons.arrow_forward_ios_rounded,
+                      onTap: () {
+                        AdService.instance.showPrivacyOptionsForm();
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SECTION TITLE
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _sectionTitle(String title, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: isDark ? _yellowDark : Colors.black),
+
+        const SizedBox(width: 6),
+
+        Text(
+          title.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.0,
+            color: Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // CARD
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _settingsCard({required Widget child}) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.035)
+            : Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // SETTING ROW
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _settingRow({
+    required IconData icon,
+    required Color iconBackground,
+    required Color iconColor,
+    required String title,
+    String? subtitle,
+    required Widget trailing,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 15),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: iconBackground,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 22, color: iconColor),
+          ),
+
+          const SizedBox(width: 11),
+
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.43),
+                    ),
                   ),
                 ],
               ],
             ),
           ),
-          const SizedBox(height: 24),
+
+          const SizedBox(width: 6),
+
+          trailing,
         ],
       ),
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // ICON BOX
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _iconBox({required IconData icon, required Color color}) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(icon, size: 22, color: color),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // DIVIDER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _divider() {
+    return Divider(
+      height: 1,
+      thickness: 0.7,
+      indent: 59,
+      endIndent: 13,
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.06),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ACTION ROW
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _actionRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required IconData trailing,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 15),
+        child: Row(
+          children: [
+            _iconBox(icon: icon, color: iconColor),
+
+            const SizedBox(width: 11),
+
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+
+            Icon(trailing, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // THEME SELECTOR
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _themeSelector() {
+    final currentTheme = _settings.themeMode;
+
+    return Container(
+      height: 43,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.055),
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _themeButton(
+              icon: Icons.light_mode_rounded,
+              title: 'light_mode'.tr(),
+              selected: currentTheme == ThemeMode.light,
+              onTap: () async {
+                await _settings.setThemeMode(ThemeMode.light);
+
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+          ),
+
+          Expanded(
+            child: _themeButton(
+              icon: Icons.dark_mode_rounded,
+              title: 'dark_mode'.tr(),
+              selected: currentTheme == ThemeMode.dark,
+              onTap: () async {
+                await _settings.setThemeMode(ThemeMode.dark);
+
+                if (mounted) {
+                  setState(() {});
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // THEME BUTTON
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _themeButton({
+    required IconData icon,
+    required String title,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: selected ? _yellow : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: selected ? Colors.black : Colors.grey),
+
+            const SizedBox(width: 6),
+
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                color: selected ? Colors.black : Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // LANGUAGE KEY
+  // ═══════════════════════════════════════════════════════════════════════
+
+  String _currentLanguageKey() {
+    final currentCode = context.locale.languageCode;
+
+    if (AppSettings.supportedLanguages.containsKey(currentCode)) {
+      return currentCode;
+    }
+
+    return AppSettings.supportedLanguages.keys.first;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PREMIUM SECTION
+  // ═══════════════════════════════════════════════════════════════════════
+
   Widget _buildPremiumSection() {
     return ListenableBuilder(
       listenable: IapService.instance,
       builder: (context, _) {
-        final iap = IapService.instance;
+        final user = FirebaseAuth.instance.currentUser;
 
-        // Check firestore for premium status
-        return StreamBuilder(
+        if (user == null) {
+          return _premiumUpgradeCard();
+        }
+
+        return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection('users')
-              .doc(FirebaseAuth.instance.currentUser?.uid)
+              .doc(user.uid)
               .snapshots(),
           builder: (context, snapshot) {
-            final isPremium = snapshot.data?.data()?['isPremium'] == true;
+            final data = snapshot.data?.data();
+
+            final isPremium = data?['isPremium'] == true;
 
             if (isPremium) {
-              return _card(
-                child: ListTile(
-                  leading: const Icon(Icons.star_rounded, color: Color(0xFFFFC72C)),
-                  title: Text('premium_member'.tr(), style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text('ads_removed_sub'.tr()),
-                ),
-              );
+              return _premiumMemberCard();
             }
 
-            return _card(
-              child: ListTile(
-                leading: const Icon(Icons.block_rounded, color: Colors.red),
-                title: Text('remove_ads_upgrade'.tr()),
-                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const PremiumUpgradeScreen()),
-                  );
-                },
-              ),
-            );
+            return _premiumUpgradeCard();
           },
         );
       },
     );
   }
 
-  Widget _sectionHeader(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.2,
-        color: Colors.grey,
+  // ═══════════════════════════════════════════════════════════════════════
+  // PREMIUM MEMBER
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _premiumMemberCard() {
+    return _settingsCard(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+        child: Row(
+          children: [
+            Container(
+              width: 39,
+              height: 39,
+              decoration: BoxDecoration(
+                color: _yellow.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.star_rounded,
+                color: _yellowDark,
+                size: 21,
+              ),
+            ),
+
+            const SizedBox(width: 11),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'premium_member'.tr(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+
+                  const SizedBox(height: 2),
+
+                  Text(
+                    'ads_removed_sub'.tr(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.48),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _yellow,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'PRO',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _card({required Widget child}) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: child,
+  // ═══════════════════════════════════════════════════════════════════════
+  // PREMIUM UPGRADE
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Widget _premiumUpgradeCard() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFFFD84A), Color(0xFFFFC72C)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _yellow.withValues(alpha: 0.20),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.black,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.star_rounded, color: _yellow, size: 22),
+              ),
+
+              const SizedBox(width: 11),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'remove_ads_upgrade'.tr(),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+
+                    const SizedBox(height: 2),
+
+                    Text(
+                      'go_premium_sub'.tr(),
+                      style: TextStyle(
+                        color: Colors.black.withValues(alpha: 0.58),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.black,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // PRIVACY POLICY
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Future<void> _openPrivacyPolicy() async {
+    final uri = Uri.parse(
+      'https://sites.google.com/view/potato60secondroutine/privacy-policy?authuser=0',
+    );
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('privacy_error'.tr())),
+      );
+    }
   }
 }

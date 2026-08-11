@@ -395,5 +395,10 @@
   "welcome_back_title": "¡Bienvenido de nuevo!",
   "login_subtitle_new": "Inicia sesión para continuar tu viaje.",
   "sign_up_action": "Regístrate",
-  "log_in_action": "Iniciar sesión"
+  "log_in_action": "Iniciar sesión",
+  "exercise_grid_subtitle": "Mostrar ejercicios en una cuadrícula",
+  "manage_privacy_options": "Administrar opciones de privacidad",
+  "go_premium_sub": "Hazte Premium para una experiencia más limpia",
+  "privacy_error": "No se pudo abrir la URL de la política de privacidad.",
+  "privacy_and_data": "Privacidad y Datos"
 }

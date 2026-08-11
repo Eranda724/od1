@@ -395,5 +395,10 @@
   "onboarding_skip": "Passer",
   "onboarding_title_4": "Restez régulier",
   "onboarding_subtitle_4": "Suivez vos progrès et célébrez chaque victoire.",
-  "already_have_account_login": "Vous avez déjà un compte ? Connectez-vous"
+  "already_have_account_login": "Vous avez déjà un compte ? Connectez-vous",
+  "exercise_grid_subtitle": "Afficher les exercices sous forme de grille",
+  "manage_privacy_options": "Gérer les options de confidentialité",
+  "go_premium_sub": "Passez à Premium pour une expérience plus épurée",
+  "privacy_error": "Impossible d'ouvrir l'URL de la politique de confidentialité.",
+  "privacy_and_data": "Confidentialité et Données"
 }

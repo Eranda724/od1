@@ -395,5 +395,10 @@
   "welcome_back_title": "Welcome back!",
   "login_subtitle_new": "Log in to continue your journey.",
   "sign_up_action": "Sign up",
-  "log_in_action": "Log in"
+  "log_in_action": "Log in",
+  "exercise_grid_subtitle": "Show exercises in a grid",
+  "manage_privacy_options": "Manage Privacy Options",
+  "go_premium_sub": "Go Premium for a cleaner experience",
+  "privacy_error": "Could not launch privacy policy URL.",
+  "privacy_and_data": "Privacy & Data"
 }

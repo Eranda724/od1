@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'congradulation_screen.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 /// Shown immediately after the Firestore save in RepEntryScreen.
 /// Plays a celebration sound, shows a random potato image, then
@@ -65,7 +67,8 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     'killing_it',
   ];
 
-  late final String _image;
+  String? _image;
+  String? _dynamicImageUrl;
   late final String _messageKey;
   late final AudioPlayer _player;
   late final AnimationController _scaleCtrl;
@@ -78,8 +81,9 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     super.initState();
 
     final rng = Random();
-    _image = _images[rng.nextInt(_images.length)];
     _messageKey = _messageKeys[rng.nextInt(_messageKeys.length)];
+
+    _fetchImage();
 
     // ── Scale-in animation ───────────────────────────────────────────────
     _scaleCtrl = AnimationController(
@@ -108,8 +112,55 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     _player = AudioPlayer();
     _playSound();
 
-    // ── Auto-advance after 2.5 s ─────────────────────────────────────────
+    // ── Auto-advance after 5 s ─────────────────────────────────────────
     _autoTimer = Timer(const Duration(milliseconds: 5000), _advance);
+  }
+
+  Future<void> _fetchImage() async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('app_config').doc('celebration_assets').get();
+      List<dynamic> rawImages = [];
+      if (doc.exists && doc.data() != null) {
+        rawImages = doc.data()!['images'] as List<dynamic>? ?? [];
+      }
+      
+      // Fallback to default if no data in firestore
+      if (rawImages.isEmpty) {
+        rawImages = [
+          {"url": "assets/images/p1.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p2.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p3.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p4.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p5.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p6.png", "isAsset": true, "enabled": true},
+          {"url": "assets/images/p7.png", "isAsset": true, "enabled": true},
+        ];
+      }
+
+      final enabledImages = rawImages.where((i) => i['enabled'] == true).toList();
+      if (enabledImages.isNotEmpty) {
+        final rng = Random();
+        final chosen = enabledImages[rng.nextInt(enabledImages.length)];
+        if (mounted) {
+          setState(() {
+            if (chosen['isAsset'] == true) {
+              _image = chosen['url'];
+            } else {
+              _dynamicImageUrl = chosen['url'];
+            }
+          });
+          return;
+        }
+      }
+    } catch (_) {}
+    
+    // Fallback if everything fails
+    if (mounted) {
+      final rng = Random();
+      setState(() {
+        _image = _images[rng.nextInt(_images.length)];
+      });
+    }
   }
 
   Future<void> _playSound() async {
@@ -182,7 +233,16 @@ class _CelebrationScreenState extends State<CelebrationScreen>
               // ── Animated potato image ──────────────────────────────────
               ScaleTransition(
                 scale: _scale,
-                child: Image.asset(_image, height: 300, fit: BoxFit.contain),
+                child: _dynamicImageUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: _dynamicImageUrl!,
+                        height: 300,
+                        fit: BoxFit.contain,
+                        errorWidget: (_, __, ___) => const Icon(Icons.error),
+                      )
+                    : (_image != null
+                        ? Image.asset(_image!, height: 300, fit: BoxFit.contain)
+                        : const SizedBox(height: 300)),
               ),
 
               const SizedBox(height: 28),
