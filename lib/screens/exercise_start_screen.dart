@@ -724,60 +724,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        onTap: (index) {
-          Navigator.pop(context);
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: PCColors.yellow,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-          letterSpacing: 0.2,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 11,
-        ),
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.local_fire_department_rounded),
-            label: 'streaks_tab'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.fitness_center_rounded),
-            label: 'exercise_tab'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.leaderboard_rounded),
-            label: 'rankings_tab'.tr(),
-          ),
-          BottomNavigationBarItem(
-            label: 'social_tab'.tr(),
-            icon: StreamBuilder<QuerySnapshot>(
-              stream: user == null
-                  ? const Stream.empty()
-                  : FirebaseFirestore.instance
-                        .collection('friendRequests')
-                        .where('toUid', isEqualTo: user.uid)
-                        .where('status', isEqualTo: 'pending')
-                        .snapshots(),
-              builder: (context, snap) {
-                final hasPending = (snap.data?.docs.isNotEmpty) == true;
-                return Badge(
-                  isLabelVisible: hasPending,
-                  backgroundColor: Colors.red,
-                  smallSize: 8,
-                  child: const Icon(Icons.people_rounded),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
