@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
-import 'screens/login_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/routine_setup_screen.dart';
@@ -146,7 +146,7 @@ class _StartRouterState extends State<StartRouter> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
       );
     }
   }

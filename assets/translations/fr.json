@@ -378,5 +378,22 @@
   "sent_caps": "ENVOYÉ",
   "add_caps": "AJOUTER",
   "streak_days_param": "{} jours",
-  "a_user": "Un utilisateur"
+  "a_user": "Un utilisateur",
+  "or_divider": "ou",
+  "email_hint": "vous@email.com",
+  "username_hint": "Votre nom d'utilisateur",
+  "create_account_title": "Créer un compte",
+  "register_subtitle": "Inscrivez-vous pour commencer votre voyage.",
+  "already_have_account_prefix": "Vous avez déjà un compte ? ",
+  "dont_have_account_prefix": "Vous n'avez pas de compte ? ",
+  "welcome_back_title": "Bon retour !",
+  "login_subtitle_new": "Connectez-vous pour continuer votre voyage.",
+  "sign_up_action": "S'inscrire",
+  "log_in_action": "Se connecter",
+  "onboarding_next": "Suivant →",
+  "onboarding_lets_go": "C'est parti !",
+  "onboarding_skip": "Passer",
+  "onboarding_title_4": "Restez régulier",
+  "onboarding_subtitle_4": "Suivez vos progrès et célébrez chaque victoire.",
+  "already_have_account_login": "Vous avez déjà un compte ? Connectez-vous"
 }
