@@ -362,7 +362,13 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 32),
+
+            const Text(
+              'Streak Rules',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 16),
 
             // ── Freeze Recharge Period ───────────────────────────────────────
             const _AdminFreezeSetting(),
