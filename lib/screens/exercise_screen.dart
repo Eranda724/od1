@@ -643,55 +643,40 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       child: content,
                     );
 
-                    if (!isLibrary && !_settings.isGridView) {
-                      content = Dismissible(
-                        key: Key('dismiss_$id'),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.red.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.red,
+                    void handleRemove() async {
+                      final oldSelected = List<String>.from(idsToShow);
+                      await _removeExerciseFromRoutine(
+                        id,
+                        idsToShow,
+                        exerciseDefs,
+                      );
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).clearSnackBars();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Exercise removed'),
+                          action: SnackBarAction(
+                            label: 'Undo',
+                            onPressed: () {
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(widget.user!.uid)
+                                  .update({
+                                    'selectedExercises': oldSelected,
+                                  });
+                            },
                           ),
                         ),
-                        onDismissed: (_) async {
-                          final oldSelected = List<String>.from(idsToShow);
-                          await _removeExerciseFromRoutine(
-                            id,
-                            idsToShow,
-                            exerciseDefs,
-                          );
-                          if (!context.mounted) return;
-
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Exercise removed'),
-                              action: SnackBarAction(
-                                label: 'Undo',
-                                onPressed: () {
-                                  FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(widget.user!.uid)
-                                      .update({
-                                        'selectedExercises': oldSelected,
-                                      });
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        child: content,
                       );
                     }
 
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
+                    final cardContainer = Container(
+                      margin: EdgeInsets.only(
+                        bottom: 12,
+                        top: isLibrary ? 0 : 4,
+                        right: isLibrary ? 0 : 4,
+                      ),
                       decoration: BoxDecoration(
                         color: isDone
                             ? Colors.green.withValues(alpha: 0.05)
@@ -707,6 +692,45 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         ],
                       ),
                       child: content,
+                    );
+
+                    if (isLibrary) return cardContainer;
+
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        cardContainer,
+                        Positioned(
+                          top: -3,
+                          right: -3,
+                          child: GestureDetector(
+                            onTap: handleRemove,
+                            child: Container(
+                              padding: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.redAccent,
+                                  width: 1.2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.1),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.remove,
+                                color: Colors.redAccent,
+                                size: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     );
                   }
 
