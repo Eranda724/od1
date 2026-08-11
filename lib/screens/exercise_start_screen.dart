@@ -884,7 +884,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _StatPill(
-                      icon: '🔥',
+                      iconWidget: Image.asset('assets/images/fire_3d.png', width: 24, height: 24),
                       label: 'day_streak_count'.tr(
                         args: [widget.streak.toString()],
                       ),
@@ -895,7 +895,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       color: PCColors.brown.withValues(alpha: 0.35),
                     ),
                     _StatPill(
-                      icon: '🏆',
+                      iconWidget: Image.asset('assets/images/trophy.png', width: 24, height: 24),
                       label: 'this_month_count'.tr(
                         args: [widget.monthlyTotal.toString()],
                       ),
@@ -1034,16 +1034,16 @@ class _TimerOption extends StatelessWidget {
 // Stat pill
 // ─────────────────────────────────────────────────────────────────────────────
 class _StatPill extends StatelessWidget {
-  final String icon;
+  final Widget iconWidget;
   final String label;
 
-  const _StatPill({required this.icon, required this.label});
+  const _StatPill({required this.iconWidget, required this.label});
 
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text(icon, style: const TextStyle(fontSize: 20)),
+      iconWidget,
       const SizedBox(width: _PCSpacing.sm),
       Text(label, style: _PCTextStyles.statLabel(context)),
     ],
