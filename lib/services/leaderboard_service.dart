@@ -115,12 +115,9 @@ class LeaderboardService {
   static Stream<List<LeaderboardEntry>> stream(LeaderboardPeriod period) {
     return _db
         .collection('users')
-        .orderBy(period.scoreField, descending: true)
-        .limit(50)
         .snapshots()
         .map((snap) {
-      final entries = <LeaderboardEntry>[];
-      int rank = 0;
+      final allEntries = <LeaderboardEntry>[];
       
       final now = DateTime.now();
       final dKey = localDailyKey(now);
@@ -128,7 +125,6 @@ class LeaderboardService {
       final mKey = localMonthKey(now);
 
       for (final doc in snap.docs) {
-        rank++;
         final data = doc.data();
         final scores = data['scores'] as Map<String, dynamic>? ?? {};
         
@@ -141,13 +137,15 @@ class LeaderboardService {
         final monthly = (mMap[mKey] as num?)?.toInt() ?? 0;
 
         final score = _scoreForPeriod(period, daily, weekly, monthly);
-        if (score == 0 && rank > 3) continue; // hide zero scorers below podium
+        // We only show users with a score > 0 on the leaderboard.
+        if (score == 0) continue; 
+        
         // Name resolution priority: displayName → username → email prefix → 'User'
         final name = _resolveName(data);
-        entries.add(LeaderboardEntry(
+        allEntries.add(LeaderboardEntry(
           uid: doc.id,
           displayName: name,
-          avatar: _avatarFor(rank),
+          avatar: '', // We'll assign this after sorting
           score: score,
           dailyScore: daily,
           weeklyScore: weekly,
@@ -155,7 +153,31 @@ class LeaderboardService {
           photoUrl: data['photoUrl'] as String?,
         ));
       }
-      return entries;
+
+      // Sort descending by score
+      allEntries.sort((a, b) => b.score.compareTo(a.score));
+
+      // Limit to top 50
+      final topEntries = allEntries.take(50).toList();
+
+      // Assign ranks and avatars
+      final rankedEntries = <LeaderboardEntry>[];
+      for (int i = 0; i < topEntries.length; i++) {
+        final entry = topEntries[i];
+        final rank = i + 1;
+        rankedEntries.add(LeaderboardEntry(
+          uid: entry.uid,
+          displayName: entry.displayName,
+          avatar: _avatarFor(rank),
+          score: entry.score,
+          dailyScore: entry.dailyScore,
+          weeklyScore: entry.weeklyScore,
+          monthlyScore: entry.monthlyScore,
+          photoUrl: entry.photoUrl,
+        ));
+      }
+
+      return rankedEntries;
     });
   }
 

@@ -34,8 +34,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     _tabController = TabController(length: _periods.length, vsync: this);
 
     _tabController.addListener(() {
-      if (_tabController.indexIsChanging) return;
-
       setState(() {
         _activePeriod = _periods[_tabController.index];
       });
@@ -143,7 +141,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             // RANKED LIST
             // ─────────────────────────────────────────────────────────────
             Expanded(
-              child: _buildList(context, entries, isLoading, snapshot.hasError),
+              child: _buildList(context, entries, isLoading, snapshot.hasError, snapshot.error),
             ),
           ],
         );
@@ -156,6 +154,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     List<LeaderboardEntry> entries,
     bool isLoading,
     bool hasError,
+    Object? error,
   ) {
     if (isLoading) {
       return const Center(
@@ -167,6 +166,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     }
 
     if (hasError) {
+      print('Leaderboard Stream Error: $error');
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -251,7 +251,6 @@ class _PodiumSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final has3 = entries.length >= 3;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -320,7 +319,7 @@ class _PodiumSection extends StatelessWidget {
                 child: CircularProgressIndicator(color: Color(0xFFFFC72C)),
               ),
             )
-          else if (!has3)
+          else if (entries.isEmpty)
             SizedBox(
               height: 200,
               child: Center(
@@ -356,13 +355,16 @@ class _PodiumSection extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // SECOND PLACE
-                  Expanded(
-                    child: _PodiumBar(
-                      rank: 2,
-                      entry: entries[1],
-                      period: period,
-                    ),
-                  ),
+                  if (entries.length >= 2)
+                    Expanded(
+                      child: _PodiumBar(
+                        rank: 2,
+                        entry: entries[1],
+                        period: period,
+                      ),
+                    )
+                  else
+                    const Expanded(child: SizedBox()),
 
                   const SizedBox(width: 10),
 
@@ -378,13 +380,16 @@ class _PodiumSection extends StatelessWidget {
                   const SizedBox(width: 10),
 
                   // THIRD PLACE
-                  Expanded(
-                    child: _PodiumBar(
-                      rank: 3,
-                      entry: entries[2],
-                      period: period,
-                    ),
-                  ),
+                  if (entries.length >= 3)
+                    Expanded(
+                      child: _PodiumBar(
+                        rank: 3,
+                        entry: entries[2],
+                        period: period,
+                      ),
+                    )
+                  else
+                    const Expanded(child: SizedBox()),
                 ],
               ),
             ),
