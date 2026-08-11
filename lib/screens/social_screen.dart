@@ -307,13 +307,15 @@ class _SocialScreenState extends State<SocialScreen> {
                           MaterialPageRoute(
                             builder: (context) => FriendProfileScreen(
                               friend: f,
-                              isFriend: false, // Not friends since they appeared in search
+                              isFriend:
+                                  false, // Not friends since they appeared in search
                             ),
                           ),
                         );
                       },
                       child: Container(
-                        color: Colors.transparent, // Ensure the whole row is clickable
+                        color: Colors
+                            .transparent, // Ensure the whole row is clickable
                         child: _UserSearchResultRow(
                           uid: userId,
                           name: user['display_name_resolved'] as String,
@@ -550,52 +552,75 @@ class _SocialScreenState extends State<SocialScreen> {
 
                                 // Name & Streak
                                 Expanded(
-                                  child: Column(
+                                  child: Row(
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        f.displayName,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.black,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            'consecutive_days'.tr(args: [f.overallStreak.toString()]),
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.w600,
-                                            ),
+                                      Flexible(
+                                        child: Text(
+                                          f.displayName,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w900,
+                                            color: context.textPrimary,
                                           ),
-                                        ],
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Image.asset(
+                                        'assets/images/fire_3d.png',
+                                        width: 18,
+                                        height: 18,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${f.overallStreak}',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                          fontWeight: FontWeight.w700,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
 
-                                // Yearly Streak
                                 Row(
                                   children: [
-                                    Image.asset(
-                                      'assets/images/fire_3d.png',
-                                      height: 14,
-                                      width: 14,
+                                    SizedBox(
+                                      width: 38,
+                                      height: 28,
+                                      child: Stack(
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          Positioned(
+                                            left: 0,
+                                            child: Image.asset(
+                                              'assets/images/fire_3d.png',
+                                              width: 28,
+                                              height: 28,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            left: 10,
+                                            child: Image.asset(
+                                              'assets/images/fire_3d.png',
+                                              width: 28,
+                                              height: 28,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      'streak_days_param'.tr(args: [f.yearlyActiveDays.toString()]),
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
+                                      '${f.sharedStreak}',
+                                      style: TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w800,
+                                        color: context.textPrimary,
                                       ),
                                     ),
                                   ],
@@ -657,33 +682,31 @@ class _UserSearchResultRow extends StatelessWidget {
 
         // Name & Subtitle
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.black,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Text('🔥', style: TextStyle(fontSize: 12)),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$streak ${streak <= 1 ? 'streak_day_unit'.tr() : 'streak_days_unit'.tr()}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w600,
-                    ),
+              Flexible(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    color: context.textPrimary,
                   ),
-                ],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Image.asset('assets/images/fire_3d.png', width: 18, height: 18),
+              const SizedBox(width: 4),
+              Text(
+                '$streak',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),

@@ -48,223 +48,228 @@ class FriendProfileScreen extends StatelessWidget {
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .doc(currentUid)
+            .doc(friend.uid)
             .snapshots(),
-        builder: (context, currentUserSnap) {
-          final currentUserData =
-              currentUserSnap.data?.data() as Map<String, dynamic>? ?? {};
-          final currentUserStreak =
-              (currentUserData['overallStreak'] ?? 0) as int;
+        builder: (context, userSnap) {
+          if (!userSnap.hasData) {
+            return const Center(
+              child: CircularProgressIndicator(color: PCColors.yellowDark),
+            );
+          }
+          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
-          return StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(friend.uid)
-                .snapshots(),
-            builder: (context, userSnap) {
-              if (!userSnap.hasData) {
-                return const Center(
-                  child: CircularProgressIndicator(color: PCColors.yellowDark),
-                );
-              }
-              final userData =
-                  userSnap.data?.data() as Map<String, dynamic>? ?? {};
-              final rawOverallStreak =
-                  (userData['overallStreak'] ?? friend.overallStreak) as int;
-              final rawFreezesAvailable =
-                  (userData['freezesAvailable'] ?? 2) as int;
-              final rawFrozenDates = List<String>.from(
-                userData['frozenDates'] ?? [],
-              );
-              final rawLastEvaluatedDate =
-                  userData['overallLastEvaluatedDate'] as String?;
+          final rawFreezesAvailable =
+              (userData['freezesAvailable'] ?? 2) as int;
+          final rawFrozenDates = List<String>.from(
+            userData['frozenDates'] ?? [],
+          );
+          final rawLastEvaluatedDate =
+              userData['overallLastEvaluatedDate'] as String?;
 
-              final effectiveData = StreakService.getEffectiveStreakData(
-                streak: rawOverallStreak,
-                freezesAvailable: rawFreezesAvailable,
-                frozenDates: rawFrozenDates,
-                lastEvaluatedDate: rawLastEvaluatedDate,
-              );
+          final effectiveData = StreakService.getEffectiveStreakData(
+            streak: friend.overallStreak,
+            freezesAvailable: rawFreezesAvailable,
+            frozenDates: rawFrozenDates,
+            lastEvaluatedDate: rawLastEvaluatedDate,
+          );
 
-              final overallStreak = effectiveData.streak;
-              final freezesAvailable = effectiveData.freezesAvailable;
-              final frozenDates = effectiveData.frozenDates.toSet();
+          final freezesAvailable = effectiveData.freezesAvailable;
+          final frozenDates = effectiveData.frozenDates.toSet();
 
-              final liveSharedStreak = math.min(
-                currentUserStreak,
-                overallStreak,
-              );
+          final overallStreak = friend.overallStreak;
+          final liveSharedStreak = friend.sharedStreak;
 
-              final activeDaysList = List<String>.from(
-                userData['activeDates'] ?? [],
-              );
-              final activeDays = activeDaysList.toSet();
+          final activeDaysList = List<String>.from(
+            userData['activeDates'] ?? [],
+          );
+          final activeDays = activeDaysList.toSet();
 
-              final bool doneToday = activeDays.contains(today);
-              int displayFreezes = freezesAvailable;
+          final bool doneToday = activeDays.contains(today);
+          int displayFreezes = freezesAvailable;
 
-              return SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // ── USER DETAILS ──
+                  Row(
                     children: [
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                          onPressed: () => Navigator.pop(context),
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: context.cardColor,
+                        backgroundImage: friend.photoUrl != null
+                            ? CachedNetworkImageProvider(friend.photoUrl!)
+                            : null,
+                        child: friend.photoUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 32,
+                                color: context.textPrimary,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Text(
+                          friend.displayName,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: context.textPrimary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      // ── USER DETAILS ──
                       Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 32,
-                          backgroundColor: context.cardColor,
-                          backgroundImage: friend.photoUrl != null
-                              ? CachedNetworkImageProvider(friend.photoUrl!)
-                              : null,
-                          child: friend.photoUrl == null
-                              ? Icon(
-                                  Icons.person,
-                                  size: 32,
-                                  color: context.textPrimary,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            friend.displayName,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Image.asset(
+                            'assets/images/fire_3d.png',
+                            width: 28,
+                            height: 28,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$overallStreak',
                             style: TextStyle(
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w900,
                               color: context.textPrimary,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/fire_3d.png',
-                              width: 24,
-                              height: 24,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '$overallStreak',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                color: context.textPrimary,
-                              ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  StreamBuilder<DocumentSnapshot>(
+                    stream: FirebaseFirestore.instance
+                        .collection('friendPairs')
+                        .doc(pairId)
+                        .snapshots(),
+                    builder: (context, pairSnap) {
+                      final actuallyFriends =
+                          pairSnap.hasData && pairSnap.data!.exists;
+
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: context.cardColor,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-
-                    StreamBuilder<DocumentSnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('friendPairs')
-                          .doc(pairId)
-                          .snapshots(),
-                      builder: (context, pairSnap) {
-                        final actuallyFriends =
-                            pairSnap.hasData && pairSnap.data!.exists;
-
-                        return Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: context.cardColor,
-                            borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // TOP YELLOW TIER (Personal Streak)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.only(
+                                left: 24,
+                                top: 24,
+                                right: 16,
+                                bottom: 24,
                               ),
-                            ],
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // TOP YELLOW TIER (Personal Streak)
-                              Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.only(
-                                  left: 24,
-                                  top: 24,
-                                  right: 16,
-                                  bottom: 24,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFffc226),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(24),
+                                  topRight: Radius.circular(24),
                                 ),
-                                decoration: const BoxDecoration(
-                                  color: PCColors.yellow,
-                                  borderRadius: BorderRadius.only(
-                                    topLeft: Radius.circular(24),
-                                    topRight: Radius.circular(24),
-                                  ),
-                                ),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              'personal_streak_title'
-                                                  .tr()
-                                                  .toUpperCase(),
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w800,
-                                                color: const Color(
-                                                  0xFF5A3D00,
-                                                ).withValues(alpha: 0.8),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 2.0, left: 6.0),
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                'FRIEND STREAK',
+                                                style: const TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: Color(0xFF5A3D00),
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(height: 12),
-                                            Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                const SizedBox(width: 20),
-                                                Transform.translate(
-                                                  offset: const Offset(0, -30),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          right: 12.0,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              Transform.translate(
+                                                offset: const Offset(0, -4),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        left: 4.0,
+                                                      ),
+                                                  child: SizedBox(
+                                                    width: 74,
+                                                    height: 60,
+                                                    child: Stack(
+                                                      clipBehavior: Clip.none,
+                                                      children: [
+                                                        Positioned(
+                                                          left: 0,
+                                                          child: Image.asset(
+                                                            'assets/images/fire_3d.png',
+                                                            width: 60,
+                                                            height: 60,
+                                                          ),
                                                         ),
-                                                    child: Image.asset(
-                                                      'assets/images/fire_3d.png',
-                                                      width: 48,
-                                                      height: 48,
+                                                        Positioned(
+                                                          left: 14,
+                                                          child: Image.asset(
+                                                            'assets/images/fire_3d.png',
+                                                            width: 60,
+                                                            height: 60,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                 ),
-                                                Transform.translate(
-                                                  offset: const Offset(0, -30),
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      Text(
-                                                        '$overallStreak',
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Flexible(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  children: [
+                                                    FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      child: Text(
+                                                        '$liveSharedStreak',
                                                         style: const TextStyle(
-                                                          fontSize: 48,
+                                                          fontSize: 60,
                                                           fontWeight:
                                                               FontWeight.w900,
                                                           color: Color(
@@ -273,132 +278,130 @@ class FriendProfileScreen extends StatelessWidget {
                                                           height: 1.0,
                                                         ),
                                                       ),
-                                                      const SizedBox(height: 2),
-                                                      Text(
-                                                        'streak_days_label'
-                                                            .tr(),
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w800,
-                                                          color: Color(
-                                                            0xFF5A3D00,
-                                                          ),
-                                                          height: 1.0,
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    const Text(
+                                                      'DAYS',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color: Color(
+                                                          0xFF5A3D00,
                                                         ),
+                                                        height: 1.0,
                                                       ),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Transform.translate(
-                                        offset: const Offset(0, -10),
-                                        child: Image.asset(
-                                          'assets/images/login.png',
-                                          height: 120,
-                                          fit: BoxFit.contain,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // MIDDLE SECTION (Weekly Activity)
-                              Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: last7.map((day) {
-                                    final isActive = activeDays.contains(day);
-                                    final isToday = day == today;
-                                    bool isFrozen = frozenDates.contains(day);
-
-                                    return _DayDot(
-                                      label: _shortDay(context, day),
-                                      active: isActive,
-                                      isFrozen: isFrozen,
-                                      isToday: isToday,
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-
-                              // BOTTOM SECTION (Together Streak)
-                              if (actuallyFriends) ...[
-                                const Divider(
-                                  color: Colors.black12,
-                                  thickness: 1,
-                                  height: 1,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(24),
-                                  child: Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Image.asset(
-                                            'assets/images/handshake.png',
-                                            width: 30,
-                                            height: 30,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'shared_streak_header'
-                                                .tr()
-                                                .toUpperCase(),
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w900,
-                                              color: PCColors.brownDark,
-                                              letterSpacing: 1.4,
-                                            ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'shared_streak_sentence'.tr(
-                                          args: [
-                                            friend.displayName,
-                                            '$liveSharedStreak',
-                                          ],
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.textPrimary,
-                                          height: 1.4,
+                                    ),
+                                      Transform.translate(
+                                        offset: const Offset(8, -8),
+                                        child: Image.asset(
+                                          'assets/images/login.png',
+                                          height: 160,
+                                          fit: BoxFit.contain,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                              ),
 
-                    const SizedBox(height: 32),
-                    _FriendshipActionButtons(
-                      currentUid: currentUid,
-                      friend: friend,
-                      pairId: pairId,
-                    ),
-                  ],
-                ),
-              ));
-            },
+                            // MIDDLE SECTION (Weekly Activity)
+                            Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: last7.map((day) {
+                                  final isActive = activeDays.contains(day);
+                                  final isToday = day == today;
+                                  bool isFrozen = frozenDates.contains(day);
+
+                                  return _DayDot(
+                                    label: _shortDay(context, day),
+                                    active: isActive,
+                                    isFrozen: isFrozen,
+                                    isToday: isToday,
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
+                            // BOTTOM SECTION (Together Streak)
+                            if (actuallyFriends) ...[
+                              const Divider(
+                                color: Colors.black12,
+                                thickness: 1,
+                                height: 1,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Image.asset(
+                                          'assets/images/handshake.png',
+                                          width: 30,
+                                          height: 30,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'shared_streak_header'
+                                              .tr()
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w900,
+                                            color: PCColors.brownDark,
+                                            letterSpacing: 1.4,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'shared_streak_sentence'.tr(
+                                        args: [
+                                          friend.displayName,
+                                          '$liveSharedStreak',
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: context.textPrimary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 32),
+                  _FriendshipActionButtons(
+                    currentUid: currentUid,
+                    friend: friend,
+                    pairId: pairId,
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -660,7 +663,8 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                             if (currentUser != null) {
                               await FriendsService.instance.sendFriendRequest(
                                 fromUid: currentUser.uid,
-                                fromName: currentUser.displayName ?? 'a_user'.tr(),
+                                fromName:
+                                    currentUser.displayName ?? 'a_user'.tr(),
                                 toUsername: widget.friend.displayName,
                               );
                               if (context.mounted) {

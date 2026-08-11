@@ -134,7 +134,19 @@ class FriendsService {
       final List<FriendInfo> friends = [];
       
       final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-      final currentUserStreak = (currentUserDoc.data()?['overallStreak'] ?? 0) as int;
+      final cData = currentUserDoc.data() ?? {};
+      final cRawStreak = (cData['overallStreak'] ?? 0) as int;
+      final cRawFreezes = (cData['freezesAvailable'] ?? 2) as int;
+      final cRawFrozen = List<String>.from(cData['frozenDates'] ?? []);
+      final cRawLastDate = cData['overallLastEvaluatedDate'] as String?;
+
+      final cEffective = StreakService.getEffectiveStreakData(
+        streak: cRawStreak,
+        freezesAvailable: cRawFreezes,
+        frozenDates: cRawFrozen,
+        lastEvaluatedDate: cRawLastDate,
+      );
+      final currentUserStreak = cEffective.streak;
       final today = _todayKey();
 
       final friendUids = <String>[];
