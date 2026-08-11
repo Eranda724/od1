@@ -85,7 +85,10 @@ class _StreakScreenState extends State<StreakScreen>
           );
         }
         if (!userSnap.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            key: ValueKey('userSnap_loading'),
+            child: CircularProgressIndicator(),
+          );
         }
 
         final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
@@ -94,6 +97,7 @@ class _StreakScreenState extends State<StreakScreen>
         final freezesAvailable = (data['freezesAvailable'] ?? 2) as int;
         final activeDates = List<String>.from(data['activeDates'] ?? []);
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
+        final nextFreezeRechargeDate = data['nextFreezeRechargeDate'] as String?;
         final today = _todayKey();
 
         // Earliest active date = first day the user ever logged an exercise
@@ -115,6 +119,12 @@ class _StreakScreenState extends State<StreakScreen>
                 ),
               );
             }
+            if (!userExSnap.hasData) {
+              return const Center(
+                key: ValueKey('userExSnap_loading'),
+                child: CircularProgressIndicator(),
+              );
+            }
             final exercisesMap = <String, dynamic>{};
             if (userExSnap.hasData) {
               for (final doc in userExSnap.data!.docs) {
@@ -132,6 +142,12 @@ class _StreakScreenState extends State<StreakScreen>
                     child: Text(
                       'error_loading'.tr(args: [exSnap.error.toString()]),
                     ),
+                  );
+                }
+                if (!exSnap.hasData) {
+                  return const Center(
+                    key: ValueKey('exSnap_loading'),
+                    child: CircularProgressIndicator(),
                   );
                 }
                 final defs = <String, ExerciseItem>{};
@@ -212,6 +228,7 @@ class _StreakScreenState extends State<StreakScreen>
                       totalRoutine: totalRoutine,
                       completedRoutine: completedRoutine,
                       userStartDate: userStartDate,
+                      nextFreezeRechargeDate: nextFreezeRechargeDate,
                     ),
 
                     const SizedBox(
@@ -228,7 +245,8 @@ class _StreakScreenState extends State<StreakScreen>
                               borderRadius: BorderRadius.circular(28),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: PCColors.yellowDark, // Darker yellow for 3D effect
+                                  color: PCColors
+                                      .yellowDark, // Darker yellow for 3D effect
                                   offset: const Offset(0, 5),
                                   blurRadius: 0,
                                 ),
@@ -245,14 +263,23 @@ class _StreakScreenState extends State<StreakScreen>
                                   final targetId = todoExercises.first;
                                   final targetDef = defs[targetId];
                                   if (targetDef != null) {
-                                    final targetExData = Map<String, dynamic>.from(exercisesMap[targetId] ?? {});
-                                    final targetStreak = targetExData['currentStreak'] ?? 0;
-                                    final targetMonthlyTotal = targetExData['monthlyTotal'] ?? 0;
-                                    
+                                    final targetExData =
+                                        Map<String, dynamic>.from(
+                                          exercisesMap[targetId] ?? {},
+                                        );
+                                    final targetStreak =
+                                        targetExData['currentStreak'] ?? 0;
+                                    final targetMonthlyTotal =
+                                        targetExData['monthlyTotal'] ?? 0;
+
                                     List<SessionItem> queue = [];
                                     int totalTodos = todoExercises.length;
-                                    
-                                    for (int i = 1; i < todoExercises.length; i++) {
+
+                                    for (
+                                      int i = 1;
+                                      i < todoExercises.length;
+                                      i++
+                                    ) {
                                       final nextId = todoExercises[i];
                                       final nEx = Map<String, dynamic>.from(
                                         exercisesMap[nextId] ?? {},
@@ -262,11 +289,15 @@ class _StreakScreenState extends State<StreakScreen>
                                         SessionItem(
                                           exerciseId: nextId,
                                           exerciseName: nDef?.name ?? nextId,
-                                          description: (nDef?.description?.isNotEmpty == true)
+                                          description:
+                                              (nDef?.description?.isNotEmpty ==
+                                                  true)
                                               ? nDef!.description
-                                              : 'default_exercise_description'.tr(),
+                                              : 'default_exercise_description'
+                                                    .tr(),
                                           streak: nEx['currentStreak'] ?? 0,
-                                          monthlyTotal: nEx['monthlyTotal'] ?? 0,
+                                          monthlyTotal:
+                                              nEx['monthlyTotal'] ?? 0,
                                           defaultReps: nDef?.defaultReps ?? 0,
                                           defaultTimer: nDef?.defaultTimer ?? 0,
                                           unit: nDef?.unit ?? 'reps',
@@ -274,16 +305,21 @@ class _StreakScreenState extends State<StreakScreen>
                                         ),
                                       );
                                     }
-                                    
+
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => ExerciseStartScreen(
                                           exerciseId: targetId,
                                           exerciseName: targetDef.name,
-                                          description: (targetDef.description?.isNotEmpty == true)
+                                          description:
+                                              (targetDef
+                                                      .description
+                                                      ?.isNotEmpty ==
+                                                  true)
                                               ? targetDef.description
-                                              : 'default_exercise_description'.tr(),
+                                              : 'default_exercise_description'
+                                                    .tr(),
                                           streak: targetStreak,
                                           monthlyTotal: targetMonthlyTotal,
                                           defaultReps: targetDef.defaultReps,
@@ -458,6 +494,7 @@ class _OverallStreakCard extends StatefulWidget {
   final int totalRoutine;
   final int completedRoutine;
   final String? userStartDate;
+  final String? nextFreezeRechargeDate;
 
   const _OverallStreakCard({
     super.key,
@@ -470,6 +507,7 @@ class _OverallStreakCard extends StatefulWidget {
     required this.totalRoutine,
     required this.completedRoutine,
     this.userStartDate,
+    this.nextFreezeRechargeDate,
   });
 
   @override
@@ -510,6 +548,20 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
     final bottomColor = isDark
         ? (Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor)
         : Colors.white;
+
+    String? countdownText;
+    if (displayFreezes < 2 && widget.nextFreezeRechargeDate != null) {
+      try {
+        final rechargeDate = DateTime.parse(widget.nextFreezeRechargeDate!);
+        final todayObj = DateTime.parse(widget.today);
+        final diff = rechargeDate.difference(todayObj).inDays;
+        if (diff > 0) {
+          countdownText = 'Next freeze in $diff days';
+        } else if (diff == 0) {
+          countdownText = 'Next freeze tomorrow';
+        }
+      } catch (_) {}
+    }
 
     return Column(
       children: [
@@ -554,13 +606,16 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(top: 6.0, left: 6.0),
-                            child: Text(
-                              'personal_streak_title'.tr().toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF5A3D00),
+                            padding: const EdgeInsets.only(top: 2.0, left: 6.0),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'personal_streak_title'.tr().toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w900,
+                                  color: Color(0xFF5A3D00),
+                                ),
                               ),
                             ),
                           ),
@@ -569,46 +624,49 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Transform.translate(
-                                offset: const Offset(0, -8),
+                                offset: const Offset(0, -4),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    right: 12.0,
-                                    left: 14.0,
-                                  ),
+                                  padding: const EdgeInsets.only(left: 4.0),
                                   child: Image.asset(
                                     'assets/images/fire_3d.png',
-                                    width: 56,
-                                    height: 56,
+                                    width: 60,
+                                    height: 60,
                                   ),
                                 ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    widget.overallStreak.toString(),
-                                    style: const TextStyle(
-                                      fontSize: 48,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF332200),
-                                      height: 1.0,
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        widget.overallStreak.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 60,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF332200),
+                                          height: 1.0,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    ('days_label'.tr() == 'days_label'
-                                            ? 'JOURS'
-                                            : 'days_label'.tr())
-                                        .toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                      color: Color(0xFF5A3D00),
-                                      height: 1.0,
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      ('days_label'.tr() == 'days_label'
+                                              ? 'JOURS'
+                                              : 'days_label'.tr())
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF5A3D00),
+                                        height: 1.0,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -617,7 +675,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     ),
                     // Right Column: Mascot
                     Transform.translate(
-                      offset: const Offset(0, -10),
+                      offset: const Offset(8, -8),
                       child: Image.asset(
                         'assets/images/potato_home_screen.png',
                         height: 120,
@@ -718,6 +776,17 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                                         : Colors.blueAccent,
                                   ),
                                 ),
+                                if (countdownText != null)
+                                  Text(
+                                    countdownText,
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.orangeAccent.shade200
+                                          : Colors.orangeAccent.shade700,
+                                    ),
+                                  ),
                               ],
                             ),
                           ],
@@ -738,89 +807,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Mini Week Row for individual exercise cards
-// ─────────────────────────────────────────────────────────────────────────────
-class _MiniWeekRow extends StatelessWidget {
-  final List<String> activeDates;
-  final List<String> frozenDates;
-  final int freezesAvailable;
-  final int streak;
-
-  const _MiniWeekRow({
-    required this.activeDates,
-    required this.frozenDates,
-    required this.freezesAvailable,
-    required this.streak,
-  });
-
-  String _dateKey(DateTime d) {
-    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final days = List.generate(7, (i) => today.subtract(Duration(days: 6 - i)));
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: days.map((date) {
-        final key = _dateKey(date);
-        final isActive = activeDates.contains(key);
-        bool isFrozen = frozenDates.contains(key);
-
-        if (isActive) {
-          return SizedBox(
-            width: 34,
-            height: 34,
-            child: Center(
-              child: Image.asset(
-                'assets/images/fire_3d.png',
-                width: 28,
-                height: 28,
-              ),
-            ),
-          );
-        }
-
-        if (isFrozen) {
-          return SizedBox(
-            width: 34,
-            height: 34,
-            child: Center(
-              child: Transform.translate(
-                offset: const Offset(0, 6), // move below slightly
-                child: OverflowBox(
-                  maxWidth: 80,
-                  maxHeight: 80,
-                  child: Image.asset(
-                    'assets/images/ice_cube_3d.png',
-                    width: 36,
-                    height: 46,
-                    fit: BoxFit.fill,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
-
-        return Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white12
-                : Colors.black.withValues(alpha: 0.06),
-          ),
-        );
-      }).toList(),
     );
   }
 }
@@ -854,8 +840,8 @@ class _ExerciseStreakCard extends StatelessWidget {
     int displayFreezes = freezesAvailable;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -870,38 +856,39 @@ class _ExerciseStreakCard extends StatelessWidget {
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ExerciseThumbnail(
-                def: def,
-                width: 44,
-                height: 44,
-                iconSize: 24,
-              ),
-              const SizedBox(width: 12),
+              ExerciseThumbnail(def: def, width: 56, height: 56, iconSize: 30),
+              const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      def.name,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.onSurface,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        def.name,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'total_streak_lifetime'.tr(
-                        args: [lifetime.toString(), def.unit],
+                      const SizedBox(height: 2),
+                      Text(
+                        'total_streak_lifetime'.tr(
+                          args: [lifetime.toString(), def.unit],
+                        ),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               Column(
@@ -921,12 +908,14 @@ class _ExerciseStreakCard extends StatelessWidget {
                         : '${'days_unit'.tr()} streak',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   if (freezesAvailable > 0) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 2),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -968,10 +957,11 @@ class _ExerciseStreakCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          _MiniWeekRow(
+          const SizedBox(height: 8),
+          WeekStreakRow(
             activeDates: activeDates,
             frozenDates: frozenDates,
+            today: DateTime.now(),
             freezesAvailable: freezesAvailable,
             streak: streak,
           ),
