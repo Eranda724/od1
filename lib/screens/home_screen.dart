@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 5, vsync: this, initialIndex: 2);
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });
@@ -125,16 +125,16 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         items: [
           BottomNavigationBarItem(
-            icon: const Icon(Icons.local_fire_department_rounded),
-            label: 'streaks_tab'.tr(),
+            icon: const Icon(Icons.person_rounded),
+            label: 'profile_menu'.tr(),
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.fitness_center_rounded),
             label: 'exercise_tab'.tr(),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.leaderboard_rounded),
-            label: 'rankings_tab'.tr(),
+            icon: const Icon(Icons.local_fire_department_rounded),
+            label: 'streaks_tab'.tr(),
           ),
           BottomNavigationBarItem(
             label: 'social_tab'.tr(),
@@ -158,24 +158,24 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.person_rounded),
-            label: 'profile_menu'.tr(),
+            icon: const Icon(Icons.leaderboard_rounded),
+            label: 'rankings_tab'.tr(),
           ),
         ],
       ),
       body: TabBarView(
         controller: _tabController,
         children: [
+          const ProfileScreen(isTab: true),
+          ExerciseScreen(user: user),
           StreakScreen(
             tabController: _tabController,
             onStartRoutine: () {
               _tabController.animateTo(1);
             },
           ),
-          ExerciseScreen(user: user),
-          LeaderboardScreen(currentUid: user?.uid),
           const SocialScreen(),
-          const ProfileScreen(isTab: true),
+          LeaderboardScreen(currentUid: user?.uid),
         ],
       ),
     );
