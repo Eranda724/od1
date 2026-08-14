@@ -45,7 +45,15 @@ class WeekStreakRow extends StatelessWidget {
     final isToday = _isSameDay(date, today);
     bool isFrozen = frozenDates.contains(key);
 
-    final dayNames = ['mon'.tr(), 'tue'.tr(), 'wed'.tr(), 'thu'.tr(), 'fri'.tr(), 'sat'.tr(), 'sun'.tr()];
+    final dayNames = [
+      'mon'.tr(),
+      'tue'.tr(),
+      'wed'.tr(),
+      'thu'.tr(),
+      'fri'.tr(),
+      'sat'.tr(),
+      'sun'.tr(),
+    ];
     final dayLabel = dayNames[date.weekday - 1];
 
     return Column(
@@ -58,7 +66,7 @@ class WeekStreakRow extends StatelessWidget {
           style: TextStyle(
             color: isToday ? PCColors.yellow : context.textSecondary,
             fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-            fontSize: 13,
+            fontSize: 11,
           ),
         ),
       ],
@@ -66,8 +74,8 @@ class WeekStreakRow extends StatelessWidget {
   }
 
   Widget _buildIcon({required bool isActive, required bool isFrozen}) {
-    const circleSize = 38.0;
-    const boxHeight = 48.0; // Uniform vertical bounding box to align day labels
+    const circleSize = 28.0;
+    const boxHeight = 36.0; // Uniform vertical bounding box to align day labels
 
     if (isActive) {
       return SizedBox(
@@ -79,8 +87,8 @@ class WeekStreakRow extends StatelessWidget {
           child: Center(
             child: Image.asset(
               'assets/images/fire_3d.png',
-              width: 30,
-              height: 30,
+              width: 28,
+              height: 28,
             ),
           ),
         ),
@@ -96,11 +104,11 @@ class WeekStreakRow extends StatelessWidget {
           maxHeight: 100, // Allow vertical visual bleed
           child: Center(
             child: Transform.translate(
-              offset: const Offset(0, 6), // Shift down slightly
+              offset: const Offset(0, 5), // Shift down slightly
               child: Image.asset(
                 'assets/images/ice_cube_3d.png',
-                height: 60,
-                width: 46,
+                height: 46,
+                width: 36,
                 fit: BoxFit.fill,
               ),
             ),

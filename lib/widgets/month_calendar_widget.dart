@@ -108,20 +108,20 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                   offset: const Offset(0, -4),
                   child: Image.asset(
                     'assets/images/fire_3d.png',
-                    width: 34,
-                    height: 34,
+                    width: 28,
+                    height: 28,
                   ),
                 ),
               if (isFrozen)
                 Transform.translate(
-                  offset: const Offset(0, 4),
+                  offset: const Offset(0, 5),
                   child: OverflowBox(
                     maxWidth: 60,
                     maxHeight: 60,
                     child: Image.asset(
                       'assets/images/ice_cube_3d.png',
-                      width: 46,
-                      height: 60,
+                      width: 36,
+                      height: 46,
                       fit: BoxFit.fill,
                     ),
                   ),
@@ -156,8 +156,8 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
               offset: const Offset(0, -4), // Move fire emoji slightly up
               child: Image.asset(
                 'assets/images/fire_3d.png',
-                width: 34,
-                height: 34,
+                width: 28,
+                height: 28,
               ),
             ),
             // Date number on top (shifted slightly down towards the fire's base)
@@ -186,14 +186,14 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           alignment: Alignment.center,
           children: [
             Transform.translate(
-              offset: const Offset(0, 4), // Center the ice cube emoji
+              offset: const Offset(0, 5), // Center the ice cube emoji
               child: OverflowBox(
                 maxWidth: 60,
                 maxHeight: 60,
                 child: Image.asset(
                   'assets/images/ice_cube_3d.png',
-                  width: 46,
-                  height: 60,
+                  width: 36,
+                  height: 46,
                   fit: BoxFit.fill,
                 ),
               ), // Same size as fire, full opacity

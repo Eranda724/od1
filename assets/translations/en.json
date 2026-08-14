@@ -357,7 +357,7 @@
     "good_night":  "Good Night",
     "todays_routine_title":  "Today\u0027s Routine",
     "tap_to_finish_routine":  "Tap to finish your daily routine",
-    "routine_completed_today":  "Routine Completed for Today! 🎉",
+    "routine_completed_today":  "Routine Completed for Today!",
     "choose_first_exercise":  "Choose your first 60-second exercise below. Add more anytime!",
     "no_exercises_started_yet":  "You haven\u0027t started any exercises yet.",
     "admin_appearance":  "Appearance",
@@ -423,5 +423,6 @@
     "admin_celebration_assets_desc":  "Add images to be shown on the celebration screen. They should be general and not contain exercise names. If none are enabled, default app assets will be used.",
     "enabled_label":  "Enabled",
     "default_gradient_label":  "Default Gradient",
-    "enter_tip_text_hint":  "Enter tip text..."
+    "enter_tip_text_hint":  "Enter tip text...",
+    "start_again":  "Start Again"
 }

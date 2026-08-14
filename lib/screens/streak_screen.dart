@@ -97,7 +97,8 @@ class _StreakScreenState extends State<StreakScreen>
         final freezesAvailable = (data['freezesAvailable'] ?? 2) as int;
         final activeDates = List<String>.from(data['activeDates'] ?? []);
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
-        final nextFreezeRechargeDate = data['nextFreezeRechargeDate'] as String?;
+        final nextFreezeRechargeDate =
+            data['nextFreezeRechargeDate'] as String?;
         final today = _todayKey();
 
         // Earliest active date = first day the user ever logged an exercise
@@ -240,20 +241,14 @@ class _StreakScreenState extends State<StreakScreen>
                         builder: (context) {
                           return Container(
                             width: double.infinity,
-                            height: 56,
+                            height: 48,
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
+                              borderRadius: BorderRadius.circular(20),
                               boxShadow: const [
                                 BoxShadow(
-                                  color: PCColors
-                                      .yellowDark, // Darker yellow for 3D effect
-                                  offset: const Offset(0, 5),
+                                  color: Color(0xFF3D8B5D),
+                                  offset: Offset(0, 4),
                                   blurRadius: 0,
-                                ),
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  offset: Offset(0, 8),
-                                  blurRadius: 6,
                                 ),
                               ],
                             ),
@@ -338,29 +333,20 @@ class _StreakScreenState extends State<StreakScreen>
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: PCColors.yellow,
-                                foregroundColor: Colors.black,
+                                backgroundColor: const Color(0xFF55AB78),
+                                foregroundColor: Colors.white,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
+                                  borderRadius: BorderRadius.circular(20),
                                 ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.play_arrow_rounded,
-                                    size: 28,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'start_my_routine'.tr().toUpperCase(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                'start_my_routine'.tr().toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
                             ),
                           );
@@ -581,14 +567,13 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. STREAK HERO CARD (Top Yellow Box - approx 2/3 of visual height)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.only(
-                  left: 24,
-                  top: 24,
+                  left: 16,
+                  top: 20,
                   right: 16,
-                  bottom: 24,
+                  bottom: 20,
                 ),
                 decoration: const BoxDecoration(
                   color: Color(0xFFffc226),
@@ -600,44 +585,43 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left Column: Streak Info
+                    // Left Column: Streak Info (aligned to bottom)
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(top: 2.0, left: 6.0),
+                            padding: const EdgeInsets.only(left: 6.0, top: 3),
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
                                 'personal_streak_title'.tr().toUpperCase(),
                                 style: const TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 32,
                                   fontWeight: FontWeight.w900,
                                   color: Color(0xFF5A3D00),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 42),
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Transform.translate(
-                                offset: const Offset(0, -4),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 4.0),
-                                  child: Image.asset(
-                                    'assets/images/fire_3d.png',
-                                    width: 60,
-                                    height: 60,
-                                  ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 16.0),
+                                child: Image.asset(
+                                  'assets/images/fire_3d.png',
+                                  width: 62,
+                                  height: 62,
                                 ),
                               ),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     FittedBox(
@@ -645,21 +629,20 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                                       child: Text(
                                         widget.overallStreak.toString(),
                                         style: const TextStyle(
-                                          fontSize: 60,
+                                          fontSize: 52,
                                           fontWeight: FontWeight.w900,
                                           color: Color(0xFF332200),
                                           height: 1.0,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
                                     Text(
                                       ('days_label'.tr() == 'days_label'
                                               ? 'JOURS'
                                               : 'days_label'.tr())
                                           .toUpperCase(),
                                       style: const TextStyle(
-                                        fontSize: 16,
+                                        fontSize: 24,
                                         fontWeight: FontWeight.w900,
                                         color: Color(0xFF5A3D00),
                                         height: 1.0,
@@ -678,7 +661,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                       offset: const Offset(8, -8),
                       child: Image.asset(
                         'assets/images/potato_home_screen.png',
-                        height: 120,
+                        height: 170,
                         fit: BoxFit.contain,
                       ),
                     ),

@@ -655,6 +655,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       ScaffoldMessenger.of(context).clearSnackBars();
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
+                          duration: const Duration(seconds: 3),
                           content: Text('exercise_removed'.tr()),
                           action: SnackBarAction(
                             label: 'undo'.tr(),
@@ -856,29 +857,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ),
                                       child: Column(
                                         children: [
-                                          Builder(
-                                            builder: (context) {
-                                              final hour = DateTime.now().hour;
-                                              String greeting = 'Good Morning';
-                                              if (hour >= 12 && hour < 17) {
-                                                greeting = 'Good Afternoon';
-                                              } else if (hour >= 17 &&
-                                                  hour < 21) {
-                                                greeting = 'Good Evening';
-                                              } else if (hour >= 21 ||
-                                                  hour < 5) {
-                                                greeting = 'Good Night';
-                                              }
-                                              return Text(
-                                                greeting,
-                                                style: const TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey,
-                                                ),
-                                              );
-                                            },
-                                          ),
                                           const SizedBox(height: 4),
                                           Text(
                                             'todays_routine_title'.tr(),
@@ -987,6 +965,108 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         color: Colors.grey,
                                       ),
                                       textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+
+                              // Routine Completed card (all done today)
+                              if (todoExercises.isEmpty && doneExercises.isNotEmpty)
+                                Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 400,
+                                    ),
+                                    child: Container(
+                                      margin: const EdgeInsets.only(
+                                        top: 12,
+                                        bottom: 0,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                        horizontal: 16,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Theme.of(context).cardColor
+                                            : const Color(0xFFF6F0E7),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            'routine_completed_today'.tr(),
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          Container(
+                                            width: double.infinity,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: Color(0xFF3D8B5D),
+                                                  offset: Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                if (doneExercises.isNotEmpty) {
+                                                  final targetId =
+                                                      doneExercises.first;
+                                                  final def =
+                                                      exerciseDefs[targetId];
+                                                  final exData =
+                                                      Map<String, dynamic>.from(
+                                                        exercises[targetId] ??
+                                                            {},
+                                                      );
+                                                  if (def != null) {
+                                                    startExercise(
+                                                      targetId,
+                                                      true,
+                                                      def.name,
+                                                      def,
+                                                      exData['currentStreak'] ??
+                                                          0,
+                                                      exData['monthlyTotal'] ??
+                                                          0,
+                                                      def.unit,
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(
+                                                  0xFF55AB78,
+                                                ),
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'start_again'.tr().toUpperCase(),
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 1.2,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
