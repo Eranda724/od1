@@ -382,7 +382,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         height: 36,
                                         width: double.infinity,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFD6A000),
+                                          color: PCColors.greenDark,
                                           borderRadius: BorderRadius.circular(
                                             8,
                                           ),
@@ -401,10 +401,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             unit,
                                           ),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: const Color(
-                                              0xFFFFC72C,
-                                            ),
-                                            foregroundColor: Colors.black,
+                                            backgroundColor: PCColors.green,
+                                            foregroundColor: Colors.white,
                                             elevation: 6,
                                             shadowColor: Colors.black
                                                 .withValues(alpha: 0.4),
@@ -444,23 +442,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             Positioned(
                               top: 4,
                               right: 4,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.white70,
-                                  shape: BoxShape.circle,
+                              child: GestureDetector(
+                                onTap: () => _removeExerciseFromRoutine(
+                                  id,
+                                  idsToShow,
+                                  exerciseDefs,
                                 ),
-                                child: IconButton(
-                                  icon: const Icon(
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white70,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
                                     Icons.close,
                                     color: Colors.black54,
-                                    size: 18,
-                                  ),
-                                  padding: const EdgeInsets.all(4),
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () => _removeExerciseFromRoutine(
-                                    id,
-                                    idsToShow,
-                                    exerciseDefs,
+                                    size: 14,
                                   ),
                                 ),
                               ),
@@ -705,12 +702,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           child: GestureDetector(
                             onTap: handleRemove,
                             child: Container(
-                              padding: const EdgeInsets.all(1),
+                              padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
                                 color: Theme.of(context).cardColor,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.redAccent,
+                                  color: Colors.grey,
                                   width: 1.2,
                                 ),
                                 boxShadow: [
@@ -722,9 +719,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ],
                               ),
                               child: const Icon(
-                                Icons.remove,
-                                color: Colors.redAccent,
-                                size: 12,
+                                Icons.close,
+                                color: Colors.grey,
+                                size: 10,
                               ),
                             ),
                           ),
