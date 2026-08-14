@@ -211,7 +211,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                   // ── Unified 3-Column Stats Card ───────────────────────────
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 20,
+                      vertical: 12,
                       horizontal: 8,
                     ),
                     decoration: BoxDecoration(
@@ -232,18 +232,22 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                     child: IntrinsicHeight(
                       child: Row(
                         children: [
-                          // 1. Overall Day Streak (Left Box)
+                          // 1. Overall Day Streak
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  'assets/images/fire_3d.png',
-                                  height: 28,
-                                  width: 28,
-                                  fit: BoxFit.contain,
+                                SizedBox(
+                                  height: 24,
+                                  child: Center(
+                                    child: Image.asset(
+                                      'assets/images/fire_3d.png',
+                                      height: 20,
+                                      width: 20,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
                                 Text(
                                   '${widget.overallStreak > 0 ? widget.overallStreak : widget.dayStreak}',
                                   style: TextStyle(
@@ -254,11 +258,11 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'days_streak_text'.tr(),
+                                  'streak_days_label'.tr().toUpperCase(),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: context.textSecondary,
                                   ),
                                 ),
@@ -271,20 +275,27 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                             indent: 6,
                             endIndent: 6,
                           ),
-                          // 2. Individual Exercise Streak (Middle Box)
+                          // 2. Today's Reps
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  'assets/images/dumbell.png',
-                                  height: 28,
-                                  width: 28,
-                                  fit: BoxFit.contain,
+                                SizedBox(
+                                  height: 24,
+                                  child: Center(
+                                    child: Text(
+                                      'today_text'.tr().toUpperCase(),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.textSecondary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
                                 Text(
-                                  '${widget.dayStreak}',
+                                  '${widget.todayReps}',
                                   style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w900,
@@ -293,15 +304,13 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'exercise_streak_sub'.tr(
-                                    args: [widget.exerciseName],
-                                  ),
+                                  widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time'
+                                      ? 'seconds_count'.tr(args: ['']).trim().toUpperCase()
+                                      : 'repetitions'.tr().toUpperCase(),
                                   textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: context.textSecondary,
                                   ),
                                 ),
@@ -314,18 +323,25 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                             indent: 6,
                             endIndent: 6,
                           ),
-                          // 3. Lifetime Reps Total (Right Box)
+                          // 3. Lifetime Reps Total
                           Expanded(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Image.asset(
-                                  'assets/images/bicep.png',
-                                  height: 28,
-                                  width: 28,
-                                  fit: BoxFit.contain,
+                                SizedBox(
+                                  height: 24,
+                                  child: Center(
+                                    child: Text(
+                                      'lifetime_label'.tr().toUpperCase(),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: context.textSecondary,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 4),
                                 Text(
                                   '${widget.lifetimeTotal}',
                                   style: TextStyle(
@@ -336,13 +352,13 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '${'total_label'.tr()} ${widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time' ? 'seconds_count'.tr(args: ['']).trim() : 'repetitions'.tr()}',
+                                  widget.unit.toLowerCase() == 'seconds' || widget.unit.toLowerCase() == 'time'
+                                      ? 'seconds_count'.tr(args: ['']).trim().toUpperCase()
+                                      : 'repetitions'.tr().toUpperCase(),
                                   textAlign: TextAlign.center,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                     color: context.textSecondary,
                                   ),
                                 ),
