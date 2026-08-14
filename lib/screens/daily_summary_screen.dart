@@ -66,10 +66,6 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   int get _totalRepsToday =>
       widget.completedExercises.fold(0, (sum, e) => sum + e.todayReps);
 
-  String _todayLabel(BuildContext context) {
-    return DateFormat.yMMMd(context.locale.languageCode).format(DateTime.now());
-  }
-
   void _shareSummary(BuildContext context) {
     final lines = widget.completedExercises
         .map((e) => '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (' + 'day_streak_count'.tr(args: [e.currentStreak.toString()]) + ')')
@@ -85,129 +81,67 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.surface,
-      appBar: AppBar(
-        backgroundColor: context.surface,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'todays_summary_title'.tr(),
-          style: TextStyle(
-            color: context.textPrimary,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1.2,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: Stack(
         children: [
-          SafeArea(
-            child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Text(
-              _todayLabel(context),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: context.textSecondary,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // ── Overall streak hero badge ────────────────────────────────
-            if (widget.overallStreak > 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: PCColors.brownDark,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: PCColors.brown, width: 1.5),
+          Column(
+            children: [
+              // ── Yellow Hero Card ──────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFffc226),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                ),
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
                     children: [
-                      const Text('🏆', style: TextStyle(fontSize: 24)),
-                      const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'overall_streak_label'.tr(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: PCColors.yellow,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          Text(
-                            'days_count'.tr(args: [widget.overallStreak.toString()]),
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 8),
+                      Image.asset(
+                        'assets/images/fire-congrads.png',
+                        height: 200,
+                        fit: BoxFit.contain,
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'personal_streak_title'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF5A3D00),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.overallStreak}',
+                        style: const TextStyle(
+                          fontSize: 72,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF332200),
+                          height: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'days_label'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF5A3D00),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
 
-            const SizedBox(height: 16),
-
-            // ── Hero total reps ────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: const LinearGradient(
-                    colors: [PCColors.yellow, PCColors.yellowDark],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  border: Border.all(color: PCColors.brown, width: 1.5),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const Text('🥔', style: TextStyle(fontSize: 36)),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$_totalRepsToday',
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w900,
-                        color: PCColors.brownDark,
-                      ),
-                    ),
-                    Text(
-                      'total_done_today_label'.tr(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: PCColors.brownDark,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
             // ── Per-exercise list ─────────────────────────────────────────
             Expanded(
@@ -227,13 +161,34 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
             ),
 
             // ── Buttons ───────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            Container(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              decoration: BoxDecoration(
+                color: context.surface,
+                border: Border(
+                  top: BorderSide(
+                    color: context.borderColor,
+                    width: 1,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
               child: Column(
                 children: [
-                  SizedBox(
+                  Container(
                     width: double.infinity,
                     height: 54,
+                    decoration: BoxDecoration(
+                      color: PCColors.greenDark,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.only(bottom: 4),
                     child: ElevatedButton.icon(
                       onPressed: () => _shareSummary(context),
                       icon: const Icon(Icons.ios_share_rounded, size: 20),
@@ -244,11 +199,10 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: PCColors.green,
                         foregroundColor: Colors.white,
-                        elevation: 3,
-                        shadowColor: PCColors.green.withValues(alpha: 0.5),
+                        elevation: 6,
+                        shadowColor: Colors.black.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          side: const BorderSide(color: PCColors.brown, width: 1.5),
                         ),
                       ),
                     ),
@@ -273,7 +227,6 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
             ),
           ],
         ),
-      ),
       
       // Confetti overlay
       Align(
