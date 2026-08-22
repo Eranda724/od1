@@ -427,16 +427,20 @@ class _PodiumBar extends StatelessWidget {
     }
   }
 
-  Color get _cardColor {
+  Color _cardColor(bool isDark) {
     switch (rank) {
       case 1:
-        return const Color(0xFFFFC72C).withValues(alpha: 0.18);
+        return const Color(0xFFFFC72C).withValues(alpha: isDark ? 0.22 : 0.18);
       case 2:
-        return const Color(0xFFE7EAED).withValues(alpha: 0.65);
+        return isDark
+            ? Colors.white.withValues(alpha: 0.09)
+            : const Color(0xFFE7EAED).withValues(alpha: 0.65);
       case 3:
-        return const Color(0xFFEBD9CA).withValues(alpha: 0.65);
+        return isDark
+            ? Colors.white.withValues(alpha: 0.07)
+            : const Color(0xFFEBD9CA).withValues(alpha: 0.65);
       default:
-        return Colors.grey.withValues(alpha: 0.1);
+        return Colors.grey.withValues(alpha: isDark ? 0.15 : 0.1);
     }
   }
 
@@ -467,7 +471,7 @@ class _PodiumBar extends StatelessWidget {
           margin: EdgeInsets.only(top: isFirst ? 18 : 22),
           padding: EdgeInsets.fromLTRB(8, isFirst ? 16 : 14, 8, 14),
           decoration: BoxDecoration(
-            color: _cardColor,
+            color: _cardColor(Theme.of(context).brightness == Brightness.dark),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: isFirst
@@ -620,22 +624,34 @@ class _PodiumBar extends StatelessWidget {
               // ─────────────────────────────────────────────────────────────
               // SCORE
               // ─────────────────────────────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  'pts_count'.tr(args: [score.toString()]),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final isDark =
+                      Theme.of(context).brightness == Brightness.dark;
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.15)
+                          : Colors.white.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      'pts_count'.tr(args: [score.toString()]),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.9)
+                            : Theme.of(context).colorScheme.onSurface
+                                  .withValues(alpha: 0.6),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
