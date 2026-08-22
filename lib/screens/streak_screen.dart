@@ -171,12 +171,15 @@ class _StreakScreenState extends State<StreakScreen>
                     : (selectedExercises ?? []);
 
                 final todoExercises = <String>[];
+                final doneExercises = <String>[];
                 for (final id in idsToShow) {
                   if (!defs.containsKey(id)) continue;
                   final exData = Map<String, dynamic>.from(
                     exercisesMap[id] ?? {},
                   );
-                  if (exData['lastCompletedDate'] != today) {
+                  if (exData['lastCompletedDate'] == today) {
+                    doneExercises.add(id);
+                  } else {
                     todoExercises.add(id);
                   }
                 }
@@ -349,6 +352,131 @@ class _StreakScreenState extends State<StreakScreen>
                                 ),
                               ),
                             ),
+                          );
+                        },
+                      ),
+
+                    // ── START AGAIN button (all exercises done today) ──────────
+                    if (todoExercises.isEmpty && doneExercises.isNotEmpty)
+                      Builder(
+                        builder: (context) {
+                          return Column(
+                            children: [
+                              Container(
+                                width: double.infinity,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0xFF3D8B5D),
+                                      offset: Offset(0, 4),
+                                      blurRadius: 0,
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (doneExercises.isNotEmpty) {
+                                      final targetId = doneExercises.first;
+                                      final targetDef = defs[targetId];
+                                      if (targetDef != null) {
+                                        final targetExData =
+                                            Map<String, dynamic>.from(
+                                              exercisesMap[targetId] ?? {},
+                                            );
+                                        // Build full queue so all done exercises replay
+                                        final List<SessionItem> fullQueue = [];
+                                        for (
+                                          int i = 1;
+                                          i < doneExercises.length;
+                                          i++
+                                        ) {
+                                          final nextId = doneExercises[i];
+                                          final nEx = Map<String, dynamic>.from(
+                                            exercisesMap[nextId] ?? {},
+                                          );
+                                          final nDef = defs[nextId];
+                                          fullQueue.add(
+                                            SessionItem(
+                                              exerciseId: nextId,
+                                              exerciseName:
+                                                  nDef?.name ?? nextId,
+                                              description:
+                                                  (nDef
+                                                          ?.description
+                                                          ?.isNotEmpty ==
+                                                      true)
+                                                  ? nDef!.description
+                                                  : 'default_exercise_description'
+                                                        .tr(),
+                                              streak: nEx['currentStreak'] ?? 0,
+                                              monthlyTotal:
+                                                  nEx['monthlyTotal'] ?? 0,
+                                              defaultReps:
+                                                  nDef?.defaultReps ?? 0,
+                                              defaultTimer:
+                                                  nDef?.defaultTimer ?? 0,
+                                              unit: nDef?.unit ?? 'reps',
+                                              exerciseDef: nDef,
+                                            ),
+                                          );
+                                        }
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ExerciseStartScreen(
+                                              exerciseId: targetId,
+                                              exerciseName: targetDef.name,
+                                              description:
+                                                  (targetDef
+                                                          .description
+                                                          ?.isNotEmpty ==
+                                                      true)
+                                                  ? targetDef.description
+                                                  : 'default_exercise_description'
+                                                        .tr(),
+                                              streak:
+                                                  targetExData['currentStreak'] ??
+                                                  0,
+                                              monthlyTotal:
+                                                  targetExData['monthlyTotal'] ??
+                                                  0,
+                                              defaultReps:
+                                                  targetDef.defaultReps,
+                                              defaultTimer:
+                                                  targetDef.defaultTimer,
+                                              unit: targetDef.unit,
+                                              exerciseDef: targetDef,
+                                              sessionQueue: fullQueue,
+                                              exerciseIndex: 1,
+                                              totalExercises:
+                                                  doneExercises.length,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF55AB78),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'start_again'.tr().toUpperCase(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
                         },
                       ),
@@ -597,7 +725,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: Text(
-                                'personal_streak_title'.tr().toUpperCase(),
+                                'PERSONAL',
                                 style: const TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w900,
@@ -606,52 +734,61 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 42),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 16.0),
-                                child: Image.asset(
-                                  'assets/images/fire_3d.png',
-                                  width: 62,
-                                  height: 62,
+                          const SizedBox(height: 8),
+                          // Fire + Number + DAY STREAK — fire scales with number
+                          IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(width: 6),
+                                // Fire scales to match the number height
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    return Image.asset(
+                                      'assets/images/fire_3d.png',
+                                      height: 58,
+                                      width: 58,
+                                      fit: BoxFit.contain,
+                                    );
+                                  },
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    FittedBox(
-                                      fit: BoxFit.scaleDown,
-                                      child: Text(
-                                        widget.overallStreak.toString(),
-                                        style: const TextStyle(
-                                          fontSize: 52,
-                                          fontWeight: FontWeight.w900,
-                                          color: Color(0xFF332200),
-                                          height: 1.0,
+                                const SizedBox(width: 6),
+                                // Number + DAY STREAK stacked
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          widget.overallStreak.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 64,
+                                            fontWeight: FontWeight.w900,
+                                            color: Color(0xFF332200),
+                                            height: 1.0,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    Text(
-                                      ('days_label'.tr() == 'days_label'
-                                              ? 'JOURS'
-                                              : 'days_label'.tr())
-                                          .toUpperCase(),
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w900,
-                                        color: Color(0xFF5A3D00),
-                                        height: 1.0,
+                                      const Text(
+                                        'DAY STREAK',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w900,
+                                          color: Color(0xFF5A3D00),
+                                          letterSpacing: 1.0,
+                                          height: 1.1,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
