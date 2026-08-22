@@ -27,7 +27,7 @@ class ExerciseDaySummary {
 
 class DailySummaryScreen extends StatefulWidget {
   final List<ExerciseDaySummary> completedExercises;
-  final int overallStreak;  // NEW: consecutive days any exercise was done
+  final int overallStreak; // NEW: consecutive days any exercise was done
 
   /// Swap for your real app store / dynamic link once you have one.
   static const String appLink = 'https://potatocouch.app/download';
@@ -45,12 +45,23 @@ class DailySummaryScreen extends StatefulWidget {
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  late final String _celebrationImage;
+
+  static const List<String> _celebrationImages = [
+    'assets/images/congrads_po1.png',
+    'assets/images/congrads_po2.png',
+    'assets/images/congrads_po3.png',
+    'assets/images/p5.png',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 3),
+    );
+    // Pick a random celebration character for this session
+    _celebrationImage = (_celebrationImages..shuffle()).first;
     // Play the full routine finish sound and start confetti
     _audioPlayer.play(AssetSource('sounds/routin-finish.mp3'));
     _confettiController.play();
@@ -68,10 +79,17 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
   void _shareSummary(BuildContext context) {
     final lines = widget.completedExercises
-        .map((e) => '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (' + 'day_streak_count'.tr(args: [e.currentStreak.toString()]) + ')')
+        .map(
+          (e) =>
+              '🔥 ${e.exerciseName}: ${e.todayReps} ${e.unit} (' +
+              'day_streak_count'.tr(args: [e.currentStreak.toString()]) +
+              ')',
+        )
         .join('\n');
 
-    final text = 'share_summary_text'.tr(args: [lines, _totalRepsToday.toString(), DailySummaryScreen.appLink]);
+    final text = 'share_summary_text'.tr(
+      args: [lines, _totalRepsToday.toString(), DailySummaryScreen.appLink],
+    );
 
     // ignore: deprecated_member_use
     Share.share(text);
@@ -86,168 +104,187 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
           Column(
             children: [
               // ── Yellow Hero Card ──────────────────────────────────────────
-              Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFffc226),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(32),
-                    bottomRight: Radius.circular(32),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFffc226),
+                    borderRadius: BorderRadius.all(Radius.circular(32)),
                   ),
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      Image.asset(
-                        'assets/images/fire-congrads.png',
-                        height: 200,
-                        fit: BoxFit.contain,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'personal_streak_title'.tr().toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF5A3D00),
-                          letterSpacing: 1.2,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 8),
+                        Image.asset(
+                          _celebrationImage,
+                          height: 200,
+                          fit: BoxFit.contain,
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${widget.overallStreak}',
-                        style: const TextStyle(
-                          fontSize: 72,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF332200),
-                          height: 1.0,
+                        const SizedBox(height: 4),
+                        const Text(
+                          'PERSONAL',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF5A3D00),
+                            letterSpacing: 1.2,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'days_label'.tr().toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF5A3D00),
-                          letterSpacing: 1.2,
+                        const SizedBox(height: 2),
+                        Text(
+                          '${widget.overallStreak}',
+                          style: const TextStyle(
+                            fontSize: 72,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF332200),
+                            height: 1.0,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 4),
+                        const Text(
+                          'DAY STREAK',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF5A3D00),
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-            // ── Per-exercise list ─────────────────────────────────────────
-            Expanded(
-              child: widget.completedExercises.isEmpty
-                  ? Center(
-                      child: Text(
-                        'no_exercises_completed'.tr(),
-                        style: TextStyle(color: PCColors.brown.withValues(alpha: 0.7)),
+              // ── Per-exercise list ─────────────────────────────────────────
+              Expanded(
+                child: widget.completedExercises.isEmpty
+                    ? Center(
+                        child: Text(
+                          'no_exercises_completed'.tr(),
+                          style: TextStyle(
+                            color: PCColors.brown.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        itemCount: widget.completedExercises.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, i) => _ExerciseSummaryCard(
+                          item: widget.completedExercises[i],
+                        ),
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      itemCount: widget.completedExercises.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, i) => _ExerciseSummaryCard(item: widget.completedExercises[i]),
-                    ),
-            ),
-
-            // ── Buttons ───────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              decoration: BoxDecoration(
-                color: context.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: context.borderColor,
-                    width: 1,
-                  ),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  ),
-                ],
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: PCColors.greenDark,
-                      borderRadius: BorderRadius.circular(16),
+
+              // ── Buttons ───────────────────────────────────────────────────
+              SafeArea(
+                top: false,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    border: Border(
+                      top: BorderSide(color: context.borderColor, width: 1),
                     ),
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: ElevatedButton.icon(
-                      onPressed: () => _shareSummary(context),
-                      icon: const Icon(Icons.ios_share_rounded, size: 20),
-                      label: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('share_btn'.tr(), style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: PCColors.green,
-                        foregroundColor: Colors.white,
-                        elevation: 6,
-                        shadowColor: Colors.black.withValues(alpha: 0.4),
-                        shape: RoundedRectangleBorder(
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          color: PCColors.greenDark,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        'done_btn'.tr(),
-                        style: TextStyle(
-                          color: PCColors.brown,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: ElevatedButton.icon(
+                          onPressed: () => _shareSummary(context),
+                          icon: const Icon(Icons.ios_share_rounded, size: 20),
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'share_btn'.tr(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: PCColors.green,
+                            foregroundColor: Colors.white,
+                            elevation: 6,
+                            shadowColor: Colors.black.withValues(alpha: 0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      TextButton(
+                        onPressed: () => Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'done_btn'.tr(),
+                            style: TextStyle(
+                              color: PCColors.brown,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
+            ],
+          ),
+
+          // Confetti overlay
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.directional,
+              blastDirection: -1.5708, // straight up
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              maxBlastForce: 100,
+              minBlastForce: 80,
+              gravity: 0.2,
+              shouldLoop: false,
+              colors: const [
+                Colors.green,
+                Colors.blue,
+                Colors.pink,
+                Colors.orange,
+                Colors.purple,
+              ],
             ),
-          ],
-        ),
-      
-      // Confetti overlay
-      Align(
-        alignment: Alignment.bottomCenter,
-        child: ConfettiWidget(
-          confettiController: _confettiController,
-          blastDirectionality: BlastDirectionality.directional,
-          blastDirection: -1.5708, // straight up
-          emissionFrequency: 0.05,
-          numberOfParticles: 20,
-          maxBlastForce: 100,
-          minBlastForce: 80,
-          gravity: 0.2,
-          shouldLoop: false,
-          colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
-        ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
-}
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -284,7 +321,10 @@ class _ExerciseSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '🔥 ' + 'day_streak_count'.tr(args: [item.currentStreak.toString()]),
+                  '🔥 ' +
+                      'day_streak_count'.tr(
+                        args: [item.currentStreak.toString()],
+                      ),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -299,7 +339,11 @@ class _ExerciseSummaryCard extends StatelessWidget {
           _MiniStat(label: 'today_label'.tr(), value: '${item.todayReps}'),
           const SizedBox(width: 16),
           // Lifetime total
-          _MiniStat(label: 'this_month_label'.tr(), value: '${item.monthlyTotal}', highlight: true),
+          _MiniStat(
+            label: 'this_month_label'.tr(),
+            value: '${item.monthlyTotal}',
+            highlight: true,
+          ),
         ],
       ),
     );
@@ -311,7 +355,11 @@ class _MiniStat extends StatelessWidget {
   final String value;
   final bool highlight;
 
-  const _MiniStat({required this.label, required this.value, this.highlight = false});
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    this.highlight = false,
+  });
 
   @override
   Widget build(BuildContext context) {
