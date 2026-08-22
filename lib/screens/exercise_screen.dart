@@ -867,7 +867,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'exercises_count'.tr(args: [todoExercises.length.toString()]),
+                                            'exercises_count'.tr(
+                                              args: [
+                                                todoExercises.length.toString(),
+                                              ],
+                                            ),
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
@@ -916,7 +920,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 }
                                               },
                                               style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF55AB78),
+                                                backgroundColor: const Color(
+                                                  0xFF55AB78,
+                                                ),
                                                 foregroundColor: Colors.white,
                                                 elevation: 0,
                                                 shape: RoundedRectangleBorder(
@@ -925,7 +931,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 ),
                                               ),
                                               child: Text(
-                                                'start_my_routine'.tr().toUpperCase(),
+                                                'start_my_routine'
+                                                    .tr()
+                                                    .toUpperCase(),
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
@@ -967,7 +975,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                 ),
 
                               // Routine Completed card (all done today)
-                              if (todoExercises.isEmpty && doneExercises.isNotEmpty)
+                              if (todoExercises.isEmpty &&
+                                  doneExercises.isNotEmpty)
                                 Center(
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
@@ -1027,16 +1036,100 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                             {},
                                                       );
                                                   if (def != null) {
-                                                    startExercise(
-                                                      targetId,
-                                                      true,
-                                                      def.name,
-                                                      def,
-                                                      exData['currentStreak'] ??
-                                                          0,
-                                                      exData['monthlyTotal'] ??
-                                                          0,
-                                                      def.unit,
+                                                    // Build a full queue so START AGAIN
+                                                    // replays ALL exercises in the routine
+                                                    final List<SessionItem>
+                                                    fullQueue = [];
+                                                    for (
+                                                      int i = 1;
+                                                      i < doneExercises.length;
+                                                      i++
+                                                    ) {
+                                                      final nextId =
+                                                          doneExercises[i];
+                                                      final nDef =
+                                                          exerciseDefs[nextId];
+                                                      final nEx =
+                                                          Map<
+                                                            String,
+                                                            dynamic
+                                                          >.from(
+                                                            exercises[nextId] ??
+                                                                {},
+                                                          );
+                                                      fullQueue.add(
+                                                        SessionItem(
+                                                          exerciseId: nextId,
+                                                          exerciseName:
+                                                              nDef?.name ??
+                                                              _fallbackName(
+                                                                nextId,
+                                                              ),
+                                                          description:
+                                                              (nDef
+                                                                      ?.description
+                                                                      ?.isNotEmpty ==
+                                                                  true)
+                                                              ? nDef!
+                                                                    .description
+                                                              : 'default_exercise_description'
+                                                                    .tr(),
+                                                          streak:
+                                                              nEx['currentStreak'] ??
+                                                              0,
+                                                          monthlyTotal:
+                                                              nEx['monthlyTotal'] ??
+                                                              0,
+                                                          defaultReps:
+                                                              nDef?.defaultReps ??
+                                                              0,
+                                                          defaultTimer:
+                                                              nDef?.defaultTimer ??
+                                                              0,
+                                                          unit:
+                                                              nDef?.unit ??
+                                                              'reps',
+                                                          exerciseDef: nDef,
+                                                        ),
+                                                      );
+                                                    }
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => ExerciseStartScreen(
+                                                          exerciseId: targetId,
+                                                          exerciseName:
+                                                              def.name,
+                                                          description:
+                                                              (def
+                                                                      .description
+                                                                      ?.isNotEmpty ==
+                                                                  true)
+                                                              ? def.description
+                                                              : 'default_exercise_description'
+                                                                    .tr(),
+                                                          streak:
+                                                              exData['currentStreak'] ??
+                                                              0,
+                                                          monthlyTotal:
+                                                              exData['monthlyTotal'] ??
+                                                              0,
+                                                          defaultReps:
+                                                              def.defaultReps ??
+                                                              0,
+                                                          defaultTimer:
+                                                              def.defaultTimer ??
+                                                              0,
+                                                          unit: def.unit,
+                                                          exerciseDef: def,
+                                                          sessionQueue:
+                                                              fullQueue,
+                                                          exerciseIndex: 1,
+                                                          totalExercises:
+                                                              doneExercises
+                                                                  .length,
+                                                        ),
+                                                      ),
                                                     );
                                                   }
                                                 }
@@ -1053,7 +1146,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                 ),
                                               ),
                                               child: Text(
-                                                'start_again'.tr().toUpperCase(),
+                                                'start_again'
+                                                    .tr()
+                                                    .toUpperCase(),
                                                 style: const TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
