@@ -320,17 +320,28 @@ class _ExerciseSummaryCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  '🔥 ' +
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/images/fire_3d.png',
+                      width: 14,
+                      height: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
                       'day_streak_count'.tr(
                         args: [item.currentStreak.toString()],
                       ),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: context.textSecondary,
-                  ),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
+
               ],
             ),
           ),
