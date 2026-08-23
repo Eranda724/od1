@@ -112,7 +112,7 @@ class _NotificationBellState extends State<NotificationBell> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 12,
-                                  color: Theme.of(context).primaryColor,
+                                  color: isDark ? Colors.blueAccent : Theme.of(context).primaryColor,
                                 ),
                               ),
                             ),

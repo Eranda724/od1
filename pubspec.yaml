@@ -2,7 +2,7 @@ name: Potato
 description: "60 seconds routine"
 publish_to: 'none'
 
-version: 1.0.3+23
+version: 1.0.3+24
 
 environment:
   sdk: ^3.11.3
