@@ -24,16 +24,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ─────────────────────────────────────────────────────────────────────
   // FORMS
-  // ─────────────────────────────────────────────────────────────────────
 
   final _formKeyProfile = GlobalKey<FormState>();
   final _formKeyPassword = GlobalKey<FormState>();
 
-  // ─────────────────────────────────────────────────────────────────────
   // CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────
 
   final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -44,9 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final _deletePasswordController = TextEditingController();
 
-  // ─────────────────────────────────────────────────────────────────────
   // STATE
-  // ─────────────────────────────────────────────────────────────────────
 
   bool _isLoadingProfile = false;
   bool _isLoadingPassword = false;
@@ -68,9 +62,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
-  // ─────────────────────────────────────────────────────────────────────
   // INIT
-  // ─────────────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -86,9 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────
   // DISPOSE
-  // ─────────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
@@ -106,9 +96,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PROFILE IMAGE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _pickAndUploadProfileImage() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -169,9 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SUPER ADMIN
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _checkSuperAdmin(String uid) async {
     try {
@@ -188,9 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // USERNAME CHECK
-  // ═══════════════════════════════════════════════════════════════════════
 
   void _onUsernameChanged(String value) {
     final user = FirebaseAuth.instance.currentUser;
@@ -274,9 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return false;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // UPDATE PROFILE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _updateProfile() async {
     if (!_formKeyProfile.currentState!.validate()) {
@@ -344,9 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // CHANGE PASSWORD
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _updatePassword() async {
     if (!_formKeyPassword.currentState!.validate()) {
@@ -425,9 +405,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // DELETE ACCOUNT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _deleteAccount() async {
     final confirmed = await showDialog<bool>(
@@ -597,9 +575,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // INPUT DECORATION
-  // ═══════════════════════════════════════════════════════════════════════
 
   InputDecoration _inputDecoration({
     required String hint,
@@ -642,9 +618,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SMALL SECTION TITLE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _sectionTitle(String title, {IconData? icon}) {
     return Row(
@@ -665,9 +639,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BUILD
-  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -679,9 +651,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      // ─────────────────────────────────────────────────────────────────
       // APP BAR
-      // ─────────────────────────────────────────────────────────────────
       appBar: widget.isTab
           ? null
           : AppBar(
@@ -721,13 +691,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
 
-      // ─────────────────────────────────────────────────────────────────
       // BODY
       //
       // No SingleChildScrollView here.
       // The normal collapsed profile fits on screen.
       // Password and Delete Account expand only when the user taps them.
-      // ─────────────────────────────────────────────────────────────────
       body: SafeArea(
         child: user == null
             ? const Center(child: Icon(Icons.person_off_rounded, size: 40))
@@ -749,9 +717,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                        // ═══════════════════════════════════════════════
                         // PROFILE HEADER
-                        // ═══════════════════════════════════════════════
                         _buildProfileHeader(
                           photoUrl: photoUrl,
                           isPremium: isPremium,
@@ -759,9 +725,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 12),
 
-                        // ═══════════════════════════════════════════════
                         // PROFILE INFORMATION
-                        // ═══════════════════════════════════════════════
                         _sectionTitle(
                           'profile_information'.tr(),
                           icon: Icons.person_outline_rounded,
@@ -883,16 +847,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 8),
 
-                        // ═══════════════════════════════════════════════
                         // CHANGE PASSWORD
                         // COLLAPSED BY DEFAULT
-                        // ═══════════════════════════════════════════════
                         _buildChangePasswordSection(isDark: isDark),
 
-                        // ═══════════════════════════════════════════════
                         // DELETE ACCOUNT
                         // COLLAPSED BY DEFAULT
-                        // ═══════════════════════════════════════════════
                         if (!_isSuperAdmin)
                           _buildDeleteAccountSection(isDark: isDark),
                       ],
@@ -905,9 +865,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PROFILE HEADER
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildProfileHeader({
     required String? photoUrl,
@@ -919,9 +877,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       height: 82,
       child: Row(
         children: [
-          // ─────────────────────────────────────────────────────────────
           // AVATAR
-          // ─────────────────────────────────────────────────────────────
           GestureDetector(
             onTap: _pickAndUploadProfileImage,
             child: Stack(
@@ -1017,9 +973,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(width: 13),
 
-          // ─────────────────────────────────────────────────────────────
           // USER INFORMATION
-          // ─────────────────────────────────────────────────────────────
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1105,9 +1059,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // USERNAME STATUS
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget? _usernameStatusIcon() {
     if (_isCheckingUsername) {
@@ -1136,11 +1088,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // CHANGE PASSWORD SECTION
   //
   // CLOSED BY DEFAULT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildChangePasswordSection({required bool isDark}) {
     return Material(
@@ -1358,11 +1308,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // DELETE ACCOUNT
   //
   // CLOSED BY DEFAULT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildDeleteAccountSection({required bool isDark}) {
     return Padding(

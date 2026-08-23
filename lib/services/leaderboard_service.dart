@@ -72,7 +72,7 @@ extension LeaderboardPeriodExt on LeaderboardPeriod {
 class LeaderboardService {
   static final _db = FirebaseFirestore.instance;
 
-  // ── Local Date Key Helpers ─────────────────────────────────────────────────────
+  // Local Date Key Helpers
 
   static String localDailyKey(DateTime d) {
     return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -97,7 +97,7 @@ class LeaderboardService {
     return '${isoYear}-W${weekNumber.toString().padLeft(2, '0')}';
   }
 
-  // ── Avatars based on score rank ──────────────────────────────────────────────
+  // Avatars based on score rank
   static String _avatarFor(int rank) {
     switch (rank) {
       case 1:
@@ -207,7 +207,7 @@ class LeaderboardService {
     return 'User';
   }
 
-  // ── Score update helpers (call these when an exercise is completed) ──────────
+  // Score update helpers (call these when an exercise is completed)
 
   /// Pure function to calculate new scores based on previous scores and points added.
   static Map<String, dynamic> calculateNewScores({

@@ -53,12 +53,12 @@ class ActiveSessionScreen extends StatefulWidget {
 }
 
 class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
-  // ── Countdown/Stopwatch Timer ────────────────────────────────────────────
+  // Countdown/Stopwatch Timer
   Timer? _tickTimer;
   late int _seconds;
   late final AudioPlayer _player;
 
-  // ── Rotating tips ────────────────────────────────────────────────────────
+  // Rotating tips
   List<Map<String, dynamic>> _activeTips = [];
   int _tipIndex = 0;
   Timer? _tipTimer;
@@ -270,7 +270,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Background Gradient (Default) ─────────────────────────────
+          // Background Gradient (Default)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -280,7 +280,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
               ),
             ),
           ),
-          // ── Background image (Admin Override) ──────────────────────────
+          // Background image (Admin Override)
           if (_randomSessionImage != null)
             _isAssetImage
                 ? Image.asset(
@@ -294,11 +294,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                     errorWidget: (context, url, error) => const SizedBox.shrink(),
                   ),
 
-          // ── Dark scrim for text legibility (Only for image) ────────────
+          // Dark scrim for text legibility (Only for image)
           if (_randomSessionImage != null)
             Container(color: Colors.black.withValues(alpha: 0.45)),
 
-          // ── Foreground content ────────────────────────────────────────
+          // Foreground content
           SafeArea(
             child: Column(
               children: [
@@ -487,7 +487,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
             ),
           ),
 
-          // ── Pre-Ad Popup Overlay ──────────────────────────────────────
+          // Pre-Ad Popup Overlay
           if (_showAdOverlay)
             Align(
               alignment: const Alignment(-1.0, -0.1),

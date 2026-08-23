@@ -43,9 +43,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     _listenForPremiumStatus();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PREMIUM STATUS
-  // ═══════════════════════════════════════════════════════════════════════
 
   void _listenForPremiumStatus() {
     final user = FirebaseAuth.instance.currentUser;
@@ -96,9 +94,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BUILD
-  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -173,9 +169,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
 
                       child: Column(
                         children: [
-                          // ═════════════════════════════════════════════
                           // PREMIUM ICON
-                          // ═════════════════════════════════════════════
                           const SizedBox(height: 8),
 
                           ScaleTransition(
@@ -213,9 +207,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
 
                           const SizedBox(height: 20),
 
-                          // ═════════════════════════════════════════════
                           // TITLE
-                          // ═════════════════════════════════════════════
                           Text(
                             'potato_couch_premium'.tr(),
                             textAlign: TextAlign.center,
@@ -243,9 +235,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
 
                           const SizedBox(height: 22),
 
-                          // ═════════════════════════════════════════════
                           // BENEFITS
-                          // ═════════════════════════════════════════════
                           _benefitsCard(
                             isLightMode: isLightMode,
                             textColor: textColor,
@@ -253,9 +243,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
 
                           const SizedBox(height: 22),
 
-                          // ═════════════════════════════════════════════
                           // PURCHASE
-                          // ═════════════════════════════════════════════
                           if (iap.isLoading)
                             _loadingWidget()
                           else
@@ -278,9 +266,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BENEFITS CARD
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _benefitsCard({required bool isLightMode, required Color textColor}) {
     return Container(
@@ -329,9 +315,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BENEFIT ROW
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildBenefitRow({
     required IconData icon,
@@ -373,9 +357,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BENEFIT DIVIDER
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _benefitDivider() {
     return Padding(
@@ -389,9 +371,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PURCHASE SECTION
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _purchaseSection({
     required IapService iap,
@@ -517,9 +497,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // LOADING
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _loadingWidget() {
     return const Padding(

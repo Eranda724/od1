@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'leaderboard_service.dart';
 
 class StreakService {
-  // ─── Date helpers ───────────────────────────────────────────────────────────
+  // Date helpers
 
   static String _dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
@@ -13,7 +13,7 @@ class StreakService {
   static String _yesterdayKey() =>
       _dateKey(DateTime.now().subtract(const Duration(days: 1)));
 
-  // ─── Core freeze helper ─────────────────────────────────────────────────────
+  // Core freeze helper
 
   static ({
     int freezesAvailable,
@@ -116,7 +116,7 @@ class StreakService {
     );
   }
 
-  // ─── Log Exercise ────────────────────────────────────────────────────────────
+  // Log Exercise
 
   /// Logs an exercise and returns a map of the updated stats.
   /// Completing any single exercise counts as a valid day for the overall streak.
@@ -144,7 +144,7 @@ class StreakService {
       final exSnap = await tx.get(exRef);
       final exerciseData = exSnap.data() ?? {};
 
-      // ── Exercise-specific stats ──
+      // Exercise-specific stats
       final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
       
       final currentMonthStr = today.substring(0, 7); // e.g. '2026-08'
@@ -229,7 +229,7 @@ class StreakService {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      // ── Leaderboard Scores ──
+      // Leaderboard Scores
       final newScores = LeaderboardService.calculateNewScores(
         existing: Map<String, dynamic>.from(
           userData['scores'] as Map<String, dynamic>? ?? {},
@@ -238,7 +238,7 @@ class StreakService {
         now: DateTime.now(),
       );
 
-      // ── Overall Streak Logic ──
+      // Overall Streak Logic
       final overallLastDate = userData['overallLastDate'] as String?;
       final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
 
@@ -333,7 +333,7 @@ class StreakService {
     });
   }
 
-  // ─── Check Routine Completion ────────────────────────────────────────────────
+  // Check Routine Completion
 
   /// Checks if the user has completed their configured routine today.
   static Future<bool> checkRoutineCompletion(String uid) async {
@@ -380,7 +380,7 @@ class StreakService {
     return completed == idsToShow.length;
   }
 
-  // ─── Log Routine Completion ──────────────────────────────────────────────────
+  // Log Routine Completion
 
   /// Logs the completion of the full routine and updates the overall streak.
   static Future<Map<String, int>> logRoutineCompletion(String uid) async {
@@ -456,7 +456,7 @@ class StreakService {
     });
   }
 
-  // ─── Check & Update Streak (app-open) ───────────────────────────────────────
+  // Check & Update Streak (app-open)
 
   /// Runs on every app-open. Lazily evaluates any missed days since last check.
   /// Deducts freezes one-per-missed-day sequentially. Breaks streak only when
@@ -483,7 +483,7 @@ class StreakService {
           exerciseDocs.add(await tx.get(ref));
         }
 
-      // ── LOGIC & WRITE PHASE ──
+      // LOGIC & WRITE PHASE
       final userData = userSnap.data() ?? {};
       final now = DateTime.now();
       final todayObj = DateTime(now.year, now.month, now.day);
@@ -491,7 +491,7 @@ class StreakService {
 
       final Map<String, dynamic> updates = {};
 
-      // ── 1. Evaluate Overall Streak ──
+      // 1. Evaluate Overall Streak
       final overallLastDate = userData['overallLastDate'] as String?;
       final overallStreak = (userData['overallStreak'] ?? 0) as int;
       if (overallLastDate != null && overallStreak > 0) {
@@ -527,7 +527,7 @@ class StreakService {
         }
       }
 
-      // ── 2. Evaluate Individual Exercises ──
+      // 2. Evaluate Individual Exercises
       for (final doc in exerciseDocs) {
         if (!doc.exists) continue;
 

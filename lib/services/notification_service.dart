@@ -26,7 +26,7 @@ class NotificationService {
   static const int _eveningId = 2;
   static const int _friendId = 3;
 
-  // ─── Morning message bank (Potato Couch voice) ────────────────────────────
+  // Morning message bank (Potato Couch voice)
   static const List<String> _morningMessages = [
     "Your couch misses you. Do 60 seconds first. 🥔",
     "Rise and… well, at least do some squats.",
@@ -48,7 +48,7 @@ class NotificationService {
     "The couch will wait. Your streak won't. 🔥",
   ];
 
-  // ─── Evening message bank (urgent but on-brand) ───────────────────────────
+  // Evening message bank (urgent but on-brand)
   static const List<String> _eveningMessages = [
     "Still on the couch? Your streak ends at midnight. 🥔",
     "60 seconds. That's all. The couch will survive. 🔥",
@@ -64,9 +64,7 @@ class NotificationService {
     "Do it now. Thank yourself at midnight. 🔥",
   ];
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // Initialization
-  // ─────────────────────────────────────────────────────────────────────────────
 
   Future<void> init() async {
     tz.initializeTimeZones();
@@ -143,9 +141,7 @@ class NotificationService {
     });
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
   // Public API
-  // ─────────────────────────────────────────────────────────────────────────────
 
   DateTime? _lastSyncTime;
 
@@ -193,7 +189,7 @@ class NotificationService {
     );
   }
 
-  // ─── Private scheduling helpers ────────────────────────────────────────
+  // Private scheduling helpers
 
   // Default times (also shown as defaults in admin_screen.dart)
   static const int _defaultMorningHour = 6;

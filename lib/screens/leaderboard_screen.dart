@@ -67,9 +67,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
         return Column(
           children: [
-            // ─────────────────────────────────────────────────────────────
             // HEADER + PODIUM
-            // ─────────────────────────────────────────────────────────────
             _PodiumSection(
               period: _activePeriod,
               entries: entries,
@@ -78,9 +76,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
             const SizedBox(height: 12),
 
-            // ─────────────────────────────────────────────────────────────
             // DAILY / WEEKLY / MONTHLY TABS
-            // ─────────────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
@@ -136,14 +132,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
             const SizedBox(height: 12),
 
-            // ─────────────────────────────────────────────────────────────
             // DIVIDER
-            // ─────────────────────────────────────────────────────────────
             Container(height: 1, color: cs.onSurface.withValues(alpha: 0.07)),
 
-            // ─────────────────────────────────────────────────────────────
             // RANKED LIST
-            // ─────────────────────────────────────────────────────────────
             Expanded(
               child: _buildList(context, entries, isLoading, snapshot.hasError, snapshot.error),
             ),
@@ -238,9 +230,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // PODIUM SECTION
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _PodiumSection extends StatelessWidget {
   final LeaderboardPeriod period;
@@ -262,9 +252,7 @@ class _PodiumSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
-          // ─────────────────────────────────────────────────────────────
           // TITLE
-          // ─────────────────────────────────────────────────────────────
           Row(
             children: [
               Expanded(
@@ -313,9 +301,7 @@ class _PodiumSection extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // ─────────────────────────────────────────────────────────────
           // PODIUM
-          // ─────────────────────────────────────────────────────────────
           if (isLoading)
             const SizedBox(
               height: 230,
@@ -403,9 +389,7 @@ class _PodiumSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // PODIUM CARD
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _PodiumBar extends StatelessWidget {
   final int rank;
@@ -494,13 +478,11 @@ class _PodiumBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ─────────────────────────────────────────────────────────────
               // MEDAL / RANK LABEL
               //
               // IMPORTANT:
               // The rank is NOT placed underneath the avatar anymore.
               // It is now a clean pill above the profile picture.
-              // ─────────────────────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
@@ -540,9 +522,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // ─────────────────────────────────────────────────────────────
               // AVATAR
-              // ─────────────────────────────────────────────────────────────
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
@@ -608,9 +588,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // ─────────────────────────────────────────────────────────────
               // NAME
-              // ─────────────────────────────────────────────────────────────
               Text(
                 entry.displayName,
                 textAlign: TextAlign.center,
@@ -625,9 +603,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 5),
 
-              // ─────────────────────────────────────────────────────────────
               // SCORE
-              // ─────────────────────────────────────────────────────────────
               Builder(
                 builder: (context) {
                   final isDark =
@@ -674,9 +650,7 @@ class _PodiumBar extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // LEADERBOARD ROW
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _LeaderboardRow extends StatelessWidget {
   final int rank;
@@ -735,9 +709,7 @@ class _LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            // ───────────────────────────────────────────────────────────
             // RANK NUMBER
-            // ───────────────────────────────────────────────────────────
             SizedBox(
               width: 42,
               child: Text(
@@ -755,9 +727,7 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 8),
 
-            // ───────────────────────────────────────────────────────────
             // AVATAR
-            // ───────────────────────────────────────────────────────────
             Container(
               width: 52,
               height: 52,
@@ -808,9 +778,7 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 14),
 
-            // ───────────────────────────────────────────────────────────
             // USER NAME + SCORE
-            // ───────────────────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -878,9 +846,7 @@ class _LeaderboardRow extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // EMPTY STATE
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _EmptyState extends StatelessWidget {
   final LeaderboardPeriod period;

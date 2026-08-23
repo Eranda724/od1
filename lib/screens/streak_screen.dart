@@ -220,7 +220,7 @@ class _StreakScreenState extends State<StreakScreen>
                 return ListView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                   children: [
-                    // ── Overall streak hero card ────────────────────────────────
+                    // Overall streak hero card
                     _OverallStreakCard(
                       key: _overallCardKey,
                       overallStreak: overallStreak,
@@ -238,7 +238,7 @@ class _StreakScreenState extends State<StreakScreen>
                     const SizedBox(
                       height: 16,
                     ), // Added gap between hero card and Start Routine button
-                    // ── Start My Routine button ────────────────────────────
+                    // Start My Routine button
                     if (todoExercises.isNotEmpty)
                       Builder(
                         builder: (context) {
@@ -356,7 +356,7 @@ class _StreakScreenState extends State<StreakScreen>
                         },
                       ),
 
-                    // ── START AGAIN button (all exercises done today) ──────────
+                    // START AGAIN button (all exercises done today)
                     if (todoExercises.isEmpty && doneExercises.isNotEmpty)
                       Builder(
                         builder: (context) {
@@ -483,7 +483,7 @@ class _StreakScreenState extends State<StreakScreen>
 
                     const SizedBox(height: 24),
 
-                    // ── Section title ────────────────────────────────────────────
+                    // Section title
                     if (userExercises.isNotEmpty)
                       Builder(
                         builder: (context) {
@@ -525,7 +525,7 @@ class _StreakScreenState extends State<StreakScreen>
                         },
                       ),
 
-                    // ── Per-exercise streak cards ─────────────────────────────────
+                    // Per-exercise streak cards
                     if (userExercises.isEmpty)
                       Center(
                         child: Padding(
@@ -595,9 +595,7 @@ class _StreakScreenState extends State<StreakScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Overall Streak Hero Card
-// ─────────────────────────────────────────────────────────────────────────────
 class _OverallStreakCard extends StatefulWidget {
   final int overallStreak;
   final String? lastDate;
@@ -926,9 +924,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Per-exercise streak card
-// ─────────────────────────────────────────────────────────────────────────────
 class _ExerciseStreakCard extends StatelessWidget {
   final ExerciseItem def;
   final int streak;

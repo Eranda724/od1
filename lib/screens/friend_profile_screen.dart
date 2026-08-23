@@ -102,7 +102,7 @@ class FriendProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // ── USER DETAILS ──
+                  // USER DETAILS
                   Row(
                     children: [
                       CircleAvatar(

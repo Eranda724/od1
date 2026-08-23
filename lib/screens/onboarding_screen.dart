@@ -146,7 +146,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ── Page images ──
+          // Page images
           PageView.builder(
             controller: _controller,
             onPageChanged: (index) {
@@ -206,7 +206,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
 
-          // ── Skip Link ──
+          // Skip Link
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             right: 24,
@@ -223,7 +223,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // ── Dot indicators ──
+          // Dot indicators
           Positioned(
             bottom: 140,
             left: 0,
@@ -248,7 +248,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // ── Dynamic Bottom Control ──
+          // Dynamic Bottom Control
           Positioned(
             bottom: 40,
             left: 24,

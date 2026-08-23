@@ -187,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
 
-                      // ── Branding ──
+                      // Branding
                       Center(
                         child: Image.asset(
                           'assets/images/login.png',
@@ -218,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // ── Social Sign-In ──
+                      // Social Sign-In
                       if (_isLoadingSocial)
                         const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
@@ -292,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                       ],
 
-                      // ── Form ──
+                      // Form
                       Text(
                         'email_label'.tr(),
                         style: TextStyle(

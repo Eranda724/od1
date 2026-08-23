@@ -286,7 +286,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const SizedBox(height: 48),
 
-              // ── Number Input & Unit Card ─────────────────────────────────
+              // Number Input & Unit Card
               Container(
                 width: 220,
                 padding: const EdgeInsets.symmetric(
@@ -341,7 +341,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const SizedBox(height: 24),
 
-              // ── Stepper Buttons Below Card ──────────────────────────────
+              // Stepper Buttons Below Card
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -371,7 +371,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const Spacer(flex: 2),
 
-              // ── Submit button ────────────────────────────────────────────
+              // Submit button
               Container(
                 width: double.infinity,
                 height: 56,

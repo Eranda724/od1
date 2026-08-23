@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // ── Light Theme (default) ──────────────────────────────────────────────────
+  // Light Theme (default)
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -81,7 +81,7 @@ class AppTheme {
     );
   }
 
-  // ── Dark Theme ─────────────────────────────────────────────────────────────
+  // Dark Theme
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,

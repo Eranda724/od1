@@ -332,7 +332,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // ── Branding ──
+                            // Branding
                             Center(
                               child: Image.asset(
                                 'assets/images/register.png',
@@ -363,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // ── Social Sign-In ──
+                            // Social Sign-In
                             if (_isLoadingSocial)
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -465,7 +465,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 12),
                             ],
 
-                            // ── Form ──
+                            // Form
                             Text(
                               'username_label'.tr(),
                               style: TextStyle(

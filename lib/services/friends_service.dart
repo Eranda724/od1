@@ -23,7 +23,7 @@ class FriendsService {
     return '${uids[0]}_${uids[1]}';
   }
 
-  // ── Send Friend Request ──
+  // Send Friend Request
   Future<void> sendFriendRequest({
     required String fromUid,
     required String fromName,
@@ -77,7 +77,7 @@ class FriendsService {
     });
   }
 
-  // ── Accept Friend Request ──
+  // Accept Friend Request
   Future<void> acceptRequest(String docId, String fromUid, String toUid) async {
     final pairId = getPairId(fromUid, toUid);
 
@@ -96,7 +96,7 @@ class FriendsService {
     await batch.commit();
   }
 
-  // ── Reject Friend Request ──
+  // Reject Friend Request
   Future<void> rejectRequest(String docId) async {
     await FirebaseFirestore.instance
         .collection('friendRequests')
@@ -104,7 +104,7 @@ class FriendsService {
         .update({'status': 'rejected'});
   }
 
-  // ── Remove Friend Request ──
+  // Remove Friend Request
   Future<void> removeFriendRequest(String fromUid, String toUid) async {
     final reqsQuery = await FirebaseFirestore.instance
         .collection('friendRequests')
@@ -118,13 +118,13 @@ class FriendsService {
     }
   }
 
-  // ── Remove Friend ──
+  // Remove Friend
   Future<void> removeFriend(String uid1, String uid2) async {
     final pairId = getPairId(uid1, uid2);
     await FirebaseFirestore.instance.collection('friendPairs').doc(pairId).delete();
   }
 
-  // ── Get Friends List ──
+  // Get Friends List
   Stream<List<FriendInfo>> getFriendsList(String currentUid) {
     return FirebaseFirestore.instance
         .collection('friendPairs')

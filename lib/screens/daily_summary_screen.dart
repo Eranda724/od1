@@ -103,7 +103,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
         children: [
           Column(
             children: [
-              // ── Yellow Hero Card ──────────────────────────────────────────
+              // Yellow Hero Card
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Container(
@@ -161,7 +161,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Per-exercise list ─────────────────────────────────────────
+              // Per-exercise list
               Expanded(
                 child: widget.completedExercises.isEmpty
                     ? Center(
@@ -183,7 +183,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       ),
               ),
 
-              // ── Buttons ───────────────────────────────────────────────────
+              // Buttons
               SafeArea(
                 top: false,
                 child: Container(
@@ -287,9 +287,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // One row per exercise: today's reps + streak + lifetime total
-// ─────────────────────────────────────────────────────────────────────────────
 class _ExerciseSummaryCard extends StatelessWidget {
   final ExerciseDaySummary item;
 

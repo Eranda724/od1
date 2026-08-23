@@ -15,7 +15,7 @@ class SocialAuthService {
   static final _auth = FirebaseAuth.instance;
   static final _db = FirebaseFirestore.instance;
 
-  // ── Google Sign-In ──────────────────────────────────────────────────────────
+  // Google Sign-In
 
   /// Signs the user in with Google.
   ///
@@ -50,7 +50,7 @@ class SocialAuthService {
     return userCredential;
   }
 
-  // ── Apple Sign-In (iOS only) ────────────────────────────────────────────────
+  // Apple Sign-In (iOS only)
 
   /// Returns true if Apple Sign-In is available on this device.
   /// Always false on Android.
@@ -99,7 +99,7 @@ class SocialAuthService {
     return userCredential;
   }
 
-  // ── Re-authentication helpers ───────────────────────────────────────────────
+  // Re-authentication helpers
 
   /// Re-authenticates a Google user. Used before sensitive operations
   /// (e.g., account deletion).
@@ -136,7 +136,7 @@ class SocialAuthService {
     await _auth.currentUser!.reauthenticateWithCredential(oauthCredential);
   }
 
-  // ── Internal helpers ────────────────────────────────────────────────────────
+  // Internal helpers
 
   /// Upserts the Firestore user document after social sign-in.
   /// Uses merge so existing fields (streak, scores, etc.) are never lost.

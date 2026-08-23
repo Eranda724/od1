@@ -66,7 +66,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
 
     final isFuture = date.isAfter(now) && !isToday;
 
-    // ── Future days ──
+    // Future days
     if (isFuture) {
       return Container(
         margin: const EdgeInsets.all(2),
@@ -87,7 +87,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       );
     }
 
-    // ── Today ──
+    // Today
     if (isToday) {
       return Container(
         margin: const EdgeInsets.all(2),
@@ -159,7 +159,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       );
     }
 
-    // ── Active day (🔥 as background) ──
+    // Active day (🔥 as background)
     if (isActive) {
       return Container(
         margin: const EdgeInsets.symmetric(vertical: 3),
@@ -196,7 +196,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       );
     }
 
-    // ── Frozen day (🧊 as background) ──
+    // Frozen day (🧊 as background)
     if (isFrozen) {
       return Container(
         margin: const EdgeInsets.all(2),
@@ -232,7 +232,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       );
     }
 
-    // ── Past day without fire or ice ──
+    // Past day without fire or ice
     return Container(
       margin: const EdgeInsets.all(2),
       child: Center(
