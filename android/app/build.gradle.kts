@@ -74,5 +74,20 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+}
+
+// Ensure all Kotlin plugin compilations finish before app's Java compilation.
+// Fixes: GeneratedPluginRegistrant.java referencing Kotlin plugin classes (e.g. audioplayers)
+afterEvaluate {
+    tasks.matching { it.name.startsWith("compileRelease") && it.name.endsWith("JavaWithJavac") }.configureEach {
+        dependsOn(
+            rootProject.subprojects
+                .filter { it.name != "app" && it.name != "gradle" }
+                .mapNotNull { sub ->
+                    sub.tasks.findByName("compileReleaseKotlin")
+                        ?: sub.tasks.findByName("compileKotlin")
+                }
+        )
+    }
 }
