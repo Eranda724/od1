@@ -59,7 +59,7 @@ class WeekStreakRow extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildIcon(isActive: isActive, isFrozen: isFrozen),
+        _buildIcon(context, isActive: isActive, isFrozen: isFrozen),
         const SizedBox(height: 2),
         Text(
           dayLabel,
@@ -73,9 +73,14 @@ class WeekStreakRow extends StatelessWidget {
     );
   }
 
-  Widget _buildIcon({required bool isActive, required bool isFrozen}) {
+  Widget _buildIcon(
+    BuildContext context, {
+    required bool isActive,
+    required bool isFrozen,
+  }) {
     const circleSize = 28.0;
     const boxHeight = 36.0; // Uniform vertical bounding box to align day labels
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (isActive) {
       return SizedBox(
@@ -127,7 +132,9 @@ class WeekStreakRow extends StatelessWidget {
           height: circleSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.08),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.06),
           ),
         ),
       ),

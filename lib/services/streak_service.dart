@@ -469,14 +469,18 @@ class StreakService {
       final settingsSnap = await FirebaseFirestore.instance.collection('app_config').doc('settings').get();
       final freezeRechargePeriod = (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
+      // PRE-TRANSACTION QUERY
+      // Fetch references outside the transaction to prevent breaking the transaction's async lifecycle.
+      final exercisesQuerySnap = await userRef.collection('exercises').get();
+      final exerciseRefs = exercisesQuerySnap.docs.map((d) => d.reference).toList();
+
       await FirebaseFirestore.instance.runTransaction<void>((tx) async {
         final userSnap = await tx.get(userRef);
         if (!userSnap.exists) return;
 
-        final exercisesQuerySnap = await userRef.collection('exercises').get();
         final exerciseDocs = <DocumentSnapshot>[];
-        for (final queryDoc in exercisesQuerySnap.docs) {
-          exerciseDocs.add(await tx.get(queryDoc.reference));
+        for (final ref in exerciseRefs) {
+          exerciseDocs.add(await tx.get(ref));
         }
 
       // ── LOGIC & WRITE PHASE ──

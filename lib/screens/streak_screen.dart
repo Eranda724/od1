@@ -698,10 +698,10 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.only(
-                  left: 16,
-                  top: 20,
-                  right: 16,
-                  bottom: 20,
+                  left: 20,
+                  top: 18,
+                  right: 8,
+                  bottom: 18,
                 ),
                 decoration: const BoxDecoration(
                   color: Color(0xFFffc226),
@@ -713,82 +713,76 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Left Column: Streak Info (aligned to bottom)
+                    // Left Column: Streak Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 6.0, top: 3),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                'PERSONAL',
-                                style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFF5A3D00),
-                                ),
+                          // PERSONAL label
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'personal_caps'.tr(),
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF5A3D00),
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          // Fire + Number + DAY STREAK — fire scales with number
-                          IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const SizedBox(width: 6),
-                                // Fire scales to match the number height
-                                LayoutBuilder(
-                                  builder: (context, constraints) {
-                                    return Image.asset(
-                                      'assets/images/fire_3d.png',
-                                      height: 58,
-                                      width: 58,
-                                      fit: BoxFit.contain,
-                                    );
-                                  },
-                                ),
-                                const SizedBox(width: 6),
-                                // Number + DAY STREAK stacked
-                                Flexible(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      FittedBox(
-                                        fit: BoxFit.scaleDown,
-                                        alignment: Alignment.centerLeft,
-                                        child: Text(
-                                          widget.overallStreak.toString(),
-                                          style: const TextStyle(
-                                            fontSize: 64,
-                                            fontWeight: FontWeight.w900,
-                                            color: Color(0xFF332200),
-                                            height: 1.0,
-                                          ),
-                                        ),
-                                      ),
-                                      const Text(
-                                        'DAY STREAK',
-                                        style: TextStyle(
-                                          fontSize: 15,
+                          const SizedBox(height: 28),
+                          // Fire + Number + DAY STREAK
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/images/fire_3d.png',
+                                height: 52,
+                                width: 52,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(width: 8),
+                              // Number + DAY STREAK stacked
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        widget.overallStreak.toString(),
+                                        style: const TextStyle(
+                                          fontSize: 68,
                                           fontWeight: FontWeight.w900,
-                                          color: Color(0xFF5A3D00),
-                                          letterSpacing: 1.0,
-                                          height: 1.1,
+                                          color: Color(0xFF332200),
+                                          height: 1.0,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        'day_streak_caps'.tr(),
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF7A5000),
+                                          letterSpacing: 2.0,
+                                          height: 1.0,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -805,6 +799,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                   ],
                 ),
               ),
+
               // 2. TOGGLE CALENDAR VIEW (Bottom White Box)
               GestureDetector(
                 onTap: () {

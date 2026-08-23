@@ -424,5 +424,7 @@
     "enabled_label":  "Enabled",
     "default_gradient_label":  "Default Gradient",
     "enter_tip_text_hint":  "Enter tip text...",
-    "start_again":  "Start Again"
+    "start_again":  "Start Again",
+    "personal_caps":  "PERSONAL",
+    "day_streak_caps":  "DAY STREAK"
 }

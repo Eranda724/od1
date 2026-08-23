@@ -55,6 +55,7 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
   Widget _buildDayCell(DateTime? date, bool isNextActive, bool isPrevActive) {
     if (date == null) return const SizedBox();
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final key = _formatDateKey(date);
     final isActive = widget.activeDates.contains(key);
     bool isFrozen = widget.frozenDates.contains(key);
@@ -65,13 +66,8 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
 
     final isFuture = date.isAfter(now) && !isToday;
 
-    // Days before the user started the app are neutral — not "missed"
-    final bool isBeforeStart =
-        widget.userStartDate != null &&
-        key.compareTo(widget.userStartDate!) < 0;
-
-    // ── Future or pre-start day ──
-    if (isFuture || isBeforeStart) {
+    // ── Future days ──
+    if (isFuture) {
       return Container(
         margin: const EdgeInsets.all(2),
         child: Center(
@@ -80,13 +76,9 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
             child: Text(
               '${date.day}',
               style: TextStyle(
-                color: isFuture
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.2)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.25),
                 fontSize: 13,
               ),
             ),
@@ -103,13 +95,33 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           child: Stack(
             alignment: Alignment.center,
             children: [
+              if (!isActive && !isFrozen)
+                Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.black.withValues(alpha: 0.06),
+                    border: Border.all(
+                      color: const Color.fromARGB(255, 0, 0, 0).withValues(alpha: 0.8),
+                      width: 1.5,
+                    ),
+                  ),
+                ),
               if (isActive)
                 Transform.translate(
-                  offset: const Offset(0, -4),
-                  child: Image.asset(
-                    'assets/images/fire_3d.png',
-                    width: 28,
-                    height: 28,
+                  offset: const Offset(0, 0),
+                  child: OverflowBox(
+                    maxWidth: 50,
+                    maxHeight: 50,
+                    child: Image.asset(
+                      'assets/images/fire_3d.png',
+                      width: 32,
+                      height: 32,
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               if (isFrozen)
@@ -133,7 +145,9 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
                   style: TextStyle(
                     color: (isActive || isFrozen)
                         ? Colors.black
-                        : Theme.of(context).colorScheme.onSurface,
+                        : (isToday
+                              ? const Color.fromARGB(255, 0, 0, 0)
+                              : (isDark ? Colors.white : Colors.black)),
                     fontSize: 14,
                     fontWeight: FontWeight.w900,
                   ),
@@ -153,22 +167,26 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
           alignment: Alignment.center,
           children: [
             Transform.translate(
-              offset: const Offset(0, -4), // Move fire emoji slightly up
-              child: Image.asset(
-                'assets/images/fire_3d.png',
-                width: 28,
-                height: 28,
+              offset: const Offset(0, -2), // Moved down from -4
+              child: OverflowBox(
+                maxWidth: 50,
+                maxHeight: 50,
+                child: Image.asset(
+                  'assets/images/fire_3d.png',
+                  width: 32,
+                  height: 30,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-            // Date number on top (shifted slightly down towards the fire's base)
+            // Date number on top (centered in the fire base)
             Transform.translate(
-              offset: const Offset(0, 1),
+              offset: const Offset(0, 2),
               child: Text(
                 '${date.day}',
                 style: const TextStyle(
                   color: Colors.black,
-                  fontSize:
-                      14, // Increased size to make the w900 weight look bolder
+                  fontSize: 14,
                   fontWeight: FontWeight.w900,
                 ),
               ),
@@ -214,21 +232,35 @@ class _MonthCalendarWidgetState extends State<MonthCalendarWidget> {
       );
     }
 
-    // ── Past missed day (Broken streak, no freeze available) ──
+    // ── Past day without fire or ice ──
     return Container(
       margin: const EdgeInsets.all(2),
       child: Center(
-        child: Transform.translate(
-          offset: const Offset(0, 1),
-          child: Text(
-            '${date.day}',
-            style: TextStyle(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.3),
-              fontSize: 13,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.06),
+              ),
             ),
-          ),
+            Transform.translate(
+              offset: const Offset(0, 1),
+              child: Text(
+                '${date.day}',
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
