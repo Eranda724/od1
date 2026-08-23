@@ -1115,11 +1115,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                               exData['monthlyTotal'] ??
                                                               0,
                                                           defaultReps:
-                                                              def.defaultReps ??
-                                                              0,
+                                                              def.defaultReps,
                                                           defaultTimer:
-                                                              def.defaultTimer ??
-                                                              0,
+                                                              def.defaultTimer,
                                                           unit: def.unit,
                                                           exerciseDef: def,
                                                           sessionQueue:
