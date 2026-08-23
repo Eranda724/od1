@@ -34,9 +34,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     _tabController = TabController(length: _periods.length, vsync: this);
 
     _tabController.addListener(() {
-      setState(() {
-        _activePeriod = _periods[_tabController.index];
-      });
+      // Only update when the tab has fully settled (not mid-animation).
+      // This prevents the stream from resetting prematurely during swipe.
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _activePeriod = _periods[_tabController.index];
+        });
+      }
     });
   }
 

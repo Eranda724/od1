@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_item.dart';
-import '../models/exercise_icons.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:translator/translator.dart';

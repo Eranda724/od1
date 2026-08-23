@@ -202,6 +202,8 @@ class _SocialScreenState extends State<SocialScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return Center(child: Text('not_signed_in'.tr()));
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -226,20 +228,41 @@ class _SocialScreenState extends State<SocialScreen> {
               TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
+                onTapOutside: (event) => FocusScope.of(context).unfocus(),
                 decoration: InputDecoration(
                   hintText: 'search_user_hint'.tr(),
-                  hintStyle: const TextStyle(
-                    color: Colors.grey,
+                  hintStyle: TextStyle(
+                    color: isDark ? Colors.white54 : Colors.grey,
                     fontWeight: FontWeight.normal,
                     fontSize: 14,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: Colors.grey,
+                    color: isDark ? Colors.white54 : Colors.grey,
                     size: 22,
                   ),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _searchController,
+                    builder: (context, value, child) {
+                      if (value.text.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return IconButton(
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: isDark ? Colors.white54 : Colors.grey,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                          FocusScope.of(context).unfocus();
+                        },
+                      );
+                    },
+                  ),
                   filled: true,
-                  fillColor: const Color(0xFFF2F2F2),
+                  fillColor: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFF2F2F2),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(28),
                     borderSide: BorderSide.none,
@@ -280,7 +303,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _searchResults.length,
                   separatorBuilder: (context, index) =>
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final user = _searchResults[index];
                     final userId = user['uid'] as String;
@@ -314,8 +337,18 @@ class _SocialScreenState extends State<SocialScreen> {
                         );
                       },
                       child: Container(
-                        color: Colors
-                            .transparent, // Ensure the whole row is clickable
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
                         child: _UserSearchResultRow(
                           uid: userId,
                           name: user['display_name_resolved'] as String,
@@ -350,10 +383,10 @@ class _SocialScreenState extends State<SocialScreen> {
                       children: [
                         Text(
                           'friend_requests'.tr().toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
-                            color: Colors.black,
+                            color: context.textPrimary,
                             letterSpacing: 1.0,
                           ),
                         ),
@@ -361,8 +394,21 @@ class _SocialScreenState extends State<SocialScreen> {
                         ...docs.map((doc) {
                           final data = doc.data() as Map<String, dynamic>;
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: Row(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
                               children: [
                                 CircleAvatar(
                                   radius: 24,
@@ -382,10 +428,10 @@ class _SocialScreenState extends State<SocialScreen> {
                                     children: [
                                       Text(
                                         data['fromName'] ?? 'someone'.tr(),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w900,
                                           fontSize: 16,
-                                          color: Colors.black,
+                                          color: context.textPrimary,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -409,12 +455,12 @@ class _SocialScreenState extends State<SocialScreen> {
                                       child: Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey.shade200,
+                                          color: isDark ? Colors.white24 : Colors.grey.shade200,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.close,
-                                          color: Colors.grey,
+                                          color: isDark ? Colors.white70 : Colors.grey,
                                           size: 20,
                                         ),
                                       ),
@@ -444,8 +490,9 @@ class _SocialScreenState extends State<SocialScreen> {
                                 ),
                               ],
                             ),
-                          );
-                        }),
+                          ),
+                        );
+                      }),
                         const SizedBox(height: 24),
                       ],
                     );
@@ -455,10 +502,10 @@ class _SocialScreenState extends State<SocialScreen> {
                 // ── 5. Friends List ──
                 Text(
                   'your_friends'.tr().toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
-                    color: Colors.black,
+                    color: context.textPrimary,
                     letterSpacing: 1.0,
                   ),
                 ),
@@ -498,11 +545,7 @@ class _SocialScreenState extends State<SocialScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: friends.length,
-                      separatorBuilder: (context, index) => const Divider(
-                        color: Colors.black12,
-                        height: 32,
-                        thickness: 1,
-                      ),
+                      separatorBuilder: (context, index) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
                         final f = friends[index];
                         return GestureDetector(
@@ -516,8 +559,18 @@ class _SocialScreenState extends State<SocialScreen> {
                             );
                           },
                           child: Container(
-                            color: Colors
-                                .transparent, // Ensure full row is tappable
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
                             child: Row(
                               children: [
                                 // Avatar
@@ -534,16 +587,16 @@ class _SocialScreenState extends State<SocialScreen> {
                                   ),
                                   child: CircleAvatar(
                                     radius: 22,
-                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
                                     backgroundImage: f.photoUrl != null
                                         ? CachedNetworkImageProvider(
                                             f.photoUrl!,
                                           )
                                         : null,
                                     child: f.photoUrl == null
-                                        ? const Icon(
+                                        ? Icon(
                                             Icons.person,
-                                            color: Colors.black38,
+                                            color: isDark ? Colors.white38 : Colors.black38,
                                           )
                                         : null,
                                   ),
@@ -665,17 +718,19 @@ class _UserSearchResultRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Row(
       children: [
         // Avatar
         CircleAvatar(
           radius: 24,
-          backgroundColor: Colors.grey.shade200,
+          backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
           backgroundImage: photoUrl != null
               ? CachedNetworkImageProvider(photoUrl!)
               : null,
           child: photoUrl == null
-              ? const Icon(Icons.person, color: Colors.black38)
+              ? Icon(Icons.person, color: isDark ? Colors.white38 : Colors.black38)
               : null,
         ),
         const SizedBox(width: 16),
@@ -720,7 +775,7 @@ class _UserSearchResultRow extends StatelessWidget {
           child: ElevatedButton(
             onPressed: isSent ? null : onAdd,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isSent ? Colors.grey.shade300 : PCColors.yellow,
+              backgroundColor: isSent ? (isDark ? Colors.grey.shade800 : Colors.grey.shade300) : PCColors.yellow,
               foregroundColor: isSent ? Colors.grey : Colors.black,
               elevation: 0,
               padding: EdgeInsets.zero, // Adjust padding inside text

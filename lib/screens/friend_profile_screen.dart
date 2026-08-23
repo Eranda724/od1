@@ -37,6 +37,7 @@ class FriendProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final today = _todayKey();
     final last7 = _last7Days();
     final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -335,8 +336,8 @@ class FriendProfileScreen extends StatelessWidget {
 
                             // BOTTOM SECTION (Together Streak)
                             if (actuallyFriends) ...[
-                              const Divider(
-                                color: Colors.black12,
+                              Divider(
+                                color: isDark ? Colors.white12 : Colors.black12,
                                 thickness: 1,
                                 height: 1,
                               ),
@@ -358,10 +359,10 @@ class FriendProfileScreen extends StatelessWidget {
                                           'shared_streak_header'
                                               .tr()
                                               .toUpperCase(),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
-                                            color: PCColors.brownDark,
+                                            color: isDark ? Colors.orangeAccent : PCColors.brownDark,
                                             letterSpacing: 1.4,
                                           ),
                                         ),
@@ -469,7 +470,7 @@ class _DayDot extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.black.withValues(alpha: 0.05),
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
         ),
       );
     }
@@ -485,7 +486,7 @@ class _DayDot extends StatelessWidget {
             fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
             color: isToday
                 ? Colors.red
-                : PCColors.brownDark.withValues(alpha: 0.5),
+                : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : PCColors.brownDark.withValues(alpha: 0.5)),
           ),
         ),
       ],
@@ -514,6 +515,7 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     if (widget.currentUid.isEmpty || widget.currentUid == widget.friend.uid)
       return const SizedBox.shrink();
 
@@ -541,7 +543,7 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
               borderRadius: BorderRadius.circular(28),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.red.shade200,
+                  color: isDark ? Colors.red.shade900.withValues(alpha: 0.5) : Colors.red.shade200,
                   offset: const Offset(0, 5),
                   blurRadius: 0,
                 ),
@@ -589,14 +591,14 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                         }
                       }
                     },
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(Icons.delete_outline, color: Colors.white),
               label: _isLoading
                   ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.red,
+                        color: Colors.white,
                       ),
                     )
                   : Text(
@@ -607,8 +609,8 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                       ),
                     ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.red,
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(28),
@@ -636,9 +638,25 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
             final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
-            return SizedBox(
+            return Container(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark ? const Color(0xFF997300) : const Color(0xFFE5A600),
+                    offset: const Offset(0, 5),
+                    blurRadius: 0,
+                  ),
+                  const BoxShadow(
+                    color: Colors.black12,
+                    offset: Offset(0, 8),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
                 onPressed: _isLoading
                     ? null
                     : () async {
@@ -699,36 +717,33 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                           if (mounted) setState(() => _isLoading = false);
                         }
                       },
-                icon: Icon(
-                  hasSentRequest ? Icons.close : Icons.add,
-                  color: hasSentRequest ? Colors.grey : Colors.black87,
-                ),
-                label: _isLoading
-                    ? SizedBox(
+                child: _isLoading
+                    ? const SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: hasSentRequest ? Colors.grey : Colors.black87,
+                          color: Colors.black87,
                         ),
                       )
                     : Text(
-                        hasSentRequest
-                            ? 'remove_request'.tr()
-                            : 'send_request'.tr(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        (hasSentRequest
+                                ? 'remove_request'.tr()
+                                : 'send_request'.tr())
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.2,
+                        ),
                       ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: hasSentRequest
-                      ? Colors.grey.shade200
-                      : PCColors.yellow,
-                  foregroundColor: hasSentRequest
-                      ? Colors.grey
-                      : Colors.black87,
+                  backgroundColor: PCColors.yellow,
+                  foregroundColor: Colors.black87,
                   elevation: 0,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(28),
                   ),
                 ),
               ),
