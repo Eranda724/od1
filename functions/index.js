@@ -111,6 +111,30 @@ exports.sendFriendActivityNotification = onDocumentUpdated("users/{uid}", async 
   } catch (err) {
     console.error("Error sending friend activity push:", err);
   }
+
+  // Write to inAppNotifications for each friend
+  const batch = db.batch();
+  friendUids.forEach(fUid => {
+    // Only write if it's not the sender themselves
+    if (fUid !== uid) {
+      const notifRef = db.collection("users").doc(fUid).collection("inAppNotifications").doc();
+      batch.set(notifRef, {
+        title: "💪 Friend Activity",
+        message: `${displayName} completed a workout today!`,
+        type: "friend_activity",
+        isRead: false,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        relatedId: uid
+      });
+    }
+  });
+
+  try {
+    await batch.commit();
+    console.log(`Successfully wrote inAppNotifications for friend activity.`);
+  } catch (err) {
+    console.error("Error writing inAppNotifications:", err);
+  }
 });
 
 // 3. Friend Request Accepted Notification

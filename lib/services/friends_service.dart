@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'streak_service.dart';
+import 'in_app_notification_service.dart';
 import 'dart:math' as math;
 
 class FriendsService {
@@ -69,6 +70,15 @@ class FriendsService {
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    // 5. Send Notification
+    await InAppNotificationService.instance.sendNotification(
+      targetUserId: toUid,
+      title: 'New Friend Request',
+      message: '$fromName sent you a friend request!',
+      type: 'friend_request',
+      relatedId: fromUid,
+    );
   }
 
   // Accept Friend Request
@@ -81,6 +91,11 @@ class FriendsService {
     final reqRef = FirebaseFirestore.instance.collection('friendRequests').doc(docId);
     batch.update(reqRef, {'status': 'accepted'});
 
+    // Also get the fromName for the notification (need to fetch it first or use currentUser displayName)
+    // Wait, the request has fromName but not toName. Let's fetch the toName from currentUser.
+    final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(toUid).get();
+    final currentUserName = currentUserDoc.data()?['displayName'] ?? 'Someone';
+
     // 2. Create pair document
     final pairRef = FirebaseFirestore.instance.collection('friendPairs').doc(pairId);
     batch.set(pairRef, {
@@ -88,6 +103,15 @@ class FriendsService {
     });
 
     await batch.commit();
+
+    // 3. Send Notification to the person who requested
+    await InAppNotificationService.instance.sendNotification(
+      targetUserId: fromUid,
+      title: 'Friend Request Accepted',
+      message: '$currentUserName accepted your friend request!',
+      type: 'friend_accepted',
+      relatedId: toUid,
+    );
   }
 
   // Reject Friend Request

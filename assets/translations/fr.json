@@ -426,5 +426,15 @@
     "enter_tip_text_hint": "Enter tip text...",
     "start_again": "Recommencer",
     "personal_caps": "PERSONNEL",
-    "day_streak_caps": "JOURS DE SÉRIE"
+    "day_streak_caps": "JOURS DE SÉRIE",
+    "notifications": "Notifications",
+    "no_notifications_yet": "Aucune notification pour le moment",
+    "mark_all_read": "Tout marquer comme lu",
+    "see_all": "Voir toutes les notifications",
+    "yesterday": "Hier",
+    "days_ago": "il y a jours",
+    "hours_ago": "il y a heures",
+    "minutes_ago": "il y a minutes",
+    "just_now": "À l'instant",
+    "error_loading_data": "Erreur lors du chargement des données"
 }

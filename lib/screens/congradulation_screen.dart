@@ -6,6 +6,7 @@ import 'package:confetti/confetti.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
+import '../widgets/notification_bell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
@@ -141,7 +142,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         clipBehavior: Clip.none,
                         children: [
                           Image.asset(
-                            'assets/images/congrads_po.png',
+                            'assets/images/congrads_po1.png',
                             height: 280,
                             fit: BoxFit.contain,
                           ),
@@ -453,6 +454,15 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 Colors.purple,
               ],
               createParticlePath: drawStar,
+            ),
+          ),
+          
+          // Notification Bell Top Right
+          const Positioned(
+            top: 48,
+            right: 16,
+            child: SafeArea(
+              child: NotificationBell(),
             ),
           ),
         ],

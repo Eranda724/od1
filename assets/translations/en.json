@@ -426,5 +426,15 @@
     "enter_tip_text_hint":  "Enter tip text...",
     "start_again":  "Start Again",
     "personal_caps":  "PERSONAL",
-    "day_streak_caps":  "DAY STREAK"
+    "day_streak_caps":  "DAY STREAK",
+    "notifications": "Notifications",
+    "no_notifications_yet": "No notifications yet",
+    "mark_all_read": "Mark all read",
+    "see_all": "See all notifications",
+    "yesterday": "Yesterday",
+    "days_ago": "days ago",
+    "hours_ago": "hours ago",
+    "minutes_ago": "minutes ago",
+    "just_now": "Just now",
+    "error_loading_data": "Error loading data"
 }

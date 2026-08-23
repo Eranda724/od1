@@ -4,6 +4,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import 'reps_count_screen.dart';
+import '../widgets/notification_bell.dart';
 import '../services/ad_service.dart';
 import '../models/exercise_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -325,10 +326,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         icon: Icon(Icons.arrow_back_ios, color: textColor),
                         onPressed: _stopSession,
                       ),
-                      IconButton(
-                        icon: Icon(Icons.notifications_none, color: textColor),
-                        onPressed: () {},
-                      ),
+                      NotificationBell(iconColor: textColor),
                     ],
                   ),
                 ),

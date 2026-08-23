@@ -12,6 +12,7 @@ import 'social_screen.dart';
 import 'admin_screen.dart';
 import 'premium_upgrade_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/notification_bell.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isAdmin;
@@ -95,12 +96,7 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Text('admin_panel'.tr()),
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {
-              // Notification action
-            },
-          ),
+          const NotificationBell(),
           const SizedBox(width: 8),
         ],
       ),

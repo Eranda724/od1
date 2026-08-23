@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import '../widgets/notification_bell.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app_settings.dart';
@@ -687,6 +688,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
+                const NotificationBell(),
                 const SizedBox(width: 4),
               ],
             ),
