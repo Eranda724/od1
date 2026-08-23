@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'dart:io' show Platform;
 import 'dart:async';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'home_screen.dart';
 import 'login_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
@@ -698,7 +696,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const LoginScreen(),
+                                      ),
                                     );
                                   },
                                   child: Text(

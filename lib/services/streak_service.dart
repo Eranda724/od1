@@ -10,17 +10,14 @@ class StreakService {
 
   static String _todayKey() => _dateKey(DateTime.now());
 
-  static String _yesterdayKey() =>
-      _dateKey(DateTime.now().subtract(const Duration(days: 1)));
-
   // Core freeze helper
-
   static ({
     int freezesAvailable,
     List<String> frozenDates,
     bool streakBroken,
     String? nextFreezeRechargeDate,
-  }) _applyMissedDays({
+  })
+  _applyMissedDays({
     required DateTime fromDate,
     required DateTime toDate,
     required int freezesAvailable,
@@ -39,10 +36,13 @@ class StreakService {
       // 1. Process Recharges (Even for today)
       if (nextFreezeRechargeDate != null) {
         final rechargeDate = DateTime.parse(nextFreezeRechargeDate);
-        if (currentDay.isAtSameMomentAs(rechargeDate) || currentDay.isAfter(rechargeDate)) {
+        if (currentDay.isAtSameMomentAs(rechargeDate) ||
+            currentDay.isAfter(rechargeDate)) {
           freezesAvailable = (freezesAvailable + 1).clamp(0, 2);
           if (freezesAvailable < 2) {
-            nextFreezeRechargeDate = _dateKey(rechargeDate.add(Duration(days: freezeRechargePeriod)));
+            nextFreezeRechargeDate = _dateKey(
+              rechargeDate.add(Duration(days: freezeRechargePeriod)),
+            );
           } else {
             nextFreezeRechargeDate = null;
           }
@@ -57,7 +57,9 @@ class StreakService {
             frozenDates.add(currentKey);
           }
           if (nextFreezeRechargeDate == null) {
-            nextFreezeRechargeDate = _dateKey(currentDay.add(Duration(days: freezeRechargePeriod)));
+            nextFreezeRechargeDate = _dateKey(
+              currentDay.add(Duration(days: freezeRechargePeriod)),
+            );
           }
         } else {
           streakBroken = true;
@@ -77,9 +79,14 @@ class StreakService {
   }
 
   /// Calculates the effective streak and freezes for a user based on their last evaluated date.
-  /// This is purely read-only and in-memory. It computes what the streak WOULD be 
+  /// This is purely read-only and in-memory. It computes what the streak WOULD be
   /// if they evaluated right now, without writing to the database.
-  static ({int streak, int freezesAvailable, List<String> frozenDates, String? nextFreezeRechargeDate}) 
+  static ({
+    int streak,
+    int freezesAvailable,
+    List<String> frozenDates,
+    String? nextFreezeRechargeDate,
+  })
   getEffectiveStreakData({
     required int streak,
     required int freezesAvailable,
@@ -89,14 +96,24 @@ class StreakService {
     String? nextFreezeRechargeDate,
   }) {
     if (streak == 0 || lastEvaluatedDate == null) {
-      return (streak: streak, freezesAvailable: freezesAvailable, frozenDates: frozenDates, nextFreezeRechargeDate: nextFreezeRechargeDate);
+      return (
+        streak: streak,
+        freezesAvailable: freezesAvailable,
+        frozenDates: frozenDates,
+        nextFreezeRechargeDate: nextFreezeRechargeDate,
+      );
     }
-    
+
     final fromDate = DateTime.parse(lastEvaluatedDate);
     final todayObj = DateTime.parse(_todayKey());
-    
+
     if (fromDate.isAtSameMomentAs(todayObj) || fromDate.isAfter(todayObj)) {
-      return (streak: streak, freezesAvailable: freezesAvailable, frozenDates: frozenDates, nextFreezeRechargeDate: nextFreezeRechargeDate);
+      return (
+        streak: streak,
+        freezesAvailable: freezesAvailable,
+        frozenDates: frozenDates,
+        nextFreezeRechargeDate: nextFreezeRechargeDate,
+      );
     }
 
     final result = _applyMissedDays(
@@ -107,7 +124,7 @@ class StreakService {
       freezeRechargePeriod: freezeRechargePeriod,
       nextFreezeRechargeDate: nextFreezeRechargeDate,
     );
-    
+
     return (
       streak: result.streakBroken ? 0 : streak,
       freezesAvailable: result.freezesAvailable,
@@ -132,8 +149,12 @@ class StreakService {
     final exRef = userRef.collection('exercises').doc(exerciseId);
 
     final today = _todayKey();
-    final settingsSnap = await FirebaseFirestore.instance.collection('app_config').doc('settings').get();
-    final freezeRechargePeriod = (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
+    final settingsSnap = await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('settings')
+        .get();
+    final freezeRechargePeriod =
+        (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
     return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
       tx,
@@ -146,7 +167,7 @@ class StreakService {
 
       // Exercise-specific stats
       final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
-      
+
       final currentMonthStr = today.substring(0, 7); // e.g. '2026-08'
       final lastMonthStr = exerciseData['lastMonthStr'] as String?;
       int prevMonthly = (exerciseData['monthlyTotal'] ?? 0) as int;
@@ -154,7 +175,7 @@ class StreakService {
         prevMonthly = 0;
       }
       final newMonthly = prevMonthly + reps;
-      
+
       final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
       final lastDate = exerciseData['lastCompletedDate'] as String?;
       final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
@@ -169,7 +190,8 @@ class StreakService {
       List<String> exActiveDates = List<String>.from(
         exerciseData['activeDates'] ?? [],
       );
-      String? newExNextFreezeRechargeDate = exerciseData['nextFreezeRechargeDate'] as String?;
+      String? newExNextFreezeRechargeDate =
+          exerciseData['nextFreezeRechargeDate'] as String?;
 
       if (lastDate == today) {
         newTodayReps = prevTodayReps + reps;
@@ -265,7 +287,8 @@ class StreakService {
         List<String> activeDates = List<String>.from(
           userData['activeDates'] ?? [],
         );
-        String? newOverallNextFreezeRechargeDate = userData['nextFreezeRechargeDate'] as String?;
+        String? newOverallNextFreezeRechargeDate =
+            userData['nextFreezeRechargeDate'] as String?;
 
         final todayObj = DateTime.parse(today);
 
@@ -294,13 +317,13 @@ class StreakService {
         if (!activeDates.contains(today)) {
           activeDates.add(today);
         }
-        
+
         newTodayTimeSpent = timeSpentSeconds; // Reset for the new day
 
         final currentYear = todayObj.year.toString();
         final lastActiveYear = userData['lastActiveYear'] as String?;
         int prevYearlyActiveDays = (userData['yearlyActiveDays'] ?? 0) as int;
-        
+
         if (lastActiveYear != currentYear) {
           prevYearlyActiveDays = 0;
         }
@@ -386,9 +409,13 @@ class StreakService {
   static Future<Map<String, int>> logRoutineCompletion(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     final today = _todayKey();
-    
-    final settingsSnap = await FirebaseFirestore.instance.collection('app_config').doc('settings').get();
-    final freezeRechargePeriod = (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
+
+    final settingsSnap = await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('settings')
+        .get();
+    final freezeRechargePeriod =
+        (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
     return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
       tx,
@@ -413,7 +440,8 @@ class StreakService {
       List<String> activeDates = List<String>.from(
         userData['activeDates'] ?? [],
       );
-      String? newOverallNextFreezeRechargeDate = userData['nextFreezeRechargeDate'] as String?;
+      String? newOverallNextFreezeRechargeDate =
+          userData['nextFreezeRechargeDate'] as String?;
 
       final todayObj = DateTime.parse(today);
 
@@ -466,13 +494,19 @@ class StreakService {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
-      final settingsSnap = await FirebaseFirestore.instance.collection('app_config').doc('settings').get();
-      final freezeRechargePeriod = (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
+      final settingsSnap = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('settings')
+          .get();
+      final freezeRechargePeriod =
+          (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
       // PRE-TRANSACTION QUERY
       // Fetch references outside the transaction to prevent breaking the transaction's async lifecycle.
       final exercisesQuerySnap = await userRef.collection('exercises').get();
-      final exerciseRefs = exercisesQuerySnap.docs.map((d) => d.reference).toList();
+      final exerciseRefs = exercisesQuerySnap.docs
+          .map((d) => d.reference)
+          .toList();
 
       await FirebaseFirestore.instance.runTransaction<void>((tx) async {
         final userSnap = await tx.get(userRef);
@@ -483,98 +517,100 @@ class StreakService {
           exerciseDocs.add(await tx.get(ref));
         }
 
-      // LOGIC & WRITE PHASE
-      final userData = userSnap.data() ?? {};
-      final now = DateTime.now();
-      final todayObj = DateTime(now.year, now.month, now.day);
-      final yesterday = todayObj.subtract(const Duration(days: 1));
+        // LOGIC & WRITE PHASE
+        final userData = userSnap.data() ?? {};
+        final now = DateTime.now();
+        final todayObj = DateTime(now.year, now.month, now.day);
+        final yesterday = todayObj.subtract(const Duration(days: 1));
 
-      final Map<String, dynamic> updates = {};
+        final Map<String, dynamic> updates = {};
 
-      // 1. Evaluate Overall Streak
-      final overallLastDate = userData['overallLastDate'] as String?;
-      final overallStreak = (userData['overallStreak'] ?? 0) as int;
-      if (overallLastDate != null && overallStreak > 0) {
-        final lastEvaluatedDate =
-            (userData['overallLastEvaluatedDate'] as String?) ??
-            overallLastDate;
-        final fromDate = DateTime.parse(lastEvaluatedDate);
+        // 1. Evaluate Overall Streak
+        final overallLastDate = userData['overallLastDate'] as String?;
+        final overallStreak = (userData['overallStreak'] ?? 0) as int;
+        if (overallLastDate != null && overallStreak > 0) {
+          final lastEvaluatedDate =
+              (userData['overallLastEvaluatedDate'] as String?) ??
+              overallLastDate;
+          final fromDate = DateTime.parse(lastEvaluatedDate);
 
-        if (fromDate.isBefore(yesterday)) {
-          int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
-          List<String> frozenDates = List<String>.from(
-            userData['frozenDates'] ?? [],
-          );
+          if (fromDate.isBefore(yesterday)) {
+            int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+            List<String> frozenDates = List<String>.from(
+              userData['frozenDates'] ?? [],
+            );
 
-          final result = _applyMissedDays(
-            fromDate: fromDate,
-            toDate: todayObj,
-            freezesAvailable: freezesAvailable,
-            frozenDates: frozenDates,
-            freezeRechargePeriod: freezeRechargePeriod,
-            nextFreezeRechargeDate: userData['nextFreezeRechargeDate'] as String?,
-          );
+            final result = _applyMissedDays(
+              fromDate: fromDate,
+              toDate: todayObj,
+              freezesAvailable: freezesAvailable,
+              frozenDates: frozenDates,
+              freezeRechargePeriod: freezeRechargePeriod,
+              nextFreezeRechargeDate:
+                  userData['nextFreezeRechargeDate'] as String?,
+            );
 
-          updates['freezesAvailable'] = result.freezesAvailable;
-          updates['frozenDates'] = result.frozenDates;
-          updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
-          updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
+            updates['freezesAvailable'] = result.freezesAvailable;
+            updates['frozenDates'] = result.frozenDates;
+            updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
+            updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
 
-          if (result.streakBroken) {
-            updates['overallStreak'] = 0;
+            if (result.streakBroken) {
+              updates['overallStreak'] = 0;
+            }
+            // Note: Do NOT tx.set here! All tx.get must happen before any tx.set.
           }
-          // Note: Do NOT tx.set here! All tx.get must happen before any tx.set.
         }
-      }
 
-      // 2. Evaluate Individual Exercises
-      for (final doc in exerciseDocs) {
-        if (!doc.exists) continue;
+        // 2. Evaluate Individual Exercises
+        for (final doc in exerciseDocs) {
+          if (!doc.exists) continue;
 
-        final exData = doc.data() as Map<String, dynamic>? ?? {};
-        final lastCompletedDate = exData['lastCompletedDate'] as String?;
-        final currentStreak = (exData['currentStreak'] ?? 0) as int;
-        if (lastCompletedDate == null || currentStreak == 0) continue;
+          final exData = doc.data() as Map<String, dynamic>? ?? {};
+          final lastCompletedDate = exData['lastCompletedDate'] as String?;
+          final currentStreak = (exData['currentStreak'] ?? 0) as int;
+          if (lastCompletedDate == null || currentStreak == 0) continue;
 
-        final lastEvaluatedDate =
-            (exData['lastEvaluatedDate'] as String?) ?? lastCompletedDate;
-        final fromDate = DateTime.parse(lastEvaluatedDate);
+          final lastEvaluatedDate =
+              (exData['lastEvaluatedDate'] as String?) ?? lastCompletedDate;
+          final fromDate = DateTime.parse(lastEvaluatedDate);
 
-        if (fromDate.isBefore(yesterday)) {
-          int exFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
-          List<String> exFrozenDates = List<String>.from(
-            exData['frozenDates'] ?? [],
-          );
+          if (fromDate.isBefore(yesterday)) {
+            int exFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
+            List<String> exFrozenDates = List<String>.from(
+              exData['frozenDates'] ?? [],
+            );
 
-          final result = _applyMissedDays(
-            fromDate: fromDate,
-            toDate: todayObj,
-            freezesAvailable: exFreezesAvailable,
-            frozenDates: exFrozenDates,
-            freezeRechargePeriod: freezeRechargePeriod,
-            nextFreezeRechargeDate: exData['nextFreezeRechargeDate'] as String?,
-          );
+            final result = _applyMissedDays(
+              fromDate: fromDate,
+              toDate: todayObj,
+              freezesAvailable: exFreezesAvailable,
+              frozenDates: exFrozenDates,
+              freezeRechargePeriod: freezeRechargePeriod,
+              nextFreezeRechargeDate:
+                  exData['nextFreezeRechargeDate'] as String?,
+            );
 
-          final Map<String, dynamic> exUpdates = {
-            'freezesAvailable': result.freezesAvailable,
-            'frozenDates': result.frozenDates,
-            'nextFreezeRechargeDate': result.nextFreezeRechargeDate,
-            'lastEvaluatedDate': _dateKey(yesterday),
-          };
+            final Map<String, dynamic> exUpdates = {
+              'freezesAvailable': result.freezesAvailable,
+              'frozenDates': result.frozenDates,
+              'nextFreezeRechargeDate': result.nextFreezeRechargeDate,
+              'lastEvaluatedDate': _dateKey(yesterday),
+            };
 
-          if (result.streakBroken) {
-            exUpdates['currentStreak'] = 0;
+            if (result.streakBroken) {
+              exUpdates['currentStreak'] = 0;
+            }
+
+            tx.set(doc.reference, exUpdates, SetOptions(merge: true));
           }
-
-          tx.set(doc.reference, exUpdates, SetOptions(merge: true));
         }
-      }
 
-      // Perform the userRef write at the very end (if updates exist)
-      if (updates.isNotEmpty) {
-        tx.set(userRef, updates, SetOptions(merge: true));
-      }
-    });
+        // Perform the userRef write at the very end (if updates exist)
+        if (updates.isNotEmpty) {
+          tx.set(userRef, updates, SetOptions(merge: true));
+        }
+      });
     } catch (e) {
       debugPrint('Error in checkAndUpdateStreak: $e');
     }

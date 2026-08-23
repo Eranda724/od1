@@ -7,7 +7,6 @@ import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/streak_service.dart';
-import 'dart:math' as math;
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -74,7 +73,6 @@ class FriendProfileScreen extends StatelessWidget {
             lastEvaluatedDate: rawLastEvaluatedDate,
           );
 
-          final freezesAvailable = effectiveData.freezesAvailable;
           final frozenDates = effectiveData.frozenDates.toSet();
 
           final overallStreak = friend.overallStreak;
@@ -84,9 +82,6 @@ class FriendProfileScreen extends StatelessWidget {
             userData['activeDates'] ?? [],
           );
           final activeDays = activeDaysList.toSet();
-
-          final bool doneToday = activeDays.contains(today);
-          int displayFreezes = freezesAvailable;
 
           return SafeArea(
             child: SingleChildScrollView(

@@ -7,7 +7,6 @@ import '../widgets/month_calendar_widget.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
 import '../widgets/exercise_thumbnail.dart';
-import '../app_settings.dart';
 import 'exercise_start_screen.dart';
 import '../models/session_item.dart';
 

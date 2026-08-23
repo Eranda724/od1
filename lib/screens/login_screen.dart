@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'welcome_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main.dart';
@@ -11,7 +9,6 @@ import '../app_settings.dart';
 import '../services/social_auth_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/language_switcher.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,11 +34,17 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final input = _emailController.text.trim();
       if (input.isEmpty) {
-        throw FirebaseAuthException(code: 'empty-email', message: 'Please enter your email.');
+        throw FirebaseAuthException(
+          code: 'empty-email',
+          message: 'Please enter your email.',
+        );
       }
       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
       if (!emailRegex.hasMatch(input)) {
-        throw FirebaseAuthException(code: 'invalid-email', message: 'Invalid email address format.');
+        throw FirebaseAuthException(
+          code: 'invalid-email',
+          message: 'Invalid email address format.',
+        );
       }
 
       await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -60,9 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const StartRouter(),
-          ),
+          MaterialPageRoute(builder: (context) => const StartRouter()),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -115,7 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message ?? 'Google sign-in failed.');
+      if (mounted)
+        setState(() => _errorMessage = e.message ?? 'Google sign-in failed.');
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'Google sign-in failed: $e');
     } finally {
@@ -138,7 +140,8 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } on FirebaseAuthException catch (e) {
-      if (mounted) setState(() => _errorMessage = e.message ?? 'Apple sign-in failed.');
+      if (mounted)
+        setState(() => _errorMessage = e.message ?? 'Apple sign-in failed.');
     } catch (e) {
       if (mounted) setState(() => _errorMessage = 'Apple sign-in failed: $e');
     } finally {
@@ -164,10 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: const [
-          LanguageSwitcher(),
-          SizedBox(width: 8),
-        ],
+        actions: const [LanguageSwitcher(), SizedBox(width: 8)],
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -177,16 +177,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? const ClampingScrollPhysics()
                 : const NeverScrollableScrollPhysics(),
             child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: IntrinsicHeight(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-
                       // Branding
                       Center(
                         child: Image.asset(
@@ -236,7 +233,11 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             label: Text(
                               'continue_apple'.tr(),
-                              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(double.infinity, 48),
@@ -259,13 +260,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           label: Text(
                             'continue_google'.tr(),
-                            style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: OutlinedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 48),
                             foregroundColor: Colors.black87,
                             backgroundColor: Colors.white,
-                            side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+                            side: BorderSide(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(28),
                             ),
@@ -274,9 +282,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                            Expanded(
+                              child: Divider(
+                                color: Colors.grey.shade300,
+                                thickness: 1,
+                              ),
+                            ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                               child: Text(
                                 'or_divider'.tr(),
                                 style: TextStyle(
@@ -286,7 +301,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                            Expanded(
+                              child: Divider(
+                                color: Colors.grey.shade300,
+                                thickness: 1,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -307,7 +327,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: InputDecoration(
                           hintText: 'email_hint'.tr(),
                           hintStyle: TextStyle(color: Colors.grey.shade400),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -318,7 +341,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: Color(0xFFFFC72C), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFFFC72C),
+                              width: 2,
+                            ),
                           ),
                         ),
                         keyboardType: TextInputType.emailAddress,
@@ -338,7 +364,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: InputDecoration(
                           hintText: '••••••••',
                           hintStyle: TextStyle(color: Colors.grey.shade400),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: Colors.grey.shade300),
@@ -349,11 +378,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: Color(0xFFFFC72C), width: 2),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFFFC72C),
+                              width: 2,
+                            ),
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
                               color: Colors.grey.shade500,
                             ),
                             onPressed: () {
@@ -373,7 +407,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const ForgotPasswordScreen(),
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
                               ),
                             );
                           },
@@ -432,7 +467,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
+                                ),
                               );
                             },
                             child: Text(
@@ -444,8 +481,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                         ],
-                      )
-],
+                      ),
+                    ],
                   ),
                 ),
               ),

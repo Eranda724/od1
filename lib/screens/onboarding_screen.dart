@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'login_screen.dart';
 import 'welcome_screen.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';

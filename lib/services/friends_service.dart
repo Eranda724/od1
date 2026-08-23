@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
-import 'notification_service.dart';
 import 'streak_service.dart';
 import 'dart:math' as math;
 
@@ -11,11 +10,6 @@ class FriendsService {
   static String _todayKey() {
     final now = DateTime.now();
     return '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-  }
-
-  static String _yesterdayKey() {
-    final y = DateTime.now().subtract(const Duration(days: 1));
-    return '${y.year}-${y.month.toString().padLeft(2, '0')}-${y.day.toString().padLeft(2, '0')}';
   }
 
   static String getPairId(String uid1, String uid2) {

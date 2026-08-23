@@ -683,7 +683,6 @@ class _LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final cardColor = isCurrentUser ? const Color(0xFFFFC72C) : theme.cardColor;
 

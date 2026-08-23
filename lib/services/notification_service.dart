@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -91,7 +90,8 @@ class NotificationService {
     // Request permission on Android 13+ and iOS for local notifications
     await _plugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
+          AndroidFlutterLocalNotificationsPlugin
+        >()
         ?.requestNotificationsPermission();
 
     // Setup FCM
@@ -113,9 +113,10 @@ class NotificationService {
       if (user != null) {
         final token = await fcm.getToken();
         if (token != null) {
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-            'fcmToken': token,
-          }, SetOptions(merge: true));
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({'fcmToken': token}, SetOptions(merge: true));
         }
       }
     });
@@ -135,10 +136,10 @@ class NotificationService {
         .doc('notifications')
         .snapshots()
         .listen((_) {
-      // Clear debounce cache to force an immediate reschedule
-      _lastSyncTime = null;
-      refreshSchedule();
-    });
+          // Clear debounce cache to force an immediate reschedule
+          _lastSyncTime = null;
+          refreshSchedule();
+        });
   }
 
   // Public API
@@ -150,7 +151,8 @@ class NotificationService {
     if (!AppSettings().notificationsEnabled) return;
 
     final now = DateTime.now();
-    if (_lastSyncTime != null && now.difference(_lastSyncTime!) < const Duration(minutes: 5)) {
+    if (_lastSyncTime != null &&
+        now.difference(_lastSyncTime!) < const Duration(minutes: 5)) {
       return; // Debounce spamming
     }
     _lastSyncTime = now;
@@ -164,7 +166,7 @@ class NotificationService {
   Future<void> cancelTodayEveningReminder() async {
     if (!AppSettings().notificationsEnabled) return;
     // Cancel the current recurring schedule first
-    await _plugin.cancel(id: _eveningId); 
+    await _plugin.cancel(id: _eveningId);
     // Re-schedule immediately starting from tomorrow
     await _scheduleEvening(skipToday: true);
   }
@@ -175,7 +177,10 @@ class NotificationService {
   }
 
   /// Show a friend activity notification right now
-  Future<void> showFriendActivityNotification(String friendName, String detail) async {
+  Future<void> showFriendActivityNotification(
+    String friendName,
+    String detail,
+  ) async {
     if (!AppSettings().notificationsEnabled) return;
     await _plugin.show(
       id: _friendId,
@@ -205,16 +210,18 @@ class NotificationService {
           .get();
       final d = snap.data() ?? {};
       return {
-        'morningHour':   (d['morningHour']   as int?) ?? _defaultMorningHour,
+        'morningHour': (d['morningHour'] as int?) ?? _defaultMorningHour,
         'morningMinute': (d['morningMinute'] as int?) ?? 0,
-        'eveningHour':   (d['eveningHour']   as int?) ?? _defaultEveningHour,
+        'eveningHour': (d['eveningHour'] as int?) ?? _defaultEveningHour,
         'eveningMinute': (d['eveningMinute'] as int?) ?? 0,
       };
     } catch (_) {
       // Offline or first run — use defaults
       return {
-        'morningHour': _defaultMorningHour, 'morningMinute': 0,
-        'eveningHour': _defaultEveningHour, 'eveningMinute': 0,
+        'morningHour': _defaultMorningHour,
+        'morningMinute': 0,
+        'eveningHour': _defaultEveningHour,
+        'eveningMinute': 0,
       };
     }
   }
@@ -244,7 +251,10 @@ class NotificationService {
       id: _morningId,
       title: '💪 Time for your workout!',
       body: _morningMessages[idx],
-      scheduledDate: _nextInstanceOfHour(times['morningHour']!, times['morningMinute']!),
+      scheduledDate: _nextInstanceOfHour(
+        times['morningHour']!,
+        times['morningMinute']!,
+      ),
       notificationDetails: _notifDetails(
         channelId: 'daily_reminder',
         channelName: 'Daily Reminder',
@@ -261,7 +271,11 @@ class NotificationService {
       id: _eveningId,
       title: '⚠️ Your streak is at risk!',
       body: _eveningMessages[idx],
-      scheduledDate: _nextInstanceOfHour(times['eveningHour']!, times['eveningMinute']!, skipToday: skipToday),
+      scheduledDate: _nextInstanceOfHour(
+        times['eveningHour']!,
+        times['eveningMinute']!,
+        skipToday: skipToday,
+      ),
       notificationDetails: _notifDetails(
         channelId: 'streak_saver',
         channelName: 'Streak Saver',
@@ -291,10 +305,20 @@ class NotificationService {
     );
   }
 
-  tz.TZDateTime _nextInstanceOfHour(int hour, int minute, {bool skipToday = false}) {
+  tz.TZDateTime _nextInstanceOfHour(
+    int hour,
+    int minute, {
+    bool skipToday = false,
+  }) {
     final now = tz.TZDateTime.now(tz.local);
     var scheduled = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, hour, minute);
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduled.isBefore(now) || skipToday) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
