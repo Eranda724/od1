@@ -55,17 +55,20 @@ class _StreakCalendarViewState extends State<StreakCalendarView> {
     final isToday = date.year == now.year && date.month == now.month && date.day == now.day;
     final isFuture = date.isAfter(now) && !isToday;
 
-    Color bgColor = Colors.white.withValues(alpha: 0.05);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    Color bgColor = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.05);
     Color borderColor = Colors.transparent;
     Widget? icon;
 
     if (isActive) {
       bgColor = PCColors.yellow.withValues(alpha: 0.2);
-      icon = const Text('🔥', style: TextStyle(fontSize: 14));
+      icon = Image.asset('assets/images/fire_3d.png', width: 22, height: 22, fit: BoxFit.contain);
       borderColor = PCColors.yellow.withValues(alpha: 0.5);
     } else if (isFrozen) {
       bgColor = Colors.blue.withValues(alpha: 0.2);
-      icon = const Text('❄️', style: TextStyle(fontSize: 14));
+      icon = Image.asset('assets/images/ice_cube_3d.png', width: 16, height: 20, fit: BoxFit.contain);
       borderColor = Colors.blueAccent.withValues(alpha: 0.5);
     } else if (isToday) {
       borderColor = PCColors.yellow;
@@ -86,8 +89,12 @@ class _StreakCalendarViewState extends State<StreakCalendarView> {
             Text(
               '${date.day}',
               style: TextStyle(
-                color: isFuture ? Colors.white38 : (isToday ? PCColors.yellow : Colors.white70),
-                fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                color: isFuture
+                    ? (isDark ? Colors.white38 : Colors.black26)
+                    : (isToday
+                        ? PCColors.yellow
+                        : (isDark ? Colors.white : Colors.black)),
+                fontWeight: isToday ? FontWeight.bold : FontWeight.w600,
               ),
             ),
           if (icon != null)
