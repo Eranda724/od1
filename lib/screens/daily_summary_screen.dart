@@ -61,7 +61,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
       duration: const Duration(seconds: 3),
     );
     // Pick a random celebration character for this session
-    _celebrationImage = (_celebrationImages..shuffle()).first;
+    _celebrationImage = (_celebrationImages.toList()..shuffle()).first;
     // Play the full routine finish sound and start confetti
     _audioPlayer.play(AssetSource('sounds/routin-finish.mp3'));
     _confettiController.play();
