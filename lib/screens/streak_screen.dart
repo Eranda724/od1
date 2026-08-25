@@ -788,7 +788,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     Transform.translate(
                       offset: const Offset(8, -8),
                       child: Image.asset(
-                        'assets/images/potato_home_screen.png',
+                        'assets/images/streak.png',
                         height: 170,
                         fit: BoxFit.contain,
                       ),
@@ -1013,9 +1013,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    streak == 1
-                        ? '${'day_unit'.tr()} streak'
-                        : '${'days_unit'.tr()} streak',
+                    'streak_days_label'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       color: Theme.of(
