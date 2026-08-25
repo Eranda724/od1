@@ -6,7 +6,6 @@ import 'package:confetti/confetti.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
-import '../widgets/notification_bell.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
@@ -63,10 +62,18 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
   AudioPlayer? _player;
+  late final String _randomImage;
 
   @override
   void initState() {
     super.initState();
+
+    final images = [
+      'assets/images/congrads_po1.png',
+      'assets/images/congrads_po2.png',
+      'assets/images/congrads_po3.png',
+    ];
+    _randomImage = images[math.Random().nextInt(images.length)];
 
     _controller = AnimationController(
       vsync: this,
@@ -142,7 +149,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         clipBehavior: Clip.none,
                         children: [
                           Image.asset(
-                            'assets/images/congrads_po1.png',
+                            _randomImage,
                             height: 280,
                             fit: BoxFit.contain,
                           ),
@@ -250,7 +257,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                                   ),
                                 ),
                                 Text(
-                                  '${widget.overallStreak > 0 ? widget.overallStreak : widget.dayStreak}',
+                                  '${widget.dayStreak}',
                                   style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w900,
@@ -454,15 +461,6 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 Colors.purple,
               ],
               createParticlePath: drawStar,
-            ),
-          ),
-          
-          // Notification Bell Top Right
-          const Positioned(
-            top: 48,
-            right: 16,
-            child: SafeArea(
-              child: NotificationBell(),
             ),
           ),
         ],

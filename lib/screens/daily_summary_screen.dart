@@ -45,14 +45,7 @@ class DailySummaryScreen extends StatefulWidget {
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  late final String _celebrationImage;
-
-  static const List<String> _celebrationImages = [
-    'assets/images/congrads_po1.png',
-    'assets/images/congrads_po2.png',
-    'assets/images/congrads_po3.png',
-    'assets/images/p5.png',
-  ];
+  late final String _celebrationImage = 'assets/images/fire-congrads.png';
 
   @override
   void initState() {
@@ -60,8 +53,6 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 3),
     );
-    // Pick a random celebration character for this session
-    _celebrationImage = (_celebrationImages.toList()..shuffle()).first;
     // Play the full routine finish sound and start confetti
     _audioPlayer.play(AssetSource('sounds/routin-finish.mp3'));
     _confettiController.play();
@@ -339,7 +330,6 @@ class _ExerciseSummaryCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
               ],
             ),
           ),
