@@ -51,21 +51,20 @@ class StreakService {
 
       // 2. Process Missed Days (Skip today, as today is not yet missed)
       if (!isToday) {
-        if (freezesAvailable > 0) {
-          freezesAvailable -= 1;
-          if (!frozenDates.contains(currentKey)) {
-            frozenDates.add(currentKey);
+        if (!streakBroken) {
+          if (freezesAvailable > 0) {
+            freezesAvailable -= 1;
+            if (!frozenDates.contains(currentKey)) {
+              frozenDates.add(currentKey);
+            }
+            if (nextFreezeRechargeDate == null) {
+              nextFreezeRechargeDate = _dateKey(
+                currentDay.add(Duration(days: freezeRechargePeriod)),
+              );
+            }
+          } else {
+            streakBroken = true;
           }
-          if (nextFreezeRechargeDate == null) {
-            nextFreezeRechargeDate = _dateKey(
-              currentDay.add(Duration(days: freezeRechargePeriod)),
-            );
-          }
-        } else {
-          streakBroken = true;
-          freezesAvailable = 2; // Reset freezes for the new streak
-          nextFreezeRechargeDate = null;
-          break;
         }
       }
     }
@@ -202,8 +201,8 @@ class StreakService {
 
         final lastEvaluatedDate =
             (exerciseData['lastEvaluatedDate'] as String?) ?? lastDate;
-        if (lastDate == null || prevStreak == 0) {
-          // First ever exercise or starting a new streak
+        if (lastDate == null) {
+          // First ever exercise
           newStreak = 1;
           exFreezesAvailable = 2;
           newExNextFreezeRechargeDate = null;
@@ -227,10 +226,6 @@ class StreakService {
         if (!exActiveDates.contains(today)) {
           exActiveDates.add(today);
         }
-
-        // Reset freezes since they successfully completed the exercise today
-        exFreezesAvailable = 2;
-        newExNextFreezeRechargeDate = null;
       }
 
       final newLifetime = prevLifetime + reps;
@@ -292,8 +287,8 @@ class StreakService {
 
         final todayObj = DateTime.parse(today);
 
-        if (overallLastDate == null || prevOverallStreak == 0) {
-          // First ever exercise or starting a new streak
+        if (overallLastDate == null) {
+          // First ever exercise
           newOverallStreak = 1;
           freezesAvailable = 2;
           newOverallNextFreezeRechargeDate = null;
