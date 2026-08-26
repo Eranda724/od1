@@ -59,6 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isUploadingImage = false;
 
+  bool _isDangerZoneExpanded = false;
+
   Timer? _debounceTimer;
 
   final ImagePicker _picker = ImagePicker();
@@ -1318,10 +1320,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Padding(
       padding: const EdgeInsets.only(top: 7),
       child: Material(
-        color: Colors.red.withValues(alpha: isDark ? 0.035 : 0.025),
+        color: _isDangerZoneExpanded
+            ? Colors.red.withValues(alpha: isDark ? 0.035 : 0.025)
+            : Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.red.withValues(alpha: 0.12)),
+          side: BorderSide(
+              color: _isDangerZoneExpanded
+                  ? Colors.red.withValues(alpha: 0.12)
+                  : (isDark ? Colors.white12 : Colors.black12)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Theme(
@@ -1337,25 +1344,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Closed initially.
             initiallyExpanded: false,
+            onExpansionChanged: (expanded) {
+              setState(() {
+                _isDangerZoneExpanded = expanded;
+              });
+            },
 
             leading: Container(
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.09),
+                color: _isDangerZoneExpanded
+                    ? Colors.red.withValues(alpha: 0.09)
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05)),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline_rounded,
-                color: Colors.red,
+                color: _isDangerZoneExpanded
+                    ? Colors.red
+                    : (isDark ? Colors.white70 : Colors.black87),
                 size: 18,
               ),
             ),
 
             title: Text(
-              'danger_zone'.tr(),
-              style: const TextStyle(
-                color: Colors.red,
+              _isDangerZoneExpanded ? 'danger_zone'.tr() : 'DELETE ACCOUNT',
+              style: TextStyle(
+                color: _isDangerZoneExpanded
+                    ? Colors.red
+                    : (isDark ? Colors.white : Colors.black),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -1365,7 +1385,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Tap to manage account deletion',
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.red.withValues(alpha: 0.55),
+                color: _isDangerZoneExpanded
+                    ? Colors.red.withValues(alpha: 0.55)
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.42),
               ),
             ),
 
@@ -1394,7 +1416,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       )
                     : OutlinedButton.icon(
-                        onPressed: _deleteAccount,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Account'),
+                              content: const Text(
+                                  'Are you sure you want to delete your account and data?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('No'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _deleteAccount();
+                                  },
+                                  child: const Text('Yes',
+                                      style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                         icon: const Icon(
                           Icons.delete_forever_rounded,
                           size: 19,
