@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math' as math;
 import 'leaderboard_service.dart';
 
 class StreakService {
@@ -176,7 +177,7 @@ class StreakService {
     final freezeRechargePeriod =
         (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
-    return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
+    final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
       tx,
     ) async {
       final userSnap = await tx.get(userRef);
@@ -366,6 +367,56 @@ class StreakService {
         'overallStreak': newOverallStreak,
       };
     });
+
+    try {
+      await _updateSharedStreaks(
+        uid: uid,
+        newOverallStreak: result['overallStreak'] ?? 0,
+      );
+    } catch (e) {
+      debugPrint('Error updating shared streaks: $e');
+    }
+
+    return result;
+  }
+
+  static Future<void> _updateSharedStreaks({
+    required String uid,
+    required int newOverallStreak,
+  }) async {
+    final pairsSnap = await FirebaseFirestore.instance
+        .collection('friendPairs')
+        .where('uids', arrayContains: uid)
+        .get();
+
+    if (pairsSnap.docs.isEmpty) return;
+
+    final batch = FirebaseFirestore.instance.batch();
+
+    for (final pairDoc in pairsSnap.docs) {
+      final uids = List<String>.from(pairDoc.data()['uids'] ?? []);
+      final friendUid = uids.firstWhere((id) => id != uid, orElse: () => '');
+      if (friendUid.isEmpty) continue;
+
+      final friendSnap = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(friendUid)
+          .get();
+      if (!friendSnap.exists) continue;
+      
+      final friendData = friendSnap.data()!;
+      final fEffective = getEffectiveStreakData(
+        streak: (friendData['overallStreak'] ?? 0) as int,
+        freezesAvailable: (friendData['freezesAvailable'] ?? 2) as int,
+        frozenDates: List<String>.from(friendData['frozenDates'] ?? []),
+        lastEvaluatedDate: friendData['overallLastEvaluatedDate'] as String?,
+      );
+
+      final sharedStreak = math.min(newOverallStreak, fEffective.streak);
+      batch.update(pairDoc.reference, {'sharedStreak': sharedStreak});
+    }
+
+    await batch.commit();
   }
 
   // Check Routine Completion

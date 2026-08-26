@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,7 +57,8 @@ class FriendProfileScreen extends StatelessWidget {
               child: CircularProgressIndicator(color: PCColors.yellowDark),
             );
           }
-          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final userData =
+              userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
           final rawFreezesAvailable =
               (userData['freezesAvailable'] ?? 2) as int;
@@ -67,16 +69,14 @@ class FriendProfileScreen extends StatelessWidget {
               userData['overallLastEvaluatedDate'] as String?;
 
           final effectiveData = StreakService.getEffectiveStreakData(
-            streak: friend.overallStreak,
+            streak: (userData['overallStreak'] ?? 0) as int,
             freezesAvailable: rawFreezesAvailable,
             frozenDates: rawFrozenDates,
             lastEvaluatedDate: rawLastEvaluatedDate,
           );
 
           final frozenDates = effectiveData.frozenDates.toSet();
-
-          final overallStreak = friend.overallStreak;
-          final liveSharedStreak = friend.sharedStreak;
+          final overallStreak = effectiveData.streak;
 
           final activeDaysList = List<String>.from(
             userData['activeDates'] ?? [],
@@ -157,6 +157,9 @@ class FriendProfileScreen extends StatelessWidget {
                     builder: (context, pairSnap) {
                       final actuallyFriends =
                           pairSnap.hasData && pairSnap.data!.exists;
+                          
+                      final pairData = pairSnap.data?.data() as Map<String, dynamic>? ?? {};
+                      final liveSharedStreak = (pairData['sharedStreak'] ?? 0) as int;
 
                       return Container(
                         width: double.infinity,
@@ -256,36 +259,35 @@ class FriendProfileScreen extends StatelessWidget {
                                               const SizedBox(width: 8),
                                               Flexible(
                                                 child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                                  mainAxisSize: MainAxisSize.min,
                                                   children: [
                                                     FittedBox(
                                                       fit: BoxFit.scaleDown,
+                                                      alignment: Alignment.center,
                                                       child: Text(
                                                         '$liveSharedStreak',
                                                         style: const TextStyle(
-                                                          fontSize: 60,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          color: Color(
-                                                            0xFF332200,
-                                                          ),
+                                                          fontSize: 68,
+                                                          fontWeight: FontWeight.w900,
+                                                          color: Color(0xFF332200),
                                                           height: 1.0,
                                                         ),
                                                       ),
                                                     ),
                                                     const SizedBox(height: 2),
-                                                    Text(
-                                                      'days_caps'.tr(),
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color: Color(
-                                                          0xFF5A3D00,
+                                                    FittedBox(
+                                                      fit: BoxFit.scaleDown,
+                                                      alignment: Alignment.center,
+                                                      child: Text(
+                                                        'day_streak_caps'.tr(),
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: Color(0xFF7A5000),
+                                                          letterSpacing: 2.0,
+                                                          height: 1.0,
                                                         ),
-                                                        height: 1.0,
                                                       ),
                                                     ),
                                                   ],
@@ -298,10 +300,14 @@ class FriendProfileScreen extends StatelessWidget {
                                     ),
                                       Transform.translate(
                                         offset: const Offset(8, -8),
-                                        child: Image.asset(
-                                          'assets/images/login.png',
-                                          height: 160,
-                                          fit: BoxFit.contain,
+                                        child: Transform(
+                                          alignment: Alignment.center,
+                                          transform: Matrix4.rotationY(math.pi),
+                                          child: Image.asset(
+                                            'assets/images/login.png',
+                                            height: 160,
+                                            fit: BoxFit.contain,
+                                          ),
                                         ),
                                       ),
                                   ],

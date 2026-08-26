@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'streak_service.dart';
@@ -144,84 +145,118 @@ class FriendsService {
 
   // Get Friends List
   Stream<List<FriendInfo>> getFriendsList(String currentUid) {
-    return FirebaseFirestore.instance
-        .collection('friendPairs')
-        .where('uids', arrayContains: currentUid)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      final List<FriendInfo> friends = [];
-      
-      final currentUserDoc = await FirebaseFirestore.instance.collection('users').doc(currentUid).get();
-      final cData = currentUserDoc.data() ?? {};
-      final cRawStreak = (cData['overallStreak'] ?? 0) as int;
-      final cRawFreezes = (cData['freezesAvailable'] ?? 2) as int;
-      final cRawFrozen = List<String>.from(cData['frozenDates'] ?? []);
-      final cRawLastDate = cData['overallLastEvaluatedDate'] as String?;
+    late StreamController<List<FriendInfo>> controller;
+    StreamSubscription? pairsSub;
+    StreamSubscription? meSub;
+    final Map<String, StreamSubscription> friendSubs = {};
+    
+    List<String> currentFriendUids = [];
+    Map<String, String> pairIds = {};
+    Map<String, int> pairSharedStreaks = {};
+    DocumentSnapshot? myDoc;
+    final Map<String, DocumentSnapshot> friendDocs = {};
 
+    void emit() {
+      if (myDoc == null) return;
+      if (friendDocs.length != currentFriendUids.length) return;
+      
+      final cData = myDoc!.data() as Map<String, dynamic>? ?? {};
       final cEffective = StreakService.getEffectiveStreakData(
-        streak: cRawStreak,
-        freezesAvailable: cRawFreezes,
-        frozenDates: cRawFrozen,
-        lastEvaluatedDate: cRawLastDate,
+        streak: cData['overallStreak'] ?? 0,
+        freezesAvailable: cData['freezesAvailable'] ?? 2,
+        frozenDates: List<String>.from(cData['frozenDates'] ?? []),
+        lastEvaluatedDate: cData['overallLastEvaluatedDate'] as String?,
       );
-      final currentUserStreak = cEffective.streak;
+      final myStreak = cEffective.streak;
       final today = _todayKey();
 
-      final friendUids = <String>[];
-      final pairIdsByFriendUid = <String, String>{};
-
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final uids = List<String>.from(data['uids']);
-        final friendUid = uids.firstWhere((id) => id != currentUid);
-        friendUids.add(friendUid);
-        pairIdsByFriendUid[friendUid] = doc.id;
-      }
-
-      final friendDocs = <DocumentSnapshot>[];
-      for (var i = 0; i < friendUids.length; i += 10) {
-        final chunk = friendUids.sublist(i, math.min(i + 10, friendUids.length));
-        if (chunk.isEmpty) continue;
-        final snap = await FirebaseFirestore.instance
-            .collection('users')
-            .where(FieldPath.documentId, whereIn: chunk)
-            .get();
-        friendDocs.addAll(snap.docs);
-      }
-
-      for (final friendDoc in friendDocs) {
-        final fData = friendDoc.data() as Map<String, dynamic>;
-        final friendUid = friendDoc.id;
-        final friendName = fData['displayName'] ?? 'Unknown';
-        final rawOverallStreak = fData['overallStreak'] ?? 0;
-        final rawFreezesAvailable = fData['freezesAvailable'] ?? 2;
-        final rawFrozenDates = List<String>.from(fData['frozenDates'] ?? []);
-        final rawLastEvaluatedDate = fData['overallLastEvaluatedDate'] as String?;
-
-        final effectiveData = StreakService.getEffectiveStreakData(
-          streak: rawOverallStreak,
-          freezesAvailable: rawFreezesAvailable,
-          frozenDates: rawFrozenDates,
-          lastEvaluatedDate: rawLastEvaluatedDate,
+      final friends = <FriendInfo>[];
+      for (final fUid in currentFriendUids) {
+        final fDoc = friendDocs[fUid];
+        if (fDoc == null) continue;
+        final fData = fDoc.data() as Map<String, dynamic>? ?? {};
+        
+        final fEffective = StreakService.getEffectiveStreakData(
+          streak: fData['overallStreak'] ?? 0,
+          freezesAvailable: fData['freezesAvailable'] ?? 2,
+          frozenDates: List<String>.from(fData['frozenDates'] ?? []),
+          lastEvaluatedDate: fData['overallLastEvaluatedDate'] as String?,
         );
-
-        final overallStreak = effectiveData.streak;
+        final friendStreak = fEffective.streak;
         final friendDoneToday = (fData['overallLastDate'] as String?) == today;
 
         friends.add(FriendInfo(
-          uid: friendUid,
-          displayName: friendName,
-          overallStreak: overallStreak,
+          uid: fUid,
+          displayName: fData['displayName'] ?? 'Unknown',
+          overallStreak: friendStreak,
           yearlyActiveDays: (fData['yearlyActiveDays'] as num?)?.toInt() ?? 0,
-          sharedStreak: math.min(currentUserStreak, overallStreak),
+          sharedStreak: pairSharedStreaks[fUid] ?? 0,
           sharedLastDate: null,
           friendDoneToday: friendDoneToday,
-          pairId: pairIdsByFriendUid[friendUid]!,
+          pairId: pairIds[fUid]!,
           photoUrl: fData['photoUrl'],
         ));
       }
-      return friends;
-    });
+      
+      // Sort identical to original behavior if needed, although caller sorts it anyway.
+      controller.add(friends);
+    }
+
+    controller = StreamController<List<FriendInfo>>.broadcast(
+      onListen: () {
+        meSub = FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots().listen((snap) {
+          myDoc = snap;
+          emit();
+        });
+
+        pairsSub = FirebaseFirestore.instance
+            .collection('friendPairs')
+            .where('uids', arrayContains: currentUid)
+            .snapshots()
+            .listen((snapshot) {
+          
+          final newFriendUids = <String>[];
+          for (final doc in snapshot.docs) {
+            final uids = List<String>.from(doc['uids']);
+            final fUid = uids.firstWhere((id) => id != currentUid);
+            newFriendUids.add(fUid);
+            pairIds[fUid] = doc.id;
+            
+            final data = doc.data() as Map<String, dynamic>? ?? {};
+            pairSharedStreaks[fUid] = (data['sharedStreak'] ?? 0) as int;
+          }
+          currentFriendUids = newFriendUids;
+
+          // Remove old subs
+          final toRemove = friendSubs.keys.where((k) => !newFriendUids.contains(k)).toList();
+          for (final k in toRemove) {
+            friendSubs[k]?.cancel();
+            friendSubs.remove(k);
+            friendDocs.remove(k);
+          }
+
+          // Add new subs
+          for (final fUid in newFriendUids) {
+            if (!friendSubs.containsKey(fUid)) {
+              friendSubs[fUid] = FirebaseFirestore.instance.collection('users').doc(fUid).snapshots().listen((snap) {
+                friendDocs[fUid] = snap;
+                emit();
+              });
+            }
+          }
+          emit();
+        });
+      },
+      onCancel: () {
+        meSub?.cancel();
+        pairsSub?.cancel();
+        for (final sub in friendSubs.values) {
+          sub.cancel();
+        }
+      },
+    );
+
+    return controller.stream;
   }
 
 }
