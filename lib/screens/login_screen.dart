@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../main.dart';
+import 'welcome_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -165,7 +166,14 @@ class _LoginScreenState extends State<LoginScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
-            Navigator.pop(context);
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+              );
+            }
           },
         ),
         backgroundColor: Colors.transparent,
@@ -183,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: IntrinsicHeight(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -191,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Center(
                         child: Image.asset(
                           'assets/images/login.png',
-                          height: screenHeight * 0.23,
+                          height: screenHeight * 0.19,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -425,33 +433,59 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      if (_errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 4),
+                      SizedBox(
+                        height: 24,
+                        child: _errorMessage != null
+                            ? Text(
+                                _errorMessage!,
+                                style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                      const SizedBox(height: 8),
                       _isLoading
                           ? const Center(child: CircularProgressIndicator())
-                          : ElevatedButton(
-                              onPressed: _login,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFFC72C),
-                                foregroundColor: Colors.black,
-                                minimumSize: const Size(double.infinity, 48),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(28),
-                                ),
+                          : Container(
+                              width: double.infinity,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(28),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0xFFD69E00),
+                                    offset: Offset(0, 5),
+                                    blurRadius: 0,
+                                  ),
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    offset: Offset(0, 8),
+                                    blurRadius: 6,
+                                  ),
+                                ],
                               ),
-                              child: Text(
-                                'log_in_action'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                              child: ElevatedButton(
+                                onPressed: _login,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFFFC72C),
+                                  foregroundColor: Colors.black,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                ),
+                                child: Text(
+                                  'log_in_action'.tr().toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                  ),
                                 ),
                               ),
                             ),
