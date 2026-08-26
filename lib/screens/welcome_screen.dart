@@ -5,6 +5,7 @@ import 'login_screen.dart';
 import 'register_screen.dart';
 import 'onboarding_screen.dart';
 import '../app_settings.dart';
+import '../widgets/language_switcher.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -131,12 +132,26 @@ class WelcomeScreen extends StatelessWidget {
                       GestureDetector(
                         onTap: () =>
                             _completeOnboarding(context, const LoginScreen()),
-                        child: Text(
-                          'already_have_account_login'.tr(),
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
+                        child: RichText(
+                          text: TextSpan(
+                            text: 'already_have_account_prefix'.tr(),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: 'already_have_account_login'
+                                    .tr()
+                                    .replaceFirst(
+                                        'already_have_account_prefix'.tr(), ''),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -162,6 +177,12 @@ class WelcomeScreen extends StatelessWidget {
                 );
               },
             ),
+          ),
+          // Language switcher overlay (Top Right)
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 8,
+            right: 8,
+            child: const LanguageSwitcher(),
           ),
         ],
       ),
