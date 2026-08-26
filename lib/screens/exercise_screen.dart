@@ -401,7 +401,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             unit,
                                           ),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: PCColors.green,
+                                            backgroundColor: const Color(0xFF55AB78),
                                             foregroundColor: Colors.white,
                                             elevation: 6,
                                             shadowColor: Colors.black
@@ -585,7 +585,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: isDone
-                                            ? Colors.green
+                                            ? const Color(0xFF55AB78)
                                             : PCColors.yellow,
                                         foregroundColor: isDone
                                             ? Colors.white
