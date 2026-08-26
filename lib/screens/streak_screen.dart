@@ -547,19 +547,32 @@ class _StreakScreenState extends State<StreakScreen>
                         List<String> exActiveDates = List<String>.from(
                           exData['activeDates'] ?? [],
                         );
-                        final List<String> exFrozenDates = List<String>.from(
+                        final rawFreezes = (exData['freezesAvailable'] ?? 2) as int;
+                        final rawFrozenDates = List<String>.from(
                           exData['frozenDates'] ?? [],
                         );
-                        final int exFreezesAvailable =
-                            (exData['freezesAvailable'] ?? 2) as int;
+                        final nextRecharge = exData['nextFreezeRechargeDate'] as String?;
+                        final lastEvaluatedDate = (exData['lastEvaluatedDate'] as String?) ?? lastDate;
+
+                        final effectiveData = StreakService.getEffectiveStreakData(
+                          streak: streak,
+                          freezesAvailable: rawFreezes,
+                          frozenDates: rawFrozenDates,
+                          lastEvaluatedDate: lastEvaluatedDate,
+                          nextFreezeRechargeDate: nextRecharge,
+                        );
+
+                        final int effectiveStreak = effectiveData.streak;
+                        final List<String> exFrozenDates = effectiveData.frozenDates;
+                        final int exFreezesAvailable = effectiveData.freezesAvailable;
 
                         // Fallback: If database has a legacy streak number but no saved dates yet, fill the UI to match
-                        if (streak > 0 &&
+                        if (effectiveStreak > 0 &&
                             lastDate != null &&
-                            exActiveDates.length < streak) {
+                            exActiveDates.length < effectiveStreak) {
                           try {
                             final lastDateObj = DateTime.parse(lastDate);
-                            final int fillCount = streak > 7 ? 7 : streak;
+                            final int fillCount = effectiveStreak > 7 ? 7 : effectiveStreak;
                             for (int i = 0; i < fillCount; i++) {
                               final d = lastDateObj.subtract(Duration(days: i));
                               final key =
@@ -574,7 +587,7 @@ class _StreakScreenState extends State<StreakScreen>
 
                         return _ExerciseStreakCard(
                           def: def,
-                          streak: streak,
+                          streak: effectiveStreak,
                           lifetime: lifetime,
                           doneToday: doneToday,
                           lastCompletedDate: lastDate,
@@ -1022,45 +1035,43 @@ class _ExerciseStreakCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (freezesAvailable > 0) ...[
-                    const SizedBox(height: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.blueAccent.withValues(alpha: 0.5),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Transform.translate(
-                            offset: const Offset(0, 1.5),
-                            child: Image.asset(
-                              'assets/images/ice_cube_3d.png',
-                              width: 12,
-                              height: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$displayFreezes/2',
-                            style: const TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.blueAccent,
-                            ),
-                          ),
-                        ],
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blueAccent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.blueAccent.withValues(alpha: 0.5),
+                        width: 1,
                       ),
                     ),
-                  ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Transform.translate(
+                          offset: const Offset(0, 1.5),
+                          child: Image.asset(
+                            'assets/images/ice_cube_3d.png',
+                            width: 12,
+                            height: 12,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$displayFreezes/2',
+                          style: const TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ],

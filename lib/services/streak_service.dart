@@ -10,6 +10,40 @@ class StreakService {
 
   static String _todayKey() => _dateKey(DateTime.now());
 
+  static ({int freezesAvailable, String? nextFreezeRechargeDate}) _recalculateFreezes({
+    required List<String> frozenDates,
+    required int freezeRechargePeriod,
+    required DateTime currentDay,
+  }) {
+    int maxFreezes = 2;
+    int usedInWindow = 0;
+    DateTime? oldestInWindow;
+
+    for (String dateStr in frozenDates) {
+      DateTime frozenDate = DateTime.parse(dateStr);
+      int daysSince = currentDay.difference(frozenDate).inDays;
+      
+      // If the freeze was used strictly less than 'freezeRechargePeriod' days ago, it is still recharging
+      if (daysSince >= 0 && daysSince < freezeRechargePeriod) {
+        usedInWindow++;
+        if (oldestInWindow == null || frozenDate.isBefore(oldestInWindow)) {
+          oldestInWindow = frozenDate;
+        }
+      }
+    }
+
+    int available = maxFreezes - usedInWindow;
+    if (available < 0) available = 0;
+    if (available > maxFreezes) available = maxFreezes;
+
+    String? nextRecharge;
+    if (available < maxFreezes && oldestInWindow != null) {
+      nextRecharge = _dateKey(oldestInWindow.add(Duration(days: freezeRechargePeriod)));
+    }
+
+    return (freezesAvailable: available, nextFreezeRechargeDate: nextRecharge);
+  }
+
   // Core freeze helper
   static ({
     int freezesAvailable,
@@ -20,10 +54,8 @@ class StreakService {
   _applyMissedDays({
     required DateTime fromDate,
     required DateTime toDate,
-    required int freezesAvailable,
     required List<String> frozenDates,
     required int freezeRechargePeriod,
-    required String? nextFreezeRechargeDate,
   }) {
     bool streakBroken = false;
     final totalDays = toDate.difference(fromDate).inDays;
@@ -33,47 +65,38 @@ class StreakService {
       final currentKey = _dateKey(currentDay);
       final isToday = i == totalDays;
 
-      // 1. Process Recharges (Even for today)
-      if (nextFreezeRechargeDate != null) {
-        final rechargeDate = DateTime.parse(nextFreezeRechargeDate);
-        if (currentDay.isAtSameMomentAs(rechargeDate) ||
-            currentDay.isAfter(rechargeDate)) {
-          freezesAvailable = (freezesAvailable + 1).clamp(0, 2);
-          if (freezesAvailable < 2) {
-            nextFreezeRechargeDate = _dateKey(
-              rechargeDate.add(Duration(days: freezeRechargePeriod)),
-            );
-          } else {
-            nextFreezeRechargeDate = null;
-          }
-        }
-      }
+      // 1. Recalculate available freezes for the current day based on past frozenDates
+      final freezeData = _recalculateFreezes(
+        frozenDates: frozenDates,
+        freezeRechargePeriod: freezeRechargePeriod,
+        currentDay: currentDay,
+      );
+      int currentFreezes = freezeData.freezesAvailable;
 
       // 2. Process Missed Days (Skip today, as today is not yet missed)
-      if (!isToday) {
-        if (!streakBroken) {
-          if (freezesAvailable > 0) {
-            freezesAvailable -= 1;
-            if (!frozenDates.contains(currentKey)) {
-              frozenDates.add(currentKey);
-            }
-            if (nextFreezeRechargeDate == null) {
-              nextFreezeRechargeDate = _dateKey(
-                currentDay.add(Duration(days: freezeRechargePeriod)),
-              );
-            }
-          } else {
-            streakBroken = true;
+      if (!isToday && !streakBroken) {
+        if (currentFreezes > 0) {
+          if (!frozenDates.contains(currentKey)) {
+            frozenDates.add(currentKey);
           }
+        } else {
+          streakBroken = true;
         }
       }
     }
 
+    // Final calculation for the end date (toDate)
+    final finalData = _recalculateFreezes(
+      frozenDates: frozenDates,
+      freezeRechargePeriod: freezeRechargePeriod,
+      currentDay: toDate,
+    );
+
     return (
-      freezesAvailable: freezesAvailable,
+      freezesAvailable: finalData.freezesAvailable,
       frozenDates: frozenDates,
       streakBroken: streakBroken,
-      nextFreezeRechargeDate: nextFreezeRechargeDate,
+      nextFreezeRechargeDate: finalData.nextFreezeRechargeDate,
     );
   }
 
@@ -118,10 +141,8 @@ class StreakService {
     final result = _applyMissedDays(
       fromDate: fromDate,
       toDate: todayObj,
-      freezesAvailable: freezesAvailable,
       frozenDates: List.from(frozenDates),
       freezeRechargePeriod: freezeRechargePeriod,
-      nextFreezeRechargeDate: nextFreezeRechargeDate,
     );
 
     return (
@@ -212,10 +233,8 @@ class StreakService {
           final result = _applyMissedDays(
             fromDate: fromDate,
             toDate: todayObj,
-            freezesAvailable: exFreezesAvailable,
             frozenDates: exFrozenDates,
             freezeRechargePeriod: freezeRechargePeriod,
-            nextFreezeRechargeDate: newExNextFreezeRechargeDate,
           );
           exFreezesAvailable = result.freezesAvailable;
           exFrozenDates = result.frozenDates;
@@ -298,10 +317,8 @@ class StreakService {
           final result = _applyMissedDays(
             fromDate: fromDate,
             toDate: todayObj,
-            freezesAvailable: freezesAvailable,
             frozenDates: frozenDates,
             freezeRechargePeriod: freezeRechargePeriod,
-            nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
           );
           freezesAvailable = result.freezesAvailable;
           frozenDates = result.frozenDates;
@@ -450,10 +467,8 @@ class StreakService {
         final result = _applyMissedDays(
           fromDate: fromDate,
           toDate: todayObj,
-          freezesAvailable: freezesAvailable,
           frozenDates: frozenDates,
           freezeRechargePeriod: freezeRechargePeriod,
-          nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
         );
         freezesAvailable = result.freezesAvailable;
         frozenDates = result.frozenDates;
@@ -530,7 +545,7 @@ class StreakService {
           final fromDate = DateTime.parse(lastEvaluatedDate);
 
           if (fromDate.isBefore(yesterday)) {
-            int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+
             List<String> frozenDates = List<String>.from(
               userData['frozenDates'] ?? [],
             );
@@ -538,11 +553,8 @@ class StreakService {
             final result = _applyMissedDays(
               fromDate: fromDate,
               toDate: todayObj,
-              freezesAvailable: freezesAvailable,
               frozenDates: frozenDates,
               freezeRechargePeriod: freezeRechargePeriod,
-              nextFreezeRechargeDate:
-                  userData['nextFreezeRechargeDate'] as String?,
             );
 
             updates['freezesAvailable'] = result.freezesAvailable;
@@ -571,7 +583,7 @@ class StreakService {
           final fromDate = DateTime.parse(lastEvaluatedDate);
 
           if (fromDate.isBefore(yesterday)) {
-            int exFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
+
             List<String> exFrozenDates = List<String>.from(
               exData['frozenDates'] ?? [],
             );
@@ -579,11 +591,8 @@ class StreakService {
             final result = _applyMissedDays(
               fromDate: fromDate,
               toDate: todayObj,
-              freezesAvailable: exFreezesAvailable,
               frozenDates: exFrozenDates,
               freezeRechargePeriod: freezeRechargePeriod,
-              nextFreezeRechargeDate:
-                  exData['nextFreezeRechargeDate'] as String?,
             );
 
             final Map<String, dynamic> exUpdates = {
