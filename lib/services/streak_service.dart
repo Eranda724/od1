@@ -180,10 +180,14 @@ class StreakService {
     final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
       tx,
     ) async {
-      final userSnap = await tx.get(userRef);
+      final snaps = await Future.wait([
+        tx.get(userRef),
+        tx.get(exRef),
+      ]);
+      final userSnap = snaps[0];
       final userData = userSnap.data() ?? {};
 
-      final exSnap = await tx.get(exRef);
+      final exSnap = snaps[1];
       final exerciseData = exSnap.data() ?? {};
 
       // Exercise-specific stats
@@ -547,11 +551,26 @@ class StreakService {
 
   // Check & Update Streak (app-open)
 
+  static Future<void>? _activeCheck;
+
   /// Runs on every app-open. Lazily evaluates any missed days since last check.
   /// Deducts freezes one-per-missed-day sequentially. Breaks streak only when
   /// a missed day has no freeze available. Wrapped in a transaction to prevent
   /// race conditions with logExercise.
   static Future<void> checkAndUpdateStreak(String uid) async {
+    if (_activeCheck != null) {
+      await _activeCheck;
+      return;
+    }
+    _activeCheck = _doCheckAndUpdateStreak(uid);
+    try {
+      await _activeCheck;
+    } finally {
+      _activeCheck = null;
+    }
+  }
+
+  static Future<void> _doCheckAndUpdateStreak(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
 
     try {
@@ -573,10 +592,9 @@ class StreakService {
         final userSnap = await tx.get(userRef);
         if (!userSnap.exists) return;
 
-        final exerciseDocs = <DocumentSnapshot>[];
-        for (final ref in exerciseRefs) {
-          exerciseDocs.add(await tx.get(ref));
-        }
+        final exerciseDocs = await Future.wait(
+          exerciseRefs.map((ref) => tx.get(ref)),
+        );
 
         // LOGIC & WRITE PHASE
         final userData = userSnap.data() ?? {};
