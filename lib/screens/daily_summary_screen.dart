@@ -114,9 +114,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'PERSONAL',
-                          style: TextStyle(
+                        Text(
+                          'personal_caps'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF5A3D00),
@@ -134,9 +134,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'DAY STREAK',
-                          style: TextStyle(
+                        Text(
+                          'day_streak_caps'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF5A3D00),
