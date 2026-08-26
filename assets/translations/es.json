@@ -436,5 +436,6 @@
     "hours_ago": "hace horas",
     "minutes_ago": "hace minutos",
     "just_now": "Justo ahora",
-    "error_loading_data": "Error al cargar los datos"
+    "error_loading_data": "Error al cargar los datos",
+    "friend_streak_caps": "RACHA ENTRE AMIGOS"
 }
