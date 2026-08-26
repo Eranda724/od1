@@ -61,9 +61,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const StartRouter()),
+          (route) => false,
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -110,9 +111,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final credential = await SocialAuthService.signInWithGoogle();
       if (credential == null) return; // user cancelled
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const StartRouter()),
+          (route) => false,
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -134,9 +136,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final credential = await SocialAuthService.signInWithApple();
       if (credential == null) return; // user cancelled
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const StartRouter()),
+          (route) => false,
         );
       }
     } on FirebaseAuthException catch (e) {
