@@ -64,6 +64,88 @@ class _HomeScreenState extends State<HomeScreen>
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: Theme.of(context).iconTheme,
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: user == null
+              ? const Stream.empty()
+              : FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.uid)
+                    .snapshots(),
+          builder: (context, snapshot) {
+            final data =
+                snapshot.data?.data() as Map<String, dynamic>?;
+            final isPremium = data?['isPremium'] == true;
+            if (isPremium) return const SizedBox.shrink();
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PremiumUpgradeScreen(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.12),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withValues(alpha: 0.10)
+                                : Colors.black.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.star_rounded,
+                        size: 14,
+                        color:
+                            Theme.of(context).brightness == Brightness.dark
+                                ? Colors.white.withValues(alpha: 0.80)
+                                : Colors.black.withValues(alpha: 0.70),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    Flexible(
+                      child: Text(
+                        'go_premium_banner'.tr(),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withValues(alpha: 0.85)
+                                  : Colors.black.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        centerTitle: true,
         actions: [
           if (widget.isAdmin)
             Padding(
@@ -171,7 +253,10 @@ class _HomeScreenState extends State<HomeScreen>
             },
           ),
           const SocialScreen(),
-          LeaderboardScreen(currentUid: user?.uid),
+          LeaderboardScreen(
+            currentUid: user?.uid,
+            onSwitchToSocial: () => _tabController.animateTo(3),
+          ),
         ],
       ),
     );
