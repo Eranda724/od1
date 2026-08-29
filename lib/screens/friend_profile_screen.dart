@@ -122,6 +122,7 @@ class FriendProfileScreen extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                             color: context.textPrimary,
                           ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

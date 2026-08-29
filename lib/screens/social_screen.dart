@@ -246,8 +246,8 @@ class _SocialScreenState extends State<SocialScreen> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  backgroundColor: const Color(0xFFFFC72C),
+                  foregroundColor: const Color(0xFF5A3D00),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   elevation: 0,
                   shape: RoundedRectangleBorder(
