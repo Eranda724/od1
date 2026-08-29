@@ -8,6 +8,8 @@ import 'friend_profile_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -230,6 +232,27 @@ class _SocialScreenState extends State<SocialScreen> {
                   fontWeight: FontWeight.w500,
                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.50),
                   height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  final String appLink = dotenv.env['APP_LINK'] ?? '';
+                  Share.share('${'share_app_msg'.tr()} $appLink');
+                },
+                icon: const Icon(Icons.share_rounded, size: 20),
+                label: Text(
+                  'share_app_btn'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
               const SizedBox(height: 20),
