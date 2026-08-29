@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -7,7 +8,6 @@ import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../services/streak_service.dart';
-import 'dart:math' as math;
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -57,7 +57,8 @@ class FriendProfileScreen extends StatelessWidget {
               child: CircularProgressIndicator(color: PCColors.yellowDark),
             );
           }
-          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final userData =
+              userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
           final rawFreezesAvailable =
               (userData['freezesAvailable'] ?? 2) as int;
@@ -68,25 +69,19 @@ class FriendProfileScreen extends StatelessWidget {
               userData['overallLastEvaluatedDate'] as String?;
 
           final effectiveData = StreakService.getEffectiveStreakData(
-            streak: friend.overallStreak,
+            streak: (userData['overallStreak'] ?? 0) as int,
             freezesAvailable: rawFreezesAvailable,
             frozenDates: rawFrozenDates,
             lastEvaluatedDate: rawLastEvaluatedDate,
           );
 
-          final freezesAvailable = effectiveData.freezesAvailable;
           final frozenDates = effectiveData.frozenDates.toSet();
-
-          final overallStreak = friend.overallStreak;
-          final liveSharedStreak = friend.sharedStreak;
+          final overallStreak = effectiveData.streak;
 
           final activeDaysList = List<String>.from(
             userData['activeDates'] ?? [],
           );
           final activeDays = activeDaysList.toSet();
-
-          final bool doneToday = activeDays.contains(today);
-          int displayFreezes = freezesAvailable;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -102,7 +97,7 @@ class FriendProfileScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // ── USER DETAILS ──
+                  // USER DETAILS
                   Row(
                     children: [
                       CircleAvatar(
@@ -162,6 +157,9 @@ class FriendProfileScreen extends StatelessWidget {
                     builder: (context, pairSnap) {
                       final actuallyFriends =
                           pairSnap.hasData && pairSnap.data!.exists;
+                          
+                      final pairData = pairSnap.data?.data() as Map<String, dynamic>? ?? {};
+                      final liveSharedStreak = (pairData['sharedStreak'] ?? 0) as int;
 
                       return Container(
                         width: double.infinity,
@@ -198,115 +196,89 @@ class FriendProfileScreen extends StatelessWidget {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 2.0, left: 6.0),
-                                            child: FittedBox(
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            // FRIEND STREAK label
+                                            FittedBox(
                                               fit: BoxFit.scaleDown,
+                                              alignment: Alignment.centerLeft,
                                               child: Text(
-                                                'FRIEND STREAK',
+                                                'friend_streak_caps'.tr(),
                                                 style: const TextStyle(
-                                                  fontSize: 20,
+                                                  fontSize: 32,
                                                   fontWeight: FontWeight.w900,
                                                   color: Color(0xFF5A3D00),
+                                                  letterSpacing: 1.2,
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              Transform.translate(
-                                                offset: const Offset(0, -4),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        left: 4.0,
+                                            const SizedBox(height: 28),
+                                            // Fire + Number + DAY STREAK
+                                            Row(
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                Image.asset(
+                                                  'assets/images/fire_3d.png',
+                                                  height: 52,
+                                                  width: 52,
+                                                  fit: BoxFit.contain,
+                                                ),
+                                                const SizedBox(width: 8),
+                                                // Number + DAY STREAK stacked
+                                                Flexible(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      FittedBox(
+                                                        fit: BoxFit.scaleDown,
+                                                        alignment: Alignment.center,
+                                                        child: Text(
+                                                          '$liveSharedStreak',
+                                                          style: const TextStyle(
+                                                            fontSize: 68,
+                                                            fontWeight: FontWeight.w900,
+                                                            color: Color(0xFF332200),
+                                                            height: 1.0,
+                                                          ),
+                                                        ),
                                                       ),
-                                                  child: SizedBox(
-                                                    width: 74,
-                                                    height: 60,
-                                                    child: Stack(
-                                                      clipBehavior: Clip.none,
-                                                      children: [
-                                                        Positioned(
-                                                          left: 0,
-                                                          child: Image.asset(
-                                                            'assets/images/fire_3d.png',
-                                                            width: 60,
-                                                            height: 60,
+                                                      const SizedBox(height: 2),
+                                                      FittedBox(
+                                                        fit: BoxFit.scaleDown,
+                                                        alignment: Alignment.center,
+                                                        child: Text(
+                                                          'day_streak_caps'.tr(),
+                                                          style: const TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight: FontWeight.w800,
+                                                            color: Color(0xFF7A5000),
+                                                            letterSpacing: 2.0,
+                                                            height: 1.0,
                                                           ),
                                                         ),
-                                                        Positioned(
-                                                          left: 14,
-                                                          child: Image.asset(
-                                                            'assets/images/fire_3d.png',
-                                                            width: 60,
-                                                            height: 60,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              Flexible(
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  mainAxisAlignment: MainAxisAlignment.center,
-                                                  children: [
-                                                    FittedBox(
-                                                      fit: BoxFit.scaleDown,
-                                                      child: Text(
-                                                        '$liveSharedStreak',
-                                                        style: const TextStyle(
-                                                          fontSize: 60,
-                                                          fontWeight:
-                                                              FontWeight.w900,
-                                                          color: Color(
-                                                            0xFF332200,
-                                                          ),
-                                                          height: 1.0,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 2),
-                                                    Text(
-                                                      'days_caps'.tr(),
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color: Color(
-                                                          0xFF5A3D00,
-                                                        ),
-                                                        height: 1.0,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
                                       Transform.translate(
                                         offset: const Offset(8, -8),
-                                        child: Image.asset(
-                                          'assets/images/login.png',
-                                          height: 160,
-                                          fit: BoxFit.contain,
+                                        child: Transform(
+                                          alignment: Alignment.center,
+                                          transform: Matrix4.rotationY(math.pi),
+                                          child: Image.asset(
+                                            'assets/images/login.png',
+                                            height: 160,
+                                            fit: BoxFit.contain,
+                                          ),
                                         ),
                                       ),
                                   ],

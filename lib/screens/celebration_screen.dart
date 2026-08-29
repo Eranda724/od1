@@ -45,7 +45,7 @@ class CelebrationScreen extends StatefulWidget {
 
 class _CelebrationScreenState extends State<CelebrationScreen>
     with SingleTickerProviderStateMixin {
-  // ── Image pool ────────────────────────────────────────────────────────────
+  // Image pool
   static const _images = [
     'assets/images/p1.png',
     'assets/images/p2.png',
@@ -56,7 +56,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     'assets/images/p7.png',
   ];
 
-  // ── Fun messages ──────────────────────────────────────────────────────────
+  // Fun messages
   static const _messageKeys = [
     'crushed_it',
     'potato_power',
@@ -85,7 +85,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
     _fetchImage();
 
-    // ── Scale-in animation ───────────────────────────────────────────────
+    // Scale-in animation
     _scaleCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
@@ -108,11 +108,11 @@ class _CelebrationScreenState extends State<CelebrationScreen>
     ]).animate(_scaleCtrl);
     _scaleCtrl.forward();
 
-    // ── Sound ────────────────────────────────────────────────────────────
+    // Sound
     _player = AudioPlayer();
     _playSound();
 
-    // ── Auto-advance after 5 s ─────────────────────────────────────────
+    // Auto-advance after 5 s
     _autoTimer = Timer(const Duration(milliseconds: 5000), _advance);
   }
 
@@ -212,7 +212,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
         body: SafeArea(
           child: Column(
             children: [
-              // ── Tap to skip hint ───────────────────────────────────────
+              // Tap to skip hint
               Padding(
                 padding: const EdgeInsets.only(top: 16, right: 20),
                 child: Align(
@@ -230,7 +230,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
               const Spacer(),
 
-              // ── Animated potato image ──────────────────────────────────
+              // Animated potato image
               ScaleTransition(
                 scale: _scale,
                 child: _dynamicImageUrl != null
@@ -247,7 +247,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
               const SizedBox(height: 28),
 
-              // ── Fun message ────────────────────────────────────────────
+              // Fun message
               Text(
                 _messageKey.tr(),
                 textAlign: TextAlign.center,
@@ -272,7 +272,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
               const Spacer(flex: 2),
 
-              // ── Progress dots ──────────────────────────────────────────
+              // Progress dots
               _AutoProgressBar(durationMs: 5000),
 
               const SizedBox(height: 32),
@@ -284,9 +284,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Thin animated progress bar that fills over the auto-advance duration
-// ─────────────────────────────────────────────────────────────────────────────
 class _AutoProgressBar extends StatefulWidget {
   final int durationMs;
   const _AutoProgressBar({required this.durationMs});

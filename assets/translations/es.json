@@ -426,5 +426,16 @@
     "enter_tip_text_hint":  "Enter tip text...",
     "start_again":  "Empezar de Nuevo",
     "personal_caps":  "PERSONAL",
-    "day_streak_caps":  "DÍAS DE RACHA"
+    "day_streak_caps":  "DÍAS DE RACHA",
+    "notifications": "Notificaciones",
+    "no_notifications_yet": "Aún no hay notificaciones",
+    "mark_all_read": "Marcar todo como leído",
+    "see_all": "Ver todas las notificaciones",
+    "yesterday": "Ayer",
+    "days_ago": "hace días",
+    "hours_ago": "hace horas",
+    "minutes_ago": "hace minutos",
+    "just_now": "Justo ahora",
+    "error_loading_data": "Error al cargar los datos",
+    "friend_streak_caps": "RACHA ENTRE AMIGOS"
 }

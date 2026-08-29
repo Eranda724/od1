@@ -75,7 +75,7 @@ class PCColors {
 extension AppColorsX on BuildContext {
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
 
-  // ── Backgrounds ────────────────────────────────────────────────────────────
+  // Backgrounds
   /// Main scaffold / page background
   Color get surface => isDark ? const Color(0xFF1A1A1A) : const Color(0xFFF4ECE1);
 
@@ -88,11 +88,11 @@ extension AppColorsX on BuildContext {
   /// Subtle border / divider colour
   Color get borderColor => isDark ? const Color(0xFF3A3A3A) : Colors.black12;
 
-  // ── Text ───────────────────────────────────────────────────────────────────
+  // Text
   Color get textPrimary   => isDark ? Colors.white        : Colors.black87;
   Color get textSecondary => isDark ? Colors.white60      : Colors.black54;
 
-  // ── Brand ──────────────────────────────────────────────────────────────────
+  // Brand
   Color get yellow => PCColors.yellow;
 
   /// General page background (respects dark mode, unlike PCColors.background)

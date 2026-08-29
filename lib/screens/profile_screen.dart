@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import '../widgets/notification_bell.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app_settings.dart';
@@ -24,16 +25,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ─────────────────────────────────────────────────────────────────────
   // FORMS
-  // ─────────────────────────────────────────────────────────────────────
 
   final _formKeyProfile = GlobalKey<FormState>();
   final _formKeyPassword = GlobalKey<FormState>();
 
-  // ─────────────────────────────────────────────────────────────────────
   // CONTROLLERS
-  // ─────────────────────────────────────────────────────────────────────
 
   final _displayNameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -44,9 +41,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final _deletePasswordController = TextEditingController();
 
-  // ─────────────────────────────────────────────────────────────────────
   // STATE
-  // ─────────────────────────────────────────────────────────────────────
 
   bool _isLoadingProfile = false;
   bool _isLoadingPassword = false;
@@ -64,13 +59,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isUploadingImage = false;
 
+  bool _isDangerZoneExpanded = false;
+
   Timer? _debounceTimer;
 
   final ImagePicker _picker = ImagePicker();
 
-  // ─────────────────────────────────────────────────────────────────────
   // INIT
-  // ─────────────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -86,9 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────
   // DISPOSE
-  // ─────────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {
@@ -106,9 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PROFILE IMAGE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _pickAndUploadProfileImage() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -169,9 +160,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SUPER ADMIN
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _checkSuperAdmin(String uid) async {
     try {
@@ -188,9 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } catch (_) {}
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // USERNAME CHECK
-  // ═══════════════════════════════════════════════════════════════════════
 
   void _onUsernameChanged(String value) {
     final user = FirebaseAuth.instance.currentUser;
@@ -274,9 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return false;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // UPDATE PROFILE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _updateProfile() async {
     if (!_formKeyProfile.currentState!.validate()) {
@@ -344,9 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // CHANGE PASSWORD
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _updatePassword() async {
     if (!_formKeyPassword.currentState!.validate()) {
@@ -425,9 +408,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // DELETE ACCOUNT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _deleteAccount() async {
     final confirmed = await showDialog<bool>(
@@ -597,9 +578,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // INPUT DECORATION
-  // ═══════════════════════════════════════════════════════════════════════
 
   InputDecoration _inputDecoration({
     required String hint,
@@ -642,9 +621,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SMALL SECTION TITLE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _sectionTitle(String title, {IconData? icon}) {
     return Row(
@@ -665,9 +642,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BUILD
-  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -679,9 +654,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      // ─────────────────────────────────────────────────────────────────
       // APP BAR
-      // ─────────────────────────────────────────────────────────────────
       appBar: widget.isTab
           ? null
           : AppBar(
@@ -717,17 +690,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     );
                   },
                 ),
+                const NotificationBell(),
                 const SizedBox(width: 4),
               ],
             ),
 
-      // ─────────────────────────────────────────────────────────────────
       // BODY
       //
       // No SingleChildScrollView here.
       // The normal collapsed profile fits on screen.
       // Password and Delete Account expand only when the user taps them.
-      // ─────────────────────────────────────────────────────────────────
       body: SafeArea(
         child: user == null
             ? const Center(child: Icon(Icons.person_off_rounded, size: 40))
@@ -749,9 +721,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                        // ═══════════════════════════════════════════════
                         // PROFILE HEADER
-                        // ═══════════════════════════════════════════════
                         _buildProfileHeader(
                           photoUrl: photoUrl,
                           isPremium: isPremium,
@@ -759,9 +729,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 12),
 
-                        // ═══════════════════════════════════════════════
                         // PROFILE INFORMATION
-                        // ═══════════════════════════════════════════════
                         _sectionTitle(
                           'profile_information'.tr(),
                           icon: Icons.person_outline_rounded,
@@ -883,16 +851,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         const SizedBox(height: 8),
 
-                        // ═══════════════════════════════════════════════
                         // CHANGE PASSWORD
                         // COLLAPSED BY DEFAULT
-                        // ═══════════════════════════════════════════════
                         _buildChangePasswordSection(isDark: isDark),
 
-                        // ═══════════════════════════════════════════════
                         // DELETE ACCOUNT
                         // COLLAPSED BY DEFAULT
-                        // ═══════════════════════════════════════════════
                         if (!_isSuperAdmin)
                           _buildDeleteAccountSection(isDark: isDark),
                       ],
@@ -905,9 +869,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PROFILE HEADER
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildProfileHeader({
     required String? photoUrl,
@@ -919,9 +881,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       height: 82,
       child: Row(
         children: [
-          // ─────────────────────────────────────────────────────────────
           // AVATAR
-          // ─────────────────────────────────────────────────────────────
           GestureDetector(
             onTap: _pickAndUploadProfileImage,
             child: Stack(
@@ -1017,9 +977,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(width: 13),
 
-          // ─────────────────────────────────────────────────────────────
           // USER INFORMATION
-          // ─────────────────────────────────────────────────────────────
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1105,9 +1063,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // USERNAME STATUS
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget? _usernameStatusIcon() {
     if (_isCheckingUsername) {
@@ -1136,11 +1092,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return null;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // CHANGE PASSWORD SECTION
   //
   // CLOSED BY DEFAULT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildChangePasswordSection({required bool isDark}) {
     return Material(
@@ -1358,20 +1312,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // DELETE ACCOUNT
   //
   // CLOSED BY DEFAULT
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildDeleteAccountSection({required bool isDark}) {
     return Padding(
       padding: const EdgeInsets.only(top: 7),
       child: Material(
-        color: Colors.red.withValues(alpha: isDark ? 0.035 : 0.025),
+        color: _isDangerZoneExpanded
+            ? Colors.red.withValues(alpha: isDark ? 0.035 : 0.025)
+            : Theme.of(context).cardTheme.color ?? Theme.of(context).cardColor,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: Colors.red.withValues(alpha: 0.12)),
+          side: BorderSide(
+              color: _isDangerZoneExpanded
+                  ? Colors.red.withValues(alpha: 0.12)
+                  : (isDark ? Colors.white12 : Colors.black12)),
         ),
         clipBehavior: Clip.antiAlias,
         child: Theme(
@@ -1387,25 +1344,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Closed initially.
             initiallyExpanded: false,
+            onExpansionChanged: (expanded) {
+              setState(() {
+                _isDangerZoneExpanded = expanded;
+              });
+            },
 
             leading: Container(
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.09),
+                color: _isDangerZoneExpanded
+                    ? Colors.red.withValues(alpha: 0.09)
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.black.withValues(alpha: 0.05)),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline_rounded,
-                color: Colors.red,
+                color: _isDangerZoneExpanded
+                    ? Colors.red
+                    : (isDark ? Colors.white70 : Colors.black87),
                 size: 18,
               ),
             ),
 
             title: Text(
-              'danger_zone'.tr(),
-              style: const TextStyle(
-                color: Colors.red,
+              _isDangerZoneExpanded ? 'danger_zone'.tr() : 'DELETE ACCOUNT',
+              style: TextStyle(
+                color: _isDangerZoneExpanded
+                    ? Colors.red
+                    : (isDark ? Colors.white : Colors.black),
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
               ),
@@ -1415,7 +1385,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               'Tap to manage account deletion',
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.red.withValues(alpha: 0.55),
+                color: _isDangerZoneExpanded
+                    ? Colors.red.withValues(alpha: 0.55)
+                    : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.42),
               ),
             ),
 
@@ -1444,7 +1416,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       )
                     : OutlinedButton.icon(
-                        onPressed: _deleteAccount,
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Account'),
+                              content: const Text(
+                                  'Are you sure you want to delete your account and data?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  child: const Text('No'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    _deleteAccount();
+                                  },
+                                  child: const Text('Yes',
+                                      style: TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                         icon: const Icon(
                           Icons.delete_forever_rounded,
                           size: 19,

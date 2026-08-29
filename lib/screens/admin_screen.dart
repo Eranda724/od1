@@ -193,9 +193,7 @@ class AdminScreen extends StatelessWidget {
   }
 }
 
-// =============================================================================
 // Admin Settings Tab — notification time configuration
-// =============================================================================
 class _AdminSettingsTab extends StatefulWidget {
   const _AdminSettingsTab();
 
@@ -279,7 +277,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 16),
 
-            // ── Morning reminder ─────────────────────────────────────────────
+            // Morning reminder
             AdminUI.buildCard(
               context,
               child: ListTile(
@@ -321,7 +319,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 12),
 
-            // ── Evening streak-saver ─────────────────────────────────────────
+            // Evening streak-saver
             AdminUI.buildCard(
               context,
               child: ListTile(
@@ -370,7 +368,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 16),
 
-            // ── Freeze Recharge Period ───────────────────────────────────────
+            // Freeze Recharge Period
             const _AdminFreezeSetting(),
 
             const SizedBox(height: 32),
@@ -381,7 +379,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 16),
 
-            // ── Session Assets Bank ───────────────────────────────────────────
+            // Session Assets Bank
             AdminUI.buildCard(
               context,
               child: ListTile(
@@ -407,7 +405,7 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
             ),
             const SizedBox(height: 12),
 
-            // ── Celebration Image Bank ─────────────────────────────────────────
+            // Celebration Image Bank
             AdminUI.buildCard(
               context,
               child: ListTile(

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
-import 'login_screen.dart';
 import 'welcome_screen.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/language_switcher.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -44,7 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   void _startAutoSlide() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
       int nextPage = _currentPage < _pages.length - 1 ? _currentPage + 1 : 0;
       if (_controller.hasClients) {
         _controller.animateToPage(
@@ -146,7 +146,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // ── Page images ──
+          // Page images
           PageView.builder(
             controller: _controller,
             onPageChanged: (index) {
@@ -206,24 +206,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
 
-          // ── Skip Link ──
+          // Top Bar (Language Switcher on Left, Skip on Right)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 8,
+            left: 12,
             right: 24,
-            child: GestureDetector(
-              onTap: _getStarted,
-              child: Text(
-                'onboarding_skip'.tr(),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const LanguageSwitcher(),
+                GestureDetector(
+                  onTap: _getStarted,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'onboarding_skip'.tr(),
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
 
-          // ── Dot indicators ──
+          // Dot indicators
           Positioned(
             bottom: 140,
             left: 0,
@@ -248,7 +259,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // ── Dynamic Bottom Control ──
+          // Dynamic Bottom Control
           Positioned(
             bottom: 40,
             left: 24,

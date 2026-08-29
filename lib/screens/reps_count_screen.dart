@@ -254,10 +254,16 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
         automaticallyImplyLeading: false, // Removed close cross
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
               const Spacer(),
 
               // Exercise Name (kept per user request, large font)
@@ -286,7 +292,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const SizedBox(height: 48),
 
-              // ── Number Input & Unit Card ─────────────────────────────────
+              // Number Input & Unit Card
               Container(
                 width: 220,
                 padding: const EdgeInsets.symmetric(
@@ -341,7 +347,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const SizedBox(height: 24),
 
-              // ── Stepper Buttons Below Card ──────────────────────────────
+              // Stepper Buttons Below Card
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -371,7 +377,7 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
 
               const Spacer(flex: 2),
 
-              // ── Submit button ────────────────────────────────────────────
+              // Submit button
               Container(
                 width: double.infinity,
                 height: 56,
@@ -423,8 +429,13 @@ class _RepEntryScreenState extends State<RepEntryScreen> {
               ),
 
               const SizedBox(height: 24),
-            ],
-          ),
+                    ],
+                  ),
+                ),
+              ),
+              ),
+            );
+          },
         ),
       ),
     );

@@ -62,10 +62,18 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   late final Animation<double> _scale;
   late final ConfettiController _confettiController;
   AudioPlayer? _player;
+  late final String _randomImage;
 
   @override
   void initState() {
     super.initState();
+
+    final images = [
+      'assets/images/congrads_po1.png',
+      'assets/images/congrads_po2.png',
+      'assets/images/congrads_po3.png',
+    ];
+    _randomImage = images[math.Random().nextInt(images.length)];
 
     _controller = AnimationController(
       vsync: this,
@@ -131,7 +139,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                 children: [
                   const Spacer(flex: 2),
 
-                  // ── Hero Graphic (Potato Mascot + Star Badge) ─────────────
+                  // Hero Graphic (Potato Mascot + Star Badge)
                   ScaleTransition(
                     scale: _scale,
                     child: SizedBox(
@@ -141,7 +149,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         clipBehavior: Clip.none,
                         children: [
                           Image.asset(
-                            'assets/images/congrads_po.png',
+                            _randomImage,
                             height: 280,
                             fit: BoxFit.contain,
                           ),
@@ -185,7 +193,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
                   const SizedBox(height: 12),
 
-                  // ── Headline: "EXCELLENT !" + Exercise Name ───────────────
+                  // Headline: "EXCELLENT !" + Exercise Name
                   Text(
                     'excellent_title'.tr(),
                     style: TextStyle(
@@ -208,7 +216,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
                   const SizedBox(height: 28),
 
-                  // ── Unified 3-Column Stats Card ───────────────────────────
+                  // Unified 3-Column Stats Card
                   Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 12,
@@ -249,7 +257,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                                   ),
                                 ),
                                 Text(
-                                  '${widget.overallStreak > 0 ? widget.overallStreak : widget.dayStreak}',
+                                  '${widget.dayStreak}',
                                   style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w900,
@@ -372,7 +380,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
                   const SizedBox(height: 24),
 
-                  // ── Live 7-Day Activity Row ───────────────────────────────
+                  // Live 7-Day Activity Row
                   Text(
                     'exercise_week_streak'
                         .tr(args: [widget.exerciseName])
@@ -389,7 +397,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
 
                   const Spacer(flex: 2),
 
-                  // ── 3D Yellow Action Button ───────────────────────────────
+                  // 3D Yellow Action Button
                   Container(
                     width: double.infinity,
                     height: 56,
@@ -437,7 +445,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
               ),
             ),
           ),
-          // ── Confetti Animation ──────────────────────────────────────────
+          // Confetti Animation
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(

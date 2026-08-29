@@ -67,20 +67,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
         return Column(
           children: [
-            // ─────────────────────────────────────────────────────────────
             // HEADER + PODIUM
-            // ─────────────────────────────────────────────────────────────
             _PodiumSection(
               period: _activePeriod,
               entries: entries,
               isLoading: isLoading,
+              currentUid: widget.currentUid,
             ),
 
             const SizedBox(height: 12),
 
-            // ─────────────────────────────────────────────────────────────
             // DAILY / WEEKLY / MONTHLY TABS
-            // ─────────────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
@@ -136,14 +133,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
             const SizedBox(height: 12),
 
-            // ─────────────────────────────────────────────────────────────
             // DIVIDER
-            // ─────────────────────────────────────────────────────────────
             Container(height: 1, color: cs.onSurface.withValues(alpha: 0.07)),
 
-            // ─────────────────────────────────────────────────────────────
             // RANKED LIST
-            // ─────────────────────────────────────────────────────────────
             Expanded(
               child: _buildList(context, entries, isLoading, snapshot.hasError, snapshot.error),
             ),
@@ -238,19 +231,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // PODIUM SECTION
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _PodiumSection extends StatelessWidget {
   final LeaderboardPeriod period;
   final List<LeaderboardEntry> entries;
   final bool isLoading;
+  final String? currentUid;
 
   const _PodiumSection({
     required this.period,
     required this.entries,
     required this.isLoading,
+    this.currentUid,
   });
 
   @override
@@ -262,9 +255,7 @@ class _PodiumSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
-          // ─────────────────────────────────────────────────────────────
           // TITLE
-          // ─────────────────────────────────────────────────────────────
           Row(
             children: [
               Expanded(
@@ -313,9 +304,7 @@ class _PodiumSection extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // ─────────────────────────────────────────────────────────────
           // PODIUM
-          // ─────────────────────────────────────────────────────────────
           if (isLoading)
             const SizedBox(
               height: 230,
@@ -365,6 +354,7 @@ class _PodiumSection extends StatelessWidget {
                         rank: 2,
                         entry: entries[1],
                         period: period,
+                        isCurrentUser: entries[1].uid == currentUid,
                       ),
                     )
                   else
@@ -378,6 +368,7 @@ class _PodiumSection extends StatelessWidget {
                       rank: 1,
                       entry: entries[0],
                       period: period,
+                      isCurrentUser: entries[0].uid == currentUid,
                     ),
                   ),
 
@@ -390,6 +381,7 @@ class _PodiumSection extends StatelessWidget {
                         rank: 3,
                         entry: entries[2],
                         period: period,
+                        isCurrentUser: entries[2].uid == currentUid,
                       ),
                     )
                   else
@@ -403,19 +395,19 @@ class _PodiumSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // PODIUM CARD
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _PodiumBar extends StatelessWidget {
   final int rank;
   final LeaderboardEntry entry;
   final LeaderboardPeriod period;
+  final bool isCurrentUser;
 
   const _PodiumBar({
     required this.rank,
     required this.entry,
     required this.period,
+    this.isCurrentUser = false,
   });
 
   Color get _badgeColor {
@@ -467,6 +459,8 @@ class _PodiumBar extends StatelessWidget {
     final isFirst = rank == 1;
     final avatarSize = isFirst ? 58.0 : 50.0;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       clipBehavior: Clip.none,
       alignment: Alignment.topCenter,
@@ -475,13 +469,15 @@ class _PodiumBar extends StatelessWidget {
           margin: EdgeInsets.only(top: isFirst ? 18 : 22),
           padding: EdgeInsets.fromLTRB(8, isFirst ? 16 : 14, 8, 14),
           decoration: BoxDecoration(
-            color: _cardColor(Theme.of(context).brightness == Brightness.dark),
+            color: _cardColor(isDark),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: isFirst
-                  ? const Color(0xFFFFC72C).withValues(alpha: 0.35)
-                  : Colors.black.withValues(alpha: 0.04),
-              width: 1,
+              color: isCurrentUser
+                  ? const Color(0xFFFFC72C)
+                  : (isFirst
+                      ? const Color(0xFFFFC72C).withValues(alpha: 0.35)
+                      : Colors.black.withValues(alpha: 0.04)),
+              width: isCurrentUser ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
@@ -494,13 +490,7 @@ class _PodiumBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ─────────────────────────────────────────────────────────────
               // MEDAL / RANK LABEL
-              //
-              // IMPORTANT:
-              // The rank is NOT placed underneath the avatar anymore.
-              // It is now a clean pill above the profile picture.
-              // ─────────────────────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
@@ -540,9 +530,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // ─────────────────────────────────────────────────────────────
               // AVATAR
-              // ─────────────────────────────────────────────────────────────
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
@@ -608,26 +596,52 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // ─────────────────────────────────────────────────────────────
               // NAME
-              // ─────────────────────────────────────────────────────────────
-              Text(
-                entry.displayName,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: isFirst ? 14 : 13,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.2,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      entry.displayName,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: isFirst ? 14 : 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 3),
+              SizedBox(
+                height: 16,
+                child: isCurrentUser
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFC72C),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'you'.tr().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.black,
+                          ),
+                        ),
+                      )
+                    : null,
               ),
 
               const SizedBox(height: 5),
 
-              // ─────────────────────────────────────────────────────────────
               // SCORE
-              // ─────────────────────────────────────────────────────────────
               Builder(
                 builder: (context) {
                   final isDark =
@@ -674,9 +688,7 @@ class _PodiumBar extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // LEADERBOARD ROW
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _LeaderboardRow extends StatelessWidget {
   final int rank;
@@ -711,8 +723,6 @@ class _LeaderboardRow extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final cardColor = isCurrentUser ? const Color(0xFFFFC72C) : theme.cardColor;
-
     final borderColor = isCurrentUser
         ? const Color(0xFFFFC72C)
         : theme.colorScheme.onSurface.withValues(alpha: 0.08);
@@ -720,13 +730,16 @@ class _LeaderboardRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor, width: isCurrentUser ? 0 : 1),
+        border: Border.all(
+          color: borderColor,
+          width: isCurrentUser ? 2 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isCurrentUser ? 0.07 : 0.025),
-            blurRadius: 12,
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
@@ -735,9 +748,7 @@ class _LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            // ───────────────────────────────────────────────────────────
             // RANK NUMBER
-            // ───────────────────────────────────────────────────────────
             SizedBox(
               width: 42,
               child: Text(
@@ -746,26 +757,20 @@ class _LeaderboardRow extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: isCurrentUser
-                      ? Colors.black
-                      : theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
                 ),
               ),
             ),
 
             const SizedBox(width: 8),
 
-            // ───────────────────────────────────────────────────────────
             // AVATAR
-            // ───────────────────────────────────────────────────────────
             Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isCurrentUser
-                    ? Colors.white.withValues(alpha: 0.8)
-                    : theme.colorScheme.surfaceContainerHighest,
+                color: theme.colorScheme.surfaceContainerHighest,
               ),
               padding: const EdgeInsets.all(2),
               child: ClipOval(
@@ -777,7 +782,7 @@ class _LeaderboardRow extends StatelessWidget {
                           return Icon(
                             Icons.person_rounded,
                             color: isCurrentUser
-                                ? Colors.black45
+                                ? const Color(0xFFE6A700)
                                 : theme.colorScheme.onSurface.withValues(
                                     alpha: 0.35,
                                   ),
@@ -787,7 +792,7 @@ class _LeaderboardRow extends StatelessWidget {
                           return Icon(
                             Icons.person_rounded,
                             color: isCurrentUser
-                                ? Colors.black45
+                                ? const Color(0xFFE6A700)
                                 : theme.colorScheme.onSurface.withValues(
                                     alpha: 0.35,
                                   ),
@@ -798,7 +803,7 @@ class _LeaderboardRow extends StatelessWidget {
                         Icons.person_rounded,
                         size: 25,
                         color: isCurrentUser
-                            ? Colors.black45
+                            ? const Color(0xFFE6A700)
                             : theme.colorScheme.onSurface.withValues(
                                 alpha: 0.35,
                               ),
@@ -808,9 +813,7 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 14),
 
-            // ───────────────────────────────────────────────────────────
             // USER NAME + SCORE
-            // ───────────────────────────────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -819,15 +822,13 @@ class _LeaderboardRow extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          isCurrentUser ? 'you'.tr() : entry.displayName,
+                          entry.displayName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w800,
-                            color: isCurrentUser
-                                ? Colors.black
-                                : theme.colorScheme.onSurface,
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -840,13 +841,13 @@ class _LeaderboardRow extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.08),
+                            color: const Color(0xFFFFC72C),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Text(
-                            'YOU',
-                            style: TextStyle(
-                              fontSize: 8,
+                          child: Text(
+                            'you'.tr().toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 9,
                               fontWeight: FontWeight.w900,
                               color: Colors.black,
                             ),
@@ -864,7 +865,7 @@ class _LeaderboardRow extends StatelessWidget {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: isCurrentUser
-                          ? Colors.black.withValues(alpha: 0.65)
+                          ? const Color(0xFFD69E00)
                           : theme.colorScheme.onSurface.withValues(alpha: 0.48),
                     ),
                   ),
@@ -878,9 +879,7 @@ class _LeaderboardRow extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // EMPTY STATE
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _EmptyState extends StatelessWidget {
   final LeaderboardPeriod period;

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'dart:ui' as ui;
 import 'dart:io' show Platform;
 import 'dart:async';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'home_screen.dart';
 import 'login_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
+import 'welcome_screen.dart';
 import '../main.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/language_switcher.dart';
@@ -194,9 +193,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       if (mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const StartRouter()),
+          (route) => false,
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -328,15 +328,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: IntrinsicHeight(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 48, 24, 16),
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // ── Branding ──
+                            // Branding
                             Center(
                               child: Image.asset(
                                 'assets/images/register.png',
-                                height: screenHeight * 0.23,
+                                height: screenHeight * 0.19,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -363,7 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             const SizedBox(height: 16),
 
-                            // ── Social Sign-In ──
+                            // Social Sign-In
                             if (_isLoadingSocial)
                               const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 12),
@@ -465,7 +465,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               const SizedBox(height: 12),
                             ],
 
-                            // ── Form ──
+                            // Form
                             Text(
                               'username_label'.tr(),
                               style: TextStyle(
@@ -647,39 +647,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                               obscureText: _obscurePassword,
                             ),
-                            const SizedBox(height: 12),
-                            if (_errorMessage != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            const SizedBox(height: 32),
+                            const SizedBox(height: 4),
+                            SizedBox(
+                              height: 24,
+                              child: _errorMessage != null
+                                  ? Text(
+                                      _errorMessage!,
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                            const SizedBox(height: 8),
                             _isLoading
                                 ? const Center(
                                     child: CircularProgressIndicator(),
                                   )
-                                : ElevatedButton(
-                                    onPressed: _register,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFFFC72C),
-                                      foregroundColor: Colors.black,
-                                      minimumSize: const Size(
-                                        double.infinity,
-                                        48,
-                                      ),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(28),
-                                      ),
+                                : Container(
+                                    width: double.infinity,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(28),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0xFFD69E00),
+                                          offset: Offset(0, 5),
+                                          blurRadius: 0,
+                                        ),
+                                        BoxShadow(
+                                          color: Colors.black12,
+                                          offset: Offset(0, 8),
+                                          blurRadius: 6,
+                                        ),
+                                      ],
                                     ),
-                                    child: Text(
-                                      'sign_up_action'.tr(),
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                    child: ElevatedButton(
+                                      onPressed: _register,
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFFFFC72C),
+                                        foregroundColor: Colors.black,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(28),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'sign_up_action'.tr().toUpperCase(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -698,7 +720,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   onTap: () {
                                     Navigator.pushReplacement(
                                       context,
-                                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginScreen(),
+                                      ),
                                     );
                                   },
                                   child: Text(
@@ -725,7 +749,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               left: 8,
               child: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const WelcomeScreen(),
+                      ),
+                    );
+                  }
+                },
               ),
             ),
             const Positioned(top: 8, right: 8, child: LanguageSwitcher()),

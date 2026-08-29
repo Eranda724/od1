@@ -23,9 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   static const Color _yellow = Color(0xFFFFC72C);
   static const Color _yellowDark = Color(0xFFE3A900);
 
-  // ═══════════════════════════════════════════════════════════════════════
   // BUILD
-  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
 
-      // ─────────────────────────────────────────────────────────────────
       // APP BAR
-      // ─────────────────────────────────────────────────────────────────
       appBar: AppBar(
         automaticallyImplyLeading: false,
         elevation: 0,
@@ -60,16 +56,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
 
-      // ─────────────────────────────────────────────────────────────────
       // BODY
-      // ─────────────────────────────────────────────────────────────────
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
-            // ═══════════════════════════════════════════════════════════
             // APPEARANCE
-            // ═══════════════════════════════════════════════════════════
             _sectionTitle('appearance'.tr(), Icons.palette_outlined),
 
             const SizedBox(height: 12),
@@ -134,9 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 24),
 
-            // ═══════════════════════════════════════════════════════════
             // NOTIFICATIONS
-            // ═══════════════════════════════════════════════════════════
             _sectionTitle(
               'notifications'.tr(),
               Icons.notifications_none_rounded,
@@ -173,9 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            // ═══════════════════════════════════════════════════════════
             // LANGUAGE
-            // ═══════════════════════════════════════════════════════════
             _sectionTitle('language_section'.tr(), Icons.language_rounded),
 
             const SizedBox(height: 7),
@@ -258,9 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            // ═══════════════════════════════════════════════════════════
             // PREMIUM
-            // ═══════════════════════════════════════════════════════════
             _sectionTitle('premium_section'.tr(), Icons.star_outline_rounded),
 
             const SizedBox(height: 7),
@@ -269,9 +255,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 12),
 
-            // ═══════════════════════════════════════════════════════════
             // PRIVACY
-            // ═══════════════════════════════════════════════════════════
             _sectionTitle('privacy_and_data'.tr(), Icons.security_rounded),
 
             const SizedBox(height: 7),
@@ -311,9 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SECTION TITLE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _sectionTitle(String title, IconData icon) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -337,9 +319,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // CARD
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _settingsCard({required Widget child}) {
     final theme = Theme.of(context);
@@ -359,9 +339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // SETTING ROW
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _settingRow({
     required IconData icon,
@@ -428,9 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // ICON BOX
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _iconBox({required IconData icon, required Color color}) {
     return Container(
@@ -444,9 +420,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // DIVIDER
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _divider() {
     return Divider(
@@ -458,9 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // ACTION ROW
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _actionRow({
     required IconData icon,
@@ -497,9 +469,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // THEME SELECTOR
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _themeSelector() {
     final currentTheme = _settings.themeMode;
@@ -547,9 +517,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // THEME BUTTON
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _themeButton({
     required IconData icon,
@@ -588,9 +556,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // LANGUAGE KEY
-  // ═══════════════════════════════════════════════════════════════════════
 
   String _currentLanguageKey() {
     final currentCode = context.locale.languageCode;
@@ -602,9 +568,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return AppSettings.supportedLanguages.keys.first;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PREMIUM SECTION
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _buildPremiumSection() {
     return ListenableBuilder(
@@ -637,9 +601,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PREMIUM MEMBER
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _premiumMemberCard() {
     return _settingsCard(
@@ -711,9 +673,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PREMIUM UPGRADE
-  // ═══════════════════════════════════════════════════════════════════════
 
   Widget _premiumUpgradeCard() {
     return Container(
@@ -795,9 +755,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
   // PRIVACY POLICY
-  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _openPrivacyPolicy() async {
     final uri = Uri.parse(

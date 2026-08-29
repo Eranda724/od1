@@ -4,9 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import 'reps_count_screen.dart';
+import '../widgets/notification_bell.dart';
 import '../services/ad_service.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'premium_upgrade_screen.dart';
 import '../models/exercise_item.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/exercise_icons.dart';
@@ -53,12 +52,12 @@ class ActiveSessionScreen extends StatefulWidget {
 }
 
 class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
-  // ── Countdown/Stopwatch Timer ────────────────────────────────────────────
+  // Countdown/Stopwatch Timer
   Timer? _tickTimer;
   late int _seconds;
   late final AudioPlayer _player;
 
-  // ── Rotating tips ────────────────────────────────────────────────────────
+  // Rotating tips
   List<Map<String, dynamic>> _activeTips = [];
   int _tipIndex = 0;
   Timer? _tipTimer;
@@ -70,7 +69,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
   bool _showAdOverlay = false;
   int _adSkipCountdown = 5;
   Timer? _adSkipTimer;
-  
+
   String? _randomSessionImage;
   bool _isAssetImage = true;
   bool _isLoading = true;
@@ -85,14 +84,22 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
   Future<void> _loadAssetsAndStart() async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('app_config').doc('session_assets').get();
+      final doc = await FirebaseFirestore.instance
+          .collection('app_config')
+          .doc('session_assets')
+          .get();
       final data = doc.data() ?? {};
-      
+
       final rawImages = data['images'] as List<dynamic>? ?? [];
       final rawTips = data['tips'] as List<dynamic>? ?? kDefaultSessionTips;
 
-      final enabledImages = rawImages.where((i) => i['enabled'] == true && i['isAsset'] != true).toList();
-      final enabledTips = rawTips.where((t) => t['enabled'] == true).map((t) => t as Map<String, dynamic>).toList();
+      final enabledImages = rawImages
+          .where((i) => i['enabled'] == true && i['isAsset'] != true)
+          .toList();
+      final enabledTips = rawTips
+          .where((t) => t['enabled'] == true)
+          .map((t) => t as Map<String, dynamic>)
+          .toList();
 
       if (enabledImages.isNotEmpty) {
         final img = enabledImages[Random().nextInt(enabledImages.length)];
@@ -263,14 +270,16 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
       );
     }
 
-    final textColor = _randomSessionImage == null ? Colors.black87 : Colors.white;
+    final textColor = _randomSessionImage == null
+        ? Colors.black87
+        : Colors.white;
 
     return Scaffold(
       backgroundColor: PCColors.brownDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // ── Background Gradient (Default) ─────────────────────────────
+          // Background Gradient (Default)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -280,31 +289,36 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
               ),
             ),
           ),
-          // ── Background image (Admin Override) ──────────────────────────
+          // Background image (Admin Override)
           if (_randomSessionImage != null)
             _isAssetImage
                 ? Image.asset(
                     _randomSessionImage!,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
                   )
                 : CachedNetworkImage(
                     imageUrl: _randomSessionImage!,
                     fit: BoxFit.cover,
-                    errorWidget: (context, url, error) => const SizedBox.shrink(),
+                    errorWidget: (context, url, error) =>
+                        const SizedBox.shrink(),
                   ),
 
-          // ── Dark scrim for text legibility (Only for image) ────────────
+          // Dark scrim for text legibility (Only for image)
           if (_randomSessionImage != null)
             Container(color: Colors.black.withValues(alpha: 0.45)),
 
-          // ── Foreground content ────────────────────────────────────────
+          // Foreground content
           SafeArea(
             child: Column(
               children: [
                 // Header (Back arrow and Bell)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -312,17 +326,17 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         icon: Icon(Icons.arrow_back_ios, color: textColor),
                         onPressed: _stopSession,
                       ),
-                      IconButton(
-                        icon: Icon(Icons.notifications_none, color: textColor),
-                        onPressed: () {},
-                      ),
+                      NotificationBell(iconColor: textColor),
                     ],
                   ),
                 ),
 
                 // Tips Text
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Column(
                     children: [
                       Text(
@@ -337,19 +351,23 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                       const SizedBox(height: 8),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 500),
-                        transitionBuilder: (child, animation) =>
-                            FadeTransition(
-                              opacity: CurvedAnimation(
-                                parent: animation,
-                                curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
-                              ),
-                              child: child,
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: animation,
+                            curve: const Interval(
+                              0.5,
+                              1.0,
+                              curve: Curves.easeIn,
                             ),
+                          ),
+                          child: child,
+                        ),
                         child: Text(
                           _activeTips.isNotEmpty
                               ? (_activeTips[_tipIndex]['isKey'] == true
-                                  ? (_activeTips[_tipIndex]['text'] as String).tr()
-                                  : _activeTips[_tipIndex]['text'] as String)
+                                    ? (_activeTips[_tipIndex]['text'] as String)
+                                          .tr()
+                                    : _activeTips[_tipIndex]['text'] as String)
                               : '',
                           key: ValueKey(_tipIndex),
                           textAlign: TextAlign.center,
@@ -440,7 +458,10 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
                 // Stop button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 48,
+                  ),
                   child: InkWell(
                     onTap: _stopSession,
                     borderRadius: BorderRadius.circular(30),
@@ -452,7 +473,9 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: const [
                           BoxShadow(
-                            color: Color(0xFFB23A3A), // Darker red for 3D effect
+                            color: Color(
+                              0xFFB23A3A,
+                            ), // Darker red for 3D effect
                             offset: Offset(0, 5),
                             blurRadius: 0,
                           ),
@@ -467,7 +490,11 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.stop_rounded, color: Colors.white, size: 28),
+                          const Icon(
+                            Icons.stop_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             'stop_btn'.tr().toUpperCase(),
@@ -487,7 +514,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
             ),
           ),
 
-          // ── Pre-Ad Popup Overlay ──────────────────────────────────────
+          // Pre-Ad Popup Overlay
           if (_showAdOverlay)
             Align(
               alignment: const Alignment(-1.0, -0.1),

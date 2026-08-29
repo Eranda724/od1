@@ -53,7 +53,7 @@ class AccountDeletionService {
     final uid = user.uid;
     final provider = currentProviderType;
 
-    // ── Step 1: Re-authenticate ─────────────────────────────────────────────
+    // Step 1: Re-authenticate
     switch (provider) {
       case 'password':
         if (password == null || password.isEmpty) {
@@ -82,30 +82,30 @@ class AccountDeletionService {
         throw Exception('Unsupported sign-in provider: $provider');
     }
 
-    // ── Step 2: Delete users/{uid}/exercises/* sub-collection ───────────────
+    // Step 2: Delete users/{uid}/exercises/* sub-collection
     await _deleteSubCollection(
       _db.collection('users').doc(uid).collection('exercises'),
     );
 
-    // ── Step 3: Delete friendRequests where fromUid == uid ──────────────────
+    // Step 3: Delete friendRequests where fromUid == uid
     await _deleteQueryResults(
       _db.collection('friendRequests').where('fromUid', isEqualTo: uid),
     );
 
-    // ── Step 4: Delete friendRequests where toUid == uid ───────────────────
+    // Step 4: Delete friendRequests where toUid == uid
     await _deleteQueryResults(
       _db.collection('friendRequests').where('toUid', isEqualTo: uid),
     );
 
-    // ── Step 5: Delete friendPairs where uids contains uid ─────────────────
+    // Step 5: Delete friendPairs where uids contains uid
     await _deleteQueryResults(
       _db.collection('friendPairs').where('uids', arrayContains: uid),
     );
 
-    // ── Step 6: Delete users/{uid} document ────────────────────────────────
+    // Step 6: Delete users/{uid} document
     await _db.collection('users').doc(uid).delete();
 
-    // ── Step 7: Delete Firebase Auth record (must be last) ─────────────────
+    // Step 7: Delete Firebase Auth record (must be last)
     await _auth.currentUser!.delete();
   }
 

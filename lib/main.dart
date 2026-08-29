@@ -6,8 +6,6 @@ import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/routine_setup_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
 import 'admin/admin_service.dart';
@@ -21,9 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // Load persisted settings before first frame
   await AppSettings().load();
   // Initialize notifications and schedule daily reminders
@@ -33,7 +29,7 @@ void main() async {
   await AdService.instance.initialize();
   // Initialize In-App Purchases listener
   IapService.instance.initialize();
-  
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('fr'), Locale('es')],
@@ -156,9 +152,7 @@ class _StartRouterState extends State<StartRouter> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
-        child: CircularProgressIndicator(
-          color: const Color(0xFFFFC72C),
-        ),
+        child: CircularProgressIndicator(color: const Color(0xFFFFC72C)),
       ),
     );
   }

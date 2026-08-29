@@ -1,33 +1,25 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
 import '../models/exercise_item.dart';
 import 'session_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Design Tokens
-// ─────────────────────────────────────────────────────────────────────────────
 class _PCSpacing {
   static const double xs = 4.0;
   static const double sm = 8.0;
   static const double md = 12.0;
   static const double lg = 16.0;
   static const double xl = 20.0;
-  static const double xxl = 24.0;
-  static const double xxxl = 32.0;
 }
 
 class _PCRadii {
-  static const double sm = 10.0;
   static const double md = 14.0;
   static const double lg = 20.0;
 }
@@ -59,19 +51,6 @@ class _PCTextStyles {
     color: Theme.of(context).colorScheme.onSurface,
   );
 
-  static const TextStyle startButton = TextStyle(
-    fontSize: 32,
-    fontWeight: FontWeight.w900,
-    color: Colors.white,
-    letterSpacing: 1.2,
-  );
-
-  static const TextStyle countdownNumber = TextStyle(
-    fontSize: 72,
-    fontWeight: FontWeight.w900,
-    color: Colors.white,
-  );
-
   static TextStyle bodyText(BuildContext context) => TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,
@@ -79,9 +58,7 @@ class _PCTextStyles {
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Widget
-// ─────────────────────────────────────────────────────────────────────────────
 class ExerciseStartScreen extends StatefulWidget {
   final String exerciseId;
   final String exerciseName;
@@ -118,14 +95,13 @@ class ExerciseStartScreen extends StatefulWidget {
 }
 
 class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
-  // ── Ready Time ─────────────────────────────────────────────────────────────
+  // Ready Time
   bool _wantsReadyTime = false;
   int _readyTimeSeconds = 3;
-  final GlobalKey _timerKey = GlobalKey();
 
   late final AudioPlayer _player;
 
-  // ── Countdown ───────────────────────────────────────────────────────────────
+  // Countdown
   bool _isCountingDown = false;
   int _currentCount = 3;
   Timer? _countdownTimer;
@@ -150,7 +126,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     _randomImage = images[Random().nextInt(images.length)];
   }
 
-  // ── Persistence ────────────────────────────────────────────────────────────
+  // Persistence
   Future<void> _loadSavedPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final savedTime = prefs.getInt('globalReadyTime');
@@ -180,7 +156,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     super.dispose();
   }
 
-  // ── Countdown ──────────────────────────────────────────────────────────────
+  // Countdown
   void _stopCountdown() {
     if (!_isCountingDown) return;
     _countdownTimer?.cancel();
@@ -260,133 +236,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     }
   }
 
-  // ── Timer popup menu ───────────────────────────────────────────────────────
-  void _showTimerMenu() async {
-    final box = _timerKey.currentContext!.findRenderObject() as RenderBox;
-    final offset = box.localToGlobal(Offset.zero);
-    final size = box.size;
-
-    final result = await showMenu<int>(
-      context: context,
-      color: Theme.of(context).scaffoldBackgroundColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: PCColors.brown, width: 1.5),
-      ),
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height + 6,
-        offset.dx + size.width,
-        0,
-      ),
-      items: [
-        for (final s in [3, 5, 10])
-          PopupMenuItem<int>(
-            value: s,
-            height: 48,
-            child: _TimerOption(seconds: s, selected: _readyTimeSeconds == s),
-          ),
-        PopupMenuItem<int>(
-          value: -1,
-          height: 48,
-          child: _TimerOption(
-            label: 'custom_label'.tr(),
-            icon: Icons.edit_rounded,
-            selected: ![3, 5, 10].contains(_readyTimeSeconds),
-          ),
-        ),
-      ],
-    );
-
-    if (!mounted || result == null) return;
-    if (result == -1) {
-      _showCustomTimeDialog();
-    } else {
-      setState(() => _readyTimeSeconds = result);
-      _saveTime(result);
-    }
-  }
-
-  void _showCustomTimeDialog() {
-    final ctrl = TextEditingController(
-      text: [3, 5, 10].contains(_readyTimeSeconds) ? '' : '$_readyTimeSeconds',
-    );
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Theme.of(context).dialogBackgroundColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: PCColors.brown, width: 2),
-        ),
-        title: Text(
-          'ready_time_dialog_title'.tr(),
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-          decoration: InputDecoration(
-            suffixText: 's',
-            suffixStyle: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-            filled: true,
-            fillColor: Theme.of(context).cardColor,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: PCColors.brown, width: 2),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'cancel_btn'.tr(),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: PCColors.yellow,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            onPressed: () {
-              final v = int.tryParse(ctrl.text);
-              if (v != null && v > 0) {
-                setState(() => _readyTimeSeconds = v);
-                _saveTime(v);
-              }
-              Navigator.pop(ctx);
-            },
-            child: Text(
-              'set_btn'.tr(),
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Detail Card ────────────────────────────────────────────────────────────
+  // Detail Card
   Widget _buildDetailCard({
     required String label,
     required String value,
@@ -531,7 +381,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ── Ready Time widget ─────────────────────────────────────────────────────
+  // Ready Time widget
   Widget _buildReadyTimeWidget() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,7 +478,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ── Start Button ──────────────────────────────────────────────────────────
+  // Start Button
   Widget _buildStartButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
@@ -716,11 +566,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  // Build
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
@@ -740,7 +588,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // ── Header Section ──────────────────────────────────────────────
+            // Header Section
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 _PCSpacing.xl,
@@ -761,16 +609,19 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                     builder: (context) {
                       String displayDesc = '';
                       final langCode = context.locale.languageCode;
-                      
+
                       if (widget.exerciseDef != null) {
-                         final def = widget.exerciseDef!;
-                         if (def.descriptions != null && def.descriptions!.containsKey(langCode) && def.descriptions![langCode]!.isNotEmpty) {
-                           displayDesc = def.descriptions![langCode]!;
-                         } else if (def.description != null && def.description!.isNotEmpty) {
-                           displayDesc = def.description!;
-                         }
+                        final def = widget.exerciseDef!;
+                        if (def.descriptions != null &&
+                            def.descriptions!.containsKey(langCode) &&
+                            def.descriptions![langCode]!.isNotEmpty) {
+                          displayDesc = def.descriptions![langCode]!;
+                        } else if (def.description != null &&
+                            def.description!.isNotEmpty) {
+                          displayDesc = def.description!;
+                        }
                       }
-                      
+
                       if (displayDesc.isEmpty) {
                         final fallbacks = [
                           'Get ready to crush this exercise! 💪',
@@ -779,7 +630,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                           'Let\'s make every rep count! 🎯',
                         ];
                         // Consistent pseudo-random based on exercise name
-                        displayDesc = fallbacks[widget.exerciseName.hashCode.abs() % fallbacks.length];
+                        displayDesc =
+                            fallbacks[widget.exerciseName.hashCode.abs() %
+                                fallbacks.length];
                       }
 
                       return Text(
@@ -801,7 +654,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
             const SizedBox(height: _PCSpacing.lg),
 
-            // ── Stats Bar ───────────────────────────────────────────────────
+            // Stats Bar
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
               child: Container(
@@ -831,7 +684,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _StatPill(
-                      iconWidget: Image.asset('assets/images/fire_3d.png', width: 24, height: 24),
+                      iconWidget: Image.asset(
+                        'assets/images/fire_3d.png',
+                        width: 24,
+                        height: 24,
+                      ),
                       label: 'day_streak_count'.tr(
                         args: [widget.streak.toString()],
                       ),
@@ -842,7 +699,11 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                       color: PCColors.brown.withValues(alpha: 0.35),
                     ),
                     _StatPill(
-                      iconWidget: Image.asset('assets/images/trophy.png', width: 24, height: 24),
+                      iconWidget: Image.asset(
+                        'assets/images/trophy.png',
+                        width: 24,
+                        height: 24,
+                      ),
                       label: 'this_month_count'.tr(
                         args: [widget.monthlyTotal.toString()],
                       ),
@@ -854,7 +715,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
             const SizedBox(height: _PCSpacing.xl),
 
-            // ── Detail Cards ─────────────────────────────────────────────
+            // Detail Cards
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
               child: Column(
@@ -875,7 +736,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               ),
             ),
 
-            // ── Random Image Spacer ───────────────────────────────────────────
+            // Random Image Spacer
             Padding(
               padding: const EdgeInsets.symmetric(
                 vertical: _PCSpacing.xl,
@@ -901,7 +762,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
               ),
             ),
 
-            // ── Ready Time Widget ───────────────────────────────────────────
+            // Ready Time Widget
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
               child: _buildReadyTimeWidget(),
@@ -909,7 +770,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
 
             const SizedBox(height: _PCSpacing.xl),
 
-            // ── Large Start Button ──────────────────────────────────────────
+            // Large Start Button
             Padding(
               padding: const EdgeInsets.only(bottom: _PCSpacing.xl),
               child: _buildStartButton(),
@@ -921,65 +782,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Timer popup option row
-// ─────────────────────────────────────────────────────────────────────────────
-class _TimerOption extends StatelessWidget {
-  final int? seconds;
-  final String? label;
-  final IconData? icon;
-  final bool selected;
-
-  const _TimerOption({
-    this.seconds,
-    this.label,
-    this.icon,
-    this.selected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final text = label ?? '${seconds}s';
-    return Row(
-      children: [
-        Icon(
-          icon ?? Icons.timer_rounded,
-          size: 20,
-          color: selected
-              ? PCColors.yellowDark
-              : Theme.of(context).colorScheme.onSurface,
-        ),
-        const SizedBox(width: _PCSpacing.md),
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
-                color: selected
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-          ),
-        ),
-        if (selected) ...[
-          const Spacer(),
-          const Icon(Icons.check_rounded, size: 20, color: PCColors.green),
-        ],
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Stat pill
-// ─────────────────────────────────────────────────────────────────────────────
 class _StatPill extends StatelessWidget {
   final Widget iconWidget;
   final String label;

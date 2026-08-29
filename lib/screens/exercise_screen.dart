@@ -401,7 +401,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                             unit,
                                           ),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: PCColors.green,
+                                            backgroundColor: const Color(0xFF55AB78),
                                             foregroundColor: Colors.white,
                                             elevation: 6,
                                             shadowColor: Colors.black
@@ -585,7 +585,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: isDone
-                                            ? Colors.green
+                                            ? const Color(0xFF55AB78)
                                             : PCColors.yellow,
                                         foregroundColor: isDone
                                             ? Colors.white
@@ -1115,11 +1115,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                                               exData['monthlyTotal'] ??
                                                               0,
                                                           defaultReps:
-                                                              def.defaultReps ??
-                                                              0,
+                                                              def.defaultReps,
                                                           defaultTimer:
-                                                              def.defaultTimer ??
-                                                              0,
+                                                              def.defaultTimer,
                                                           unit: def.unit,
                                                           exerciseDef: def,
                                                           sessionQueue:

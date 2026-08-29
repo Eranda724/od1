@@ -45,14 +45,7 @@ class DailySummaryScreen extends StatefulWidget {
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  late final String _celebrationImage;
-
-  static const List<String> _celebrationImages = [
-    'assets/images/congrads_po1.png',
-    'assets/images/congrads_po2.png',
-    'assets/images/congrads_po3.png',
-    'assets/images/p5.png',
-  ];
+  late final String _celebrationImage = 'assets/images/fire-congrads.png';
 
   @override
   void initState() {
@@ -60,8 +53,6 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 3),
     );
-    // Pick a random celebration character for this session
-    _celebrationImage = (_celebrationImages..shuffle()).first;
     // Play the full routine finish sound and start confetti
     _audioPlayer.play(AssetSource('sounds/routin-finish.mp3'));
     _confettiController.play();
@@ -103,7 +94,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
         children: [
           Column(
             children: [
-              // ── Yellow Hero Card ──────────────────────────────────────────
+              // Yellow Hero Card
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 child: Container(
@@ -123,9 +114,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'PERSONAL',
-                          style: TextStyle(
+                        Text(
+                          'personal_caps'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF5A3D00),
@@ -143,9 +134,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          'DAY STREAK',
-                          style: TextStyle(
+                        Text(
+                          'day_streak_caps'.tr(),
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF5A3D00),
@@ -161,7 +152,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Per-exercise list ─────────────────────────────────────────
+              // Per-exercise list
               Expanded(
                 child: widget.completedExercises.isEmpty
                     ? Center(
@@ -183,7 +174,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                       ),
               ),
 
-              // ── Buttons ───────────────────────────────────────────────────
+              // Buttons
               SafeArea(
                 top: false,
                 child: Container(
@@ -287,9 +278,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // One row per exercise: today's reps + streak + lifetime total
-// ─────────────────────────────────────────────────────────────────────────────
 class _ExerciseSummaryCard extends StatelessWidget {
   final ExerciseDaySummary item;
 
@@ -341,7 +330,6 @@ class _ExerciseSummaryCard extends StatelessWidget {
                     ),
                   ],
                 ),
-
               ],
             ),
           ),

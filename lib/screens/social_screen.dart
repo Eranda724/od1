@@ -212,7 +212,7 @@ class _SocialScreenState extends State<SocialScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── 1. Screen Header ──
+              // 1. Screen Header
               Text(
                 'add_friends_title'.tr(),
                 style: TextStyle(
@@ -224,7 +224,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ── 2. Search Bar ──
+              // 2. Search Bar
               TextField(
                 controller: _searchController,
                 onChanged: _onSearchChanged,
@@ -275,7 +275,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 24),
 
-              // ── 3. Search Results ──
+              // 3. Search Results
               if (_isSearching)
                 const Center(
                   child: Padding(
@@ -366,7 +366,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 ),
 
               if (_searchController.text.isEmpty) ...[
-                // ── 4. Incoming Requests ──
+                // 4. Incoming Requests
                 StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
                       .collection('friendRequests')
@@ -499,7 +499,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   },
                 ),
 
-                // ── 5. Friends List ──
+                // 5. Friends List
                 Text(
                   'your_friends'.tr().toUpperCase(),
                   style: TextStyle(
@@ -695,9 +695,7 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
 // NEW BORDERLESS RESULT ROW WIDGET
-// ═══════════════════════════════════════════════════════════════════════════
 
 class _UserSearchResultRow extends StatelessWidget {
   final String uid;
