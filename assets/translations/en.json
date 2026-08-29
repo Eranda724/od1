@@ -437,5 +437,10 @@
     "minutes_ago": "minutes ago",
     "just_now": "Just now",
     "error_loading_data": "Error loading data",
-    "friend_streak_caps": "FRIEND STREAK"
+    "friend_streak_caps": "FRIEND STREAK",
+    "go_premium_banner": "Go Premium & Remove Ads today!",
+    "invite_friends_podium": "Compete with friends! Invite at least 3 friends to fill the podium!",
+    "add_friends_subtitle": "Add as many friends as possible and start a friend streak with them!",
+    "share_app_btn": "Invite Friends via Link",
+    "share_app_msg": "Join me on this app and let's start a friend streak! Download here: "
 }

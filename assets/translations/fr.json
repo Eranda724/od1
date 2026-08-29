@@ -427,7 +427,7 @@
     "start_again": "Recommencer",
     "personal_caps": "PERSONNELLE",
     "day_streak_caps": "JOURS D'AFFILIÉE",
-    "friend_streak_caps": "ENTRE AMI",
+    "friend_streak_caps": "ENTRE AMIS",
     "notifications": "Notifications",
     "no_notifications_yet": "Aucune notification pour le moment",
     "mark_all_read": "Tout marquer comme lu",
@@ -437,5 +437,10 @@
     "hours_ago": "il y a heures",
     "minutes_ago": "il y a minutes",
     "just_now": "À l'instant",
-    "error_loading_data": "Erreur lors du chargement des données"
+    "error_loading_data": "Erreur lors du chargement des données",
+    "go_premium_banner": "Activez le Premium sans pub ici!",
+    "invite_friends_podium": "Compétition entre amis! Invitez au moins 3 amis pour remplir le podium!",
+    "add_friends_subtitle": "Ajoutez un maximum d'amis et lancez une série entre amis avec eux!",
+    "share_app_btn": "Inviter des amis via un lien",
+    "share_app_msg": "Rejoignez-moi sur cette application et commençons une série entre amis! Téléchargez ici: "
 }

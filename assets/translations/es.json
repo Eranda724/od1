@@ -437,5 +437,10 @@
     "minutes_ago": "hace minutos",
     "just_now": "Justo ahora",
     "error_loading_data": "Error al cargar los datos",
-    "friend_streak_caps": "RACHA ENTRE AMIGOS"
+    "friend_streak_caps": "RACHA ENTRE AMIGOS",
+    "go_premium_banner": "¡Activa Premium sin anuncios!",
+    "invite_friends_podium": "¡Compite con amigos! ¡Invita al menos a 3 amigos para llenar el podio!",
+    "add_friends_subtitle": "¡Añade tantos amigos como puedas y empieza una racha entre amigos con ellos!",
+    "share_app_btn": "Invitar amigos a través de un enlace",
+    "share_app_msg": "¡Únete a mí en esta aplicación y comencemos una racha de amigos! Descarga aquí: "
 }
