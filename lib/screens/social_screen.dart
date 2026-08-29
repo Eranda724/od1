@@ -222,7 +222,17 @@ class _SocialScreenState extends State<SocialScreen> {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 6),
+              Text(
+                'add_friends_subtitle'.tr(),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.50),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
 
               // 2. Search Bar
               TextField(
