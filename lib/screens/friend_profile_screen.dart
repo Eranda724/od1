@@ -57,8 +57,7 @@ class FriendProfileScreen extends StatelessWidget {
               child: CircularProgressIndicator(color: PCColors.yellowDark),
             );
           }
-          final userData =
-              userSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
           final rawFreezesAvailable =
               (userData['freezesAvailable'] ?? 2) as int;
@@ -157,9 +156,11 @@ class FriendProfileScreen extends StatelessWidget {
                     builder: (context, pairSnap) {
                       final actuallyFriends =
                           pairSnap.hasData && pairSnap.data!.exists;
-                          
-                      final pairData = pairSnap.data?.data() as Map<String, dynamic>? ?? {};
-                      final liveSharedStreak = (pairData['sharedStreak'] ?? 0) as int;
+
+                      final pairData =
+                          pairSnap.data?.data() as Map<String, dynamic>? ?? {};
+                      final liveSharedStreak =
+                          (pairData['sharedStreak'] ?? 0) as int;
 
                       return Container(
                         width: double.infinity,
@@ -195,95 +196,104 @@ class FriendProfileScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            // FRIEND STREAK label
-                                            FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                'friend_streak_caps'.tr(),
-                                                style: const TextStyle(
-                                                  fontSize: 32,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Color(0xFF5A3D00),
-                                                  letterSpacing: 1.2,
-                                                ),
-                                              ),
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // FRIEND STREAK label
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            'friend_streak_caps'.tr(),
+                                            style: const TextStyle(
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF5A3D00),
+                                              letterSpacing: 1.2,
                                             ),
-                                            const SizedBox(height: 28),
-                                            // Fire + Number + DAY STREAK
-                                            Row(
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                Image.asset(
-                                                  'assets/images/fire_3d.png',
-                                                  height: 52,
-                                                  width: 52,
-                                                  fit: BoxFit.contain,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                // Number + DAY STREAK stacked
-                                                Flexible(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      FittedBox(
-                                                        fit: BoxFit.scaleDown,
-                                                        alignment: Alignment.center,
-                                                        child: Text(
-                                                          '$liveSharedStreak',
-                                                          style: const TextStyle(
-                                                            fontSize: 68,
-                                                            fontWeight: FontWeight.w900,
-                                                            color: Color(0xFF332200),
-                                                            height: 1.0,
-                                                          ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 28),
+                                        // Fire + Number + DAY STREAK
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Image.asset(
+                                              'assets/images/fire_3d.png',
+                                              height: 52,
+                                              width: 52,
+                                              fit: BoxFit.contain,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            // Number + DAY STREAK stacked
+                                            Flexible(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      '$liveSharedStreak',
+                                                      style: const TextStyle(
+                                                        fontSize: 68,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color: Color(
+                                                          0xFF332200,
                                                         ),
+                                                        height: 1.0,
                                                       ),
-                                                      const SizedBox(height: 2),
-                                                      FittedBox(
-                                                        fit: BoxFit.scaleDown,
-                                                        alignment: Alignment.center,
-                                                        child: Text(
-                                                          'day_streak_caps'.tr(),
-                                                          style: const TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w800,
-                                                            color: Color(0xFF7A5000),
-                                                            letterSpacing: 2.0,
-                                                            height: 1.0,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                  const SizedBox(height: 2),
+                                                  FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      'day_streak_caps'.tr(),
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Color(
+                                                          0xFF7A5000,
+                                                        ),
+                                                        letterSpacing: 2.0,
+                                                        height: 1.0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                  Transform.translate(
+                                    offset: const Offset(8, -8),
+                                    child: Transform(
+                                      alignment: Alignment.center,
+                                      transform: Matrix4.rotationY(math.pi),
+                                      child: Image.asset(
+                                        'assets/images/login.png',
+                                        height: 160,
+                                        fit: BoxFit.contain,
                                       ),
-                                      Transform.translate(
-                                        offset: const Offset(8, -8),
-                                        child: Transform(
-                                          alignment: Alignment.center,
-                                          transform: Matrix4.rotationY(math.pi),
-                                          child: Image.asset(
-                                            'assets/images/login.png',
-                                            height: 160,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
 
                             // MIDDLE SECTION (Weekly Activity)
                             Padding(
@@ -321,12 +331,6 @@ class FriendProfileScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Image.asset(
-                                          'assets/images/handshake.png',
-                                          width: 30,
-                                          height: 30,
-                                        ),
-                                        const SizedBox(width: 8),
                                         Text(
                                           'shared_streak_header'
                                               .tr()
@@ -334,7 +338,9 @@ class FriendProfileScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
-                                            color: isDark ? Colors.orangeAccent : PCColors.brownDark,
+                                            color: isDark
+                                                ? Colors.orangeAccent
+                                                : PCColors.brownDark,
                                             letterSpacing: 1.4,
                                           ),
                                         ),
@@ -442,7 +448,9 @@ class _DayDot extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
         ),
       );
     }
@@ -458,7 +466,9 @@ class _DayDot extends StatelessWidget {
             fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
             color: isToday
                 ? Colors.red
-                : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : PCColors.brownDark.withValues(alpha: 0.5)),
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : PCColors.brownDark.withValues(alpha: 0.5)),
           ),
         ),
       ],
@@ -508,24 +518,9 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
         final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
-          return Container(
+          return SizedBox(
             width: double.infinity,
             height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark ? Colors.red.shade900.withValues(alpha: 0.5) : Colors.red.shade200,
-                  offset: const Offset(0, 5),
-                  blurRadius: 0,
-                ),
-                const BoxShadow(
-                  color: Colors.black12,
-                  offset: Offset(0, 8),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
             child: ElevatedButton.icon(
               onPressed: _isLoading
                   ? null
@@ -563,14 +558,17 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                         }
                       }
                     },
-              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              icon: Icon(
+                Icons.delete_outline,
+                color: isDark ? Colors.white70 : Colors.black54,
+              ),
               label: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: isDark ? Colors.white70 : Colors.black54,
                       ),
                     )
                   : Text(
@@ -581,11 +579,19 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                       ),
                     ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.black.withValues(alpha: 0.05),
+                foregroundColor: isDark ? Colors.white70 : Colors.black54,
                 elevation: 0,
+                shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(30),
+                  side: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.10),
+                  ),
                 ),
               ),
             ),
@@ -617,7 +623,9 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? const Color(0xFF997300) : const Color(0xFFE5A600),
+                    color: isDark
+                        ? const Color(0xFF997300)
+                        : const Color(0xFFE5A600),
                     offset: const Offset(0, 5),
                     blurRadius: 0,
                   ),
