@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/leaderboard_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   final String? currentUid;
+  final VoidCallback? onSwitchToSocial;
 
-  const LeaderboardScreen({super.key, this.currentUid});
+  const LeaderboardScreen({super.key, this.currentUid, this.onSwitchToSocial});
 
   @override
   State<LeaderboardScreen> createState() => _LeaderboardScreenState();
@@ -56,91 +58,109 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     final cs = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return StreamBuilder<List<LeaderboardEntry>>(
-      stream: LeaderboardService.stream(_activePeriod),
-      builder: (context, snapshot) {
-        final entries = snapshot.data ?? [];
+    return StreamBuilder<QuerySnapshot>(
+      stream: widget.currentUid == null
+          ? const Stream.empty()
+          : FirebaseFirestore.instance
+                .collection('friendPairs')
+                .where('uids', arrayContains: widget.currentUid!)
+                .snapshots(),
+      builder: (context, pairsSnapshot) {
+        final friendCount = pairsSnapshot.data?.docs.length ?? 0;
 
-        final isLoading =
-            snapshot.connectionState == ConnectionState.waiting &&
-            entries.isEmpty;
+        return StreamBuilder<List<LeaderboardEntry>>(
+          stream: widget.currentUid != null
+              ? LeaderboardService.friendsStream(
+                  _activePeriod,
+                  widget.currentUid!,
+                )
+              : LeaderboardService.stream(_activePeriod),
+          builder: (context, snapshot) {
+            final entries = snapshot.data ?? [];
+            final isLoading =
+                snapshot.connectionState == ConnectionState.waiting &&
+                entries.isEmpty;
 
-        return Column(
-          children: [
-            // HEADER + PODIUM
-            _PodiumSection(
-              period: _activePeriod,
-              entries: entries,
-              isLoading: isLoading,
-              currentUid: widget.currentUid,
-            ),
-
-            const SizedBox(height: 12),
-
-            // DAILY / WEEKLY / MONTHLY TABS
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.06)
-                      : const Color(0xFFF1EBDD),
-                  borderRadius: BorderRadius.circular(18),
+            return Column(
+              children: [
+                // HEADER + PODIUM
+                _PodiumSection(
+                  period: _activePeriod,
+                  entries: entries,
+                  isLoading: isLoading,
+                  currentUid: widget.currentUid,
+                  friendCount: friendCount,
+                  onSwitchToSocial: widget.onSwitchToSocial,
                 ),
-                child: TabBar(
-                  controller: _tabController,
 
-                  // No divider
-                  dividerColor: Colors.transparent,
+                const SizedBox(height: 12),
 
-                  // Full width indicator
-                  indicatorSize: TabBarIndicatorSize.tab,
-
-                  // Modern pill indicator
-                  indicator: BoxDecoration(
-                    color: const Color(0xFFFFC72C),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFC72C).withValues(alpha: 0.25),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                // DAILY / WEEKLY / MONTHLY TABS
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Container(
+                    height: 52,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : const Color(0xFFF1EBDD),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: TabBar(
+                      controller: _tabController,
+                      dividerColor: Colors.transparent,
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicator: BoxDecoration(
+                        color: const Color(0xFFFFC72C),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFFC72C)
+                                .withValues(alpha: 0.25),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                    ],
+                      labelColor: Colors.black,
+                      unselectedLabelColor:
+                          cs.onSurface.withValues(alpha: 0.55),
+                      labelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      tabs: _periods
+                          .map((period) => Tab(text: period.label))
+                          .toList(),
+                    ),
                   ),
-
-                  labelColor: Colors.black,
-                  unselectedLabelColor: cs.onSurface.withValues(alpha: 0.55),
-
-                  labelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                  ),
-
-                  unselectedLabelStyle: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-
-                  tabs: _periods
-                      .map((period) => Tab(text: period.label))
-                      .toList(),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 12),
+                const SizedBox(height: 12),
 
-            // DIVIDER
-            Container(height: 1, color: cs.onSurface.withValues(alpha: 0.07)),
+                // DIVIDER
+                Container(
+                    height: 1,
+                    color: cs.onSurface.withValues(alpha: 0.07)),
 
-            // RANKED LIST
-            Expanded(
-              child: _buildList(context, entries, isLoading, snapshot.hasError, snapshot.error),
-            ),
-          ],
+                // RANKED LIST
+                Expanded(
+                  child: _buildList(
+                    context,
+                    entries,
+                    isLoading,
+                    snapshot.hasError,
+                    snapshot.error,
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -163,7 +183,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     }
 
     if (hasError) {
-      print('Leaderboard Stream Error: $error');
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -203,9 +222,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
     // Top 3 are displayed in the podium.
     // The normal list starts at rank 4.
-    final listEntries = entries.length > 3
-        ? entries.sublist(3)
-        : <LeaderboardEntry>[];
+    final listEntries =
+        entries.length > 3 ? entries.sublist(3) : <LeaderboardEntry>[];
 
     if (listEntries.isEmpty) {
       return const SizedBox.shrink();
@@ -231,6 +249,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 }
 
+
 // PODIUM SECTION
 
 class _PodiumSection extends StatelessWidget {
@@ -238,12 +257,16 @@ class _PodiumSection extends StatelessWidget {
   final List<LeaderboardEntry> entries;
   final bool isLoading;
   final String? currentUid;
+  final int friendCount;
+  final VoidCallback? onSwitchToSocial;
 
   const _PodiumSection({
     required this.period,
     required this.entries,
     required this.isLoading,
+    required this.friendCount,
     this.currentUid,
+    this.onSwitchToSocial,
   });
 
   @override
@@ -301,6 +324,56 @@ class _PodiumSection extends StatelessWidget {
               ),
             ],
           ),
+
+          // INVITE BANNER — shown when user has fewer than 3 friends
+          if (friendCount < 3) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                // Switch to the Social tab via the HomeScreen TabController
+                onSwitchToSocial?.call();
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFC72C).withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFFFFC72C).withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.people_outline_rounded,
+                      size: 18,
+                      color: Color(0xFFD69E00),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'invite_friends_podium'.tr(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB88200),
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 12,
+                      color: Color(0xFFD69E00),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 20),
 
@@ -721,7 +794,6 @@ class _LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final borderColor = isCurrentUser
         ? const Color(0xFFFFC72C)
