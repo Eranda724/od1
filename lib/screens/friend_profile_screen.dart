@@ -224,11 +224,30 @@ class FriendProfileScreen extends StatelessWidget {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.center,
                                           children: [
-                                            Image.asset(
-                                              'assets/images/fire_3d.png',
-                                              height: 52,
-                                              width: 52,
-                                              fit: BoxFit.contain,
+                                            SizedBox(
+                                              width: 74,
+                                              height: 60,
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  Positioned(
+                                                    left: 0,
+                                                    child: Image.asset(
+                                                      'assets/images/fire_3d.png',
+                                                      width: 60,
+                                                      height: 60,
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    left: 14,
+                                                    child: Image.asset(
+                                                      'assets/images/fire_3d.png',
+                                                      width: 60,
+                                                      height: 60,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                             const SizedBox(width: 8),
                                             // Number + DAY STREAK stacked
@@ -617,6 +636,90 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
             final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
+            if (hasSentRequest) {
+              return SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          try {
+                            await FriendsService.instance.removeFriendRequest(
+                              widget.currentUid,
+                              widget.friend.uid,
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('request_removed'.tr()),
+                                  backgroundColor: Colors.grey,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'error_msg'.tr(
+                                      args: [
+                                        e.toString().replaceFirst(
+                                          'Exception: ',
+                                          '',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _isLoading = false);
+                          }
+                        },
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                  label: _isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        )
+                      : Text(
+                          'remove_request'.tr().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.black.withValues(alpha: 0.05),
+                    foregroundColor: isDark ? Colors.white70 : Colors.black54,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
             return Container(
               width: double.infinity,
               height: 56,
@@ -643,37 +746,21 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                     : () async {
                         setState(() => _isLoading = true);
                         try {
-                          if (hasSentRequest) {
-                            await FriendsService.instance.removeFriendRequest(
-                              widget.currentUid,
-                              widget.friend.uid,
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser != null) {
+                            await FriendsService.instance.sendFriendRequest(
+                              fromUid: currentUser.uid,
+                              fromName:
+                                  currentUser.displayName ?? 'a_user'.tr(),
+                              toUsername: widget.friend.displayName,
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('request_removed'.tr()),
-                                  backgroundColor: Colors.grey,
+                                  content: Text('friend_request_sent'.tr()),
+                                  backgroundColor: Colors.green,
                                 ),
                               );
-                            }
-                          } else {
-                            final currentUser =
-                                FirebaseAuth.instance.currentUser;
-                            if (currentUser != null) {
-                              await FriendsService.instance.sendFriendRequest(
-                                fromUid: currentUser.uid,
-                                fromName:
-                                    currentUser.displayName ?? 'a_user'.tr(),
-                                toUsername: widget.friend.displayName,
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('friend_request_sent'.tr()),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
                             }
                           }
                         } catch (e) {
@@ -698,6 +785,15 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                           if (mounted) setState(() => _isLoading = false);
                         }
                       },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PCColors.yellow,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
                 child: _isLoading
                     ? const SizedBox(
                         width: 20,
@@ -708,25 +804,13 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                         ),
                       )
                     : Text(
-                        (hasSentRequest
-                                ? 'remove_request'.tr()
-                                : 'send_request'.tr())
-                            .toUpperCase(),
+                        'send_request'.tr().toUpperCase(),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.2,
                         ),
                       ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PCColors.yellow,
-                  foregroundColor: Colors.black87,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                ),
               ),
             );
           },
