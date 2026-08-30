@@ -86,89 +86,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             return Column(
               children: [
                 // ============================================================
-                // 1. TITLE & BUTTON
+                // 1. HEADER + BANNER + PODIUM
                 // ============================================================
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'leaderboard_title'.tr(),
-                              style: const TextStyle(
-                                fontSize: 25,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFFFC72C,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: const Icon(
-                              Icons.emoji_events_rounded,
-                              color: Color(0xFFFFB800),
-                              size: 25,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      GestureDetector(
-                        onTap: () => widget.onSwitchToSocial?.call(),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.grey.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.people_outline_rounded,
-                                size: 18,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.6,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'add_friends_subtitle'.tr(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.6,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                _PodiumSection(
+                  period: _activePeriod,
+                  entries: entries,
+                  isLoading: isLoading,
+                  currentUid: widget.currentUid,
+                  friendCount: friendCount,
+                  onSwitchToSocial: widget.onSwitchToSocial,
                 ),
 
+                const SizedBox(height: 12),
+
                 // ============================================================
-                // 2. DAILY / WEEKLY / MONTHLY TABS
+                // 2. DAILY / WEEKLY / MONTHLY TABS (Big Button)
                 // ============================================================
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -190,18 +122,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(
-                              0xFFFFC72C,
-                            ).withValues(alpha: 0.25),
+                            color: const Color(0xFFFFC72C).withValues(alpha: 0.25),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       labelColor: Colors.black,
-                      unselectedLabelColor: colorScheme.onSurface.withValues(
-                        alpha: 0.55,
-                      ),
+                      unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.55),
                       labelStyle: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -210,9 +138,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
-                      tabs: _periods
-                          .map((period) => Tab(text: period.label))
-                          .toList(),
+                      tabs: _periods.map((period) => Tab(text: period.label)).toList(),
                     ),
                   ),
                 ),
@@ -220,7 +146,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 const SizedBox(height: 12),
 
                 // ============================================================
-                // DIVIDER
+                // 3. DIVIDER
                 // ============================================================
                 Container(
                   height: 1,
@@ -228,7 +154,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 ),
 
                 // ============================================================
-                // RANKED LIST
+                // 4. RANKED LIST
                 // ============================================================
                 Expanded(
                   child: _buildList(
@@ -257,18 +183,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // ================================================================
-        // PODIUM
-        // ================================================================
-        SliverToBoxAdapter(
-          child: _PodiumOnlySection(
-            period: _activePeriod,
-            entries: entries,
-            isLoading: isLoading,
-            currentUid: widget.currentUid,
-          ),
-        ),
-
         // ================================================================
         // LOADING
         // ================================================================
@@ -365,28 +279,121 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 // PODIUM SECTION
 // ============================================================================
 
-class _PodiumOnlySection extends StatelessWidget {
+class _PodiumSection extends StatelessWidget {
   final LeaderboardPeriod period;
   final List<LeaderboardEntry> entries;
   final bool isLoading;
   final String? currentUid;
+  final int friendCount;
+  final VoidCallback? onSwitchToSocial;
 
-  const _PodiumOnlySection({
+  const _PodiumSection({
     required this.period,
     required this.entries,
     required this.isLoading,
     this.currentUid,
+    required this.friendCount,
+    this.onSwitchToSocial,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ==================================================================
+          // TITLE
+          // ==================================================================
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'leaderboard_title'.tr(),
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFC72C).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.emoji_events_rounded,
+                  color: Color(0xFFFFB800),
+                  size: 25,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ==================================================================
+          // INVITE BANNER
+          // ==================================================================
+          if (friendCount < 3) ...[
+            GestureDetector(
+              onTap: () => onSwitchToSocial?.call(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.people_outline_rounded,
+                      size: 18,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'invite_friends_podium'.tr(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // ==================================================================
+          // LITTLE TEXT (PERIOD)
+          // ==================================================================
+          Text(
+            period.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+
           // ==================================================================
           // PODIUM
           // ==================================================================
