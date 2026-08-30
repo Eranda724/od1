@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../services/leaderboard_service.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
+
+import '../services/leaderboard_service.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   final String? currentUid;
@@ -55,7 +56,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
+    final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
     return StreamBuilder<QuerySnapshot>(
@@ -77,25 +78,98 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               : LeaderboardService.stream(_activePeriod),
           builder: (context, snapshot) {
             final entries = snapshot.data ?? [];
+
             final isLoading =
                 snapshot.connectionState == ConnectionState.waiting &&
                 entries.isEmpty;
 
             return Column(
               children: [
-                // HEADER + PODIUM
-                _PodiumSection(
-                  period: _activePeriod,
-                  entries: entries,
-                  isLoading: isLoading,
-                  currentUid: widget.currentUid,
-                  friendCount: friendCount,
-                  onSwitchToSocial: widget.onSwitchToSocial,
+                // ============================================================
+                // 1. TITLE & BUTTON
+                // ============================================================
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'leaderboard_title'.tr(),
+                              style: const TextStyle(
+                                fontSize: 25,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFFFC72C,
+                              ).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.emoji_events_rounded,
+                              color: Color(0xFFFFB800),
+                              size: 25,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      GestureDetector(
+                        onTap: () => widget.onSwitchToSocial?.call(),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.grey.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.people_outline_rounded,
+                                size: 18,
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'add_friends_subtitle'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
 
-                const SizedBox(height: 12),
-
-                // DAILY / WEEKLY / MONTHLY TABS
+                // ============================================================
+                // 2. DAILY / WEEKLY / MONTHLY TABS
+                // ============================================================
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -116,16 +190,18 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFC72C)
-                                .withValues(alpha: 0.25),
+                            color: const Color(
+                              0xFFFFC72C,
+                            ).withValues(alpha: 0.25),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       labelColor: Colors.black,
-                      unselectedLabelColor:
-                          cs.onSurface.withValues(alpha: 0.55),
+                      unselectedLabelColor: colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
                       labelStyle: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -143,12 +219,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
                 const SizedBox(height: 12),
 
+                // ============================================================
                 // DIVIDER
+                // ============================================================
                 Container(
-                    height: 1,
-                    color: cs.onSurface.withValues(alpha: 0.07)),
+                  height: 1,
+                  color: colorScheme.onSurface.withValues(alpha: 0.07),
+                ),
 
+                // ============================================================
                 // RANKED LIST
+                // ============================================================
                 Expanded(
                   child: _buildList(
                     context,
@@ -173,100 +254,128 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     bool hasError,
     Object? error,
   ) {
-    if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: Color(0xFFFFC72C),
-          strokeWidth: 3,
-        ),
-      );
-    }
-
-    if (hasError) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.grey.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.wifi_off_rounded,
-                size: 30,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'could_not_load_leaderboard'.tr(),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.6),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (entries.isEmpty) {
-      return _EmptyState(period: _activePeriod);
-    }
-
-    // Top 3 are displayed in the podium.
-    // The normal list starts at rank 4.
-    final listEntries =
-        entries.length > 3 ? entries.sublist(3) : <LeaderboardEntry>[];
-
-    if (listEntries.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+    return CustomScrollView(
       physics: const BouncingScrollPhysics(),
-      itemCount: listEntries.length,
-      itemBuilder: (context, index) {
-        final entry = listEntries[index];
-        final rank = index + 4;
-        final isMe = entry.uid == widget.currentUid;
+      slivers: [
+        // ================================================================
+        // PODIUM
+        // ================================================================
+        SliverToBoxAdapter(
+          child: _PodiumOnlySection(
+            period: _activePeriod,
+            entries: entries,
+            isLoading: isLoading,
+            currentUid: widget.currentUid,
+          ),
+        ),
 
-        return _LeaderboardRow(
-          rank: rank,
-          entry: entry,
-          isCurrentUser: isMe,
-          period: _activePeriod,
-        );
-      },
+        // ================================================================
+        // LOADING
+        // ================================================================
+        if (isLoading)
+          const SliverFillRemaining(
+            child: Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFFFFC72C),
+                strokeWidth: 3,
+              ),
+            ),
+          )
+        // ================================================================
+        // ERROR
+        // ================================================================
+        else if (hasError)
+          SliverFillRemaining(
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.wifi_off_rounded,
+                      size: 30,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'could_not_load_leaderboard'.tr(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        // ================================================================
+        // EMPTY
+        // ================================================================
+        else if (entries.isEmpty)
+          SliverFillRemaining(child: _EmptyState(period: _activePeriod))
+        // ================================================================
+        // RANKED USERS
+        // ================================================================
+        else
+          Builder(
+            builder: (context) {
+              final listEntries = entries.length > 3
+                  ? entries.sublist(3)
+                  : <LeaderboardEntry>[];
+
+              if (listEntries.isEmpty) {
+                return const SliverToBoxAdapter(child: SizedBox.shrink());
+              }
+
+              return SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final entry = listEntries[index];
+                    final rank = index + 4;
+                    final isMe = entry.uid == widget.currentUid;
+
+                    return _LeaderboardRow(
+                      rank: rank,
+                      entry: entry,
+                      isCurrentUser: isMe,
+                      period: _activePeriod,
+                    );
+                  }, childCount: listEntries.length),
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 }
 
-
+// ============================================================================
 // PODIUM SECTION
+// ============================================================================
 
-class _PodiumSection extends StatelessWidget {
+class _PodiumOnlySection extends StatelessWidget {
   final LeaderboardPeriod period;
   final List<LeaderboardEntry> entries;
   final bool isLoading;
   final String? currentUid;
-  final int friendCount;
-  final VoidCallback? onSwitchToSocial;
 
-  const _PodiumSection({
+  const _PodiumOnlySection({
     required this.period,
     required this.entries,
     required this.isLoading,
-    required this.friendCount,
     this.currentUid,
-    this.onSwitchToSocial,
   });
 
   @override
@@ -278,106 +387,9 @@ class _PodiumSection extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         children: [
-          // TITLE
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'leaderboard_title'.tr(),
-                      style: const TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      period.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.45,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Small trophy icon
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFC72C).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.emoji_events_rounded,
-                  color: Color(0xFFFFB800),
-                  size: 25,
-                ),
-              ),
-            ],
-          ),
-
-          // INVITE BANNER — shown when user has fewer than 3 friends
-          if (friendCount < 3) ...[
-            const SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {
-                // Switch to the Social tab via the HomeScreen TabController
-                onSwitchToSocial?.call();
-              },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFC72C).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFFFFC72C).withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.people_outline_rounded,
-                      size: 18,
-                      color: Color(0xFFD69E00),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'invite_friends_podium'.tr(),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFFB88200),
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward_ios_rounded,
-                      size: 12,
-                      color: Color(0xFFD69E00),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 20),
-
+          // ==================================================================
           // PODIUM
+          // ==================================================================
           if (isLoading)
             const SizedBox(
               height: 230,
@@ -414,13 +426,15 @@ class _PodiumSection extends StatelessWidget {
               ),
             )
           else
-            SizedBox(
-              height: 245,
+            Container(
+              padding: const EdgeInsets.only(top: 20),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // ==========================================================
                   // SECOND PLACE
+                  // ==========================================================
                   if (entries.length >= 2)
                     Expanded(
                       child: _PodiumBar(
@@ -435,7 +449,9 @@ class _PodiumSection extends StatelessWidget {
 
                   const SizedBox(width: 10),
 
+                  // ==========================================================
                   // FIRST PLACE
+                  // ==========================================================
                   Expanded(
                     child: _PodiumBar(
                       rank: 1,
@@ -447,7 +463,9 @@ class _PodiumSection extends StatelessWidget {
 
                   const SizedBox(width: 10),
 
+                  // ==========================================================
                   // THIRD PLACE
+                  // ==========================================================
                   if (entries.length >= 3)
                     Expanded(
                       child: _PodiumBar(
@@ -468,7 +486,9 @@ class _PodiumSection extends StatelessWidget {
   }
 }
 
+// ============================================================================
 // PODIUM CARD
+// ============================================================================
 
 class _PodiumBar extends StatelessWidget {
   final int rank;
@@ -500,14 +520,17 @@ class _PodiumBar extends StatelessWidget {
     switch (rank) {
       case 1:
         return const Color(0xFFFFC72C).withValues(alpha: isDark ? 0.22 : 0.18);
+
       case 2:
         return isDark
             ? Colors.white.withValues(alpha: 0.09)
             : const Color(0xFFE7EAED).withValues(alpha: 0.65);
+
       case 3:
         return isDark
             ? Colors.white.withValues(alpha: 0.07)
             : const Color(0xFFEBD9CA).withValues(alpha: 0.65);
+
       default:
         return Colors.grey.withValues(alpha: isDark ? 0.15 : 0.1);
     }
@@ -531,7 +554,6 @@ class _PodiumBar extends StatelessWidget {
     final score = entry.scoreFor(period);
     final isFirst = rank == 1;
     final avatarSize = isFirst ? 58.0 : 50.0;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Stack(
@@ -548,8 +570,8 @@ class _PodiumBar extends StatelessWidget {
               color: isCurrentUser
                   ? const Color(0xFFFFC72C)
                   : (isFirst
-                      ? const Color(0xFFFFC72C).withValues(alpha: 0.35)
-                      : Colors.black.withValues(alpha: 0.04)),
+                        ? const Color(0xFFFFC72C).withValues(alpha: 0.35)
+                        : Colors.black.withValues(alpha: 0.04)),
               width: isCurrentUser ? 2 : 1,
             ),
             boxShadow: [
@@ -563,7 +585,9 @@ class _PodiumBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // ============================================================
               // MEDAL / RANK LABEL
+              // ============================================================
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
@@ -586,9 +610,7 @@ class _PodiumBar extends StatelessWidget {
                         size: 13,
                         color: Colors.white,
                       ),
-
                     if (rank == 1) const SizedBox(width: 3),
-
                     Text(
                       _rankText,
                       style: const TextStyle(
@@ -603,12 +625,13 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 10),
 
+              // ============================================================
               // AVATAR
+              // ============================================================
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
                 children: [
-                  // Avatar outer ring
                   Container(
                     width: avatarSize + 10,
                     height: avatarSize + 10,
@@ -669,7 +692,9 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 12),
 
+              // ============================================================
               // NAME
+              // ============================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -691,11 +716,18 @@ class _PodiumBar extends StatelessWidget {
               ),
 
               const SizedBox(height: 3),
+
+              // ============================================================
+              // CURRENT USER LABEL
+              // ============================================================
               SizedBox(
                 height: 16,
                 child: isCurrentUser
                     ? Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFC72C),
                           borderRadius: BorderRadius.circular(6),
@@ -714,11 +746,14 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 5),
 
+              // ============================================================
               // SCORE
+              // ============================================================
               Builder(
                 builder: (context) {
                   final isDark =
                       Theme.of(context).brightness == Brightness.dark;
+
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -732,21 +767,35 @@ class _PodiumBar extends StatelessWidget {
                     ),
                     child: Text(
                       'pts_count'.tr(args: [score.toString()]),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         color: isDark
                             ? Colors.white.withValues(alpha: 0.9)
-                            : Theme.of(context).colorScheme.onSurface
-                                  .withValues(alpha: 0.6),
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
                   );
                 },
               ),
+
+              // ============================================================
+              // EXTRA PODIUM STEP HEIGHT
+              // ============================================================
+              if (rank == 1) const SizedBox(height: 40),
+              if (rank == 2) const SizedBox(height: 20),
+              if (rank == 3) const SizedBox(height: 8),
             ],
           ),
         ),
+
+        // ==================================================================
+        // CROWN
+        // ==================================================================
         if (isFirst)
           Positioned(
             top: -20,
@@ -761,7 +810,9 @@ class _PodiumBar extends StatelessWidget {
   }
 }
 
+// ============================================================================
 // LEADERBOARD ROW
+// ============================================================================
 
 class _LeaderboardRow extends StatelessWidget {
   final int rank;
@@ -804,10 +855,7 @@ class _LeaderboardRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: borderColor,
-          width: isCurrentUser ? 2 : 1,
-        ),
+        border: Border.all(color: borderColor, width: isCurrentUser ? 2 : 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.025),
@@ -820,7 +868,9 @@ class _LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
+            // ==============================================================
             // RANK NUMBER
+            // ==============================================================
             SizedBox(
               width: 42,
               child: Text(
@@ -836,7 +886,9 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 8),
 
+            // ==============================================================
             // AVATAR
+            // ==============================================================
             Container(
               width: 52,
               height: 52,
@@ -885,7 +937,9 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 14),
 
+            // ==============================================================
             // USER NAME + SCORE
+            // ==============================================================
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,7 +958,6 @@ class _LeaderboardRow extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       if (isCurrentUser) ...[
                         const SizedBox(width: 7),
                         Container(
@@ -951,7 +1004,9 @@ class _LeaderboardRow extends StatelessWidget {
   }
 }
 
+// ============================================================================
 // EMPTY STATE
+// ============================================================================
 
 class _EmptyState extends StatelessWidget {
   final LeaderboardPeriod period;
@@ -968,7 +1023,9 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon container
+            // ==================================================================
+            // ICON CONTAINER
+            // ==================================================================
             Container(
               width: 82,
               height: 82,
@@ -985,6 +1042,9 @@ class _EmptyState extends StatelessWidget {
 
             const SizedBox(height: 20),
 
+            // ==================================================================
+            // TITLE
+            // ==================================================================
             Text(
               'no_scores_yet'.tr(),
               textAlign: TextAlign.center,
@@ -995,6 +1055,9 @@ class _EmptyState extends StatelessWidget {
 
             const SizedBox(height: 8),
 
+            // ==================================================================
+            // DESCRIPTION
+            // ==================================================================
             Text(
               'complete_exercises_appear_leaderboard'.tr(
                 args: [period.label.toLowerCase()],

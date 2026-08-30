@@ -150,11 +150,16 @@ class SocialAuthService {
     final data = <String, dynamic>{};
 
     // Use the override (Apple first login), fall back to Auth displayName
-    final name = (displayNameOverride?.isNotEmpty == true)
+    final rawName = (displayNameOverride?.isNotEmpty == true)
         ? displayNameOverride!
         : (user.displayName?.isNotEmpty == true ? user.displayName! : null);
 
-    if (name != null) {
+    String? name;
+    if (rawName != null) {
+      name = rawName.trim().split(' ').first;
+    }
+
+    if (name != null && name.isNotEmpty) {
       data['displayName'] = name;
       // Keep Firebase Auth profile in sync
       if (user.displayName != name) {
