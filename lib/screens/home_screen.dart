@@ -178,7 +178,11 @@ class _HomeScreenState extends State<HomeScreen>
                 child: Text('admin_panel'.tr()),
               ),
             ),
-          const NotificationBell(),
+          NotificationBell(
+            onNavigateTab: (index) {
+              _tabController.animateTo(index);
+            },
+          ),
           const SizedBox(width: 8),
         ],
       ),
