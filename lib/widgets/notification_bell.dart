@@ -6,8 +6,9 @@ import '../screens/notifications_screen.dart';
 
 class NotificationBell extends StatefulWidget {
   final Color? iconColor;
+  final Function(int)? onNavigateTab;
 
-  const NotificationBell({super.key, this.iconColor});
+  const NotificationBell({super.key, this.iconColor, this.onNavigateTab});
 
   @override
   State<NotificationBell> createState() => _NotificationBellState();
@@ -169,14 +170,17 @@ class _NotificationBellState extends State<NotificationBell> {
                       const Divider(height: 1),
                       // Footer (See All)
                       InkWell(
-                        onTap: () {
+                        onTap: () async {
                           _closeDropdown();
-                          Navigator.push(
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => const NotificationsScreen(),
                             ),
                           );
+                          if (result == 'social') {
+                            widget.onNavigateTab?.call(3);
+                          }
                         },
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(16),
@@ -241,6 +245,12 @@ class _NotificationBellState extends State<NotificationBell> {
       onTap: () {
         if (!notif.isRead) {
           InAppNotificationService.instance.markAsRead(notif.id);
+        }
+        _closeDropdown();
+        if (notif.type == 'friend_activity' || 
+            notif.type == 'friend_request' || 
+            notif.type == 'friend_accepted') {
+          widget.onNavigateTab?.call(3);
         }
       },
       child: Container(
