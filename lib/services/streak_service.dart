@@ -642,7 +642,7 @@ class StreakService {
         for (final doc in exerciseDocs) {
           if (!doc.exists) continue;
 
-          final exData = doc.data() as Map<String, dynamic>? ?? {};
+          final exData = doc.data() ?? {};
           final lastCompletedDate = exData['lastCompletedDate'] as String?;
           final currentStreak = (exData['currentStreak'] ?? 0) as int;
           if (lastCompletedDate == null || currentStreak == 0) continue;

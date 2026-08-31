@@ -323,6 +323,9 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                         onPressed: () async {
                           final picked = await _picker.pickImage(
                             source: ImageSource.gallery,
+                            maxWidth: 800,
+                            maxHeight: 800,
+                            imageQuality: 75,
                           );
                           if (picked != null) {
                             setState(() => _labelImageFile = File(picked.path));

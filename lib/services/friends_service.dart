@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'streak_service.dart';
 import 'in_app_notification_service.dart';
-import 'dart:math' as math;
+
 
 class FriendsService {
   FriendsService._();
@@ -160,14 +160,6 @@ class FriendsService {
       if (myDoc == null) return;
       if (friendDocs.length != currentFriendUids.length) return;
       
-      final cData = myDoc!.data() as Map<String, dynamic>? ?? {};
-      final cEffective = StreakService.getEffectiveStreakData(
-        streak: cData['overallStreak'] ?? 0,
-        freezesAvailable: cData['freezesAvailable'] ?? 2,
-        frozenDates: List<String>.from(cData['frozenDates'] ?? []),
-        lastEvaluatedDate: cData['overallLastEvaluatedDate'] as String?,
-      );
-      final myStreak = cEffective.streak;
       final today = _todayKey();
 
       final friends = <FriendInfo>[];

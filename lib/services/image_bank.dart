@@ -20,7 +20,7 @@ class ImageBank {
 
   static final _rng = math.Random();
 
-  // ── FIRESTORE ─────────────────────────────────────────────────────────────
+  // FIRESTORE
 
   static const String _collection = 'app_config';
   static const String _document = 'image_bank';
@@ -28,7 +28,7 @@ class ImageBank {
   static DocumentReference get _docRef =>
       FirebaseFirestore.instance.collection(_collection).doc(_document);
 
-  // ── HARD-CODED FALLBACKS (mirrors admin_celebration_assets_screen.dart) ──
+  // HARD-CODED FALLBACKS (mirrors admin_celebration_assets_screen.dart)
 
   static const List<String> _fallbackCelebrationImages = [
     'assets/images/p1.png',
@@ -89,7 +89,7 @@ class ImageBank {
     'assets/images/congrads_po3.png',
   ];
 
-  // ── CACHED POOLS (refreshed each time Firestore is read) ─────────────────
+  // CACHED POOLS (refreshed each time Firestore is read)
 
   static List<String>? _celebrationImages;
   static List<String>? _exerciseCongrats;
@@ -117,11 +117,23 @@ class ImageBank {
   static void _updateCaches(DocumentSnapshot snap) {
     if (!snap.exists) return;
     final data = snap.data() as Map<String, dynamic>? ?? {};
-    _celebrationImages = _parse(data, 'celebration_images', _fallbackCelebrationImages);
-    _exerciseCongrats = _parse(data, 'exercise_congrats', _fallbackExerciseCongrats);
-    _dailySummary     = _parse(data, 'daily_summary',     _fallbackDailySummary);
-    _streakCharacter  = _parse(data, 'streak_character',  _fallbackStreakCharacter);
-    
+    _celebrationImages = _parse(
+      data,
+      'celebration_images',
+      _fallbackCelebrationImages,
+    );
+    _exerciseCongrats = _parse(
+      data,
+      'exercise_congrats',
+      _fallbackExerciseCongrats,
+    );
+    _dailySummary = _parse(data, 'daily_summary', _fallbackDailySummary);
+    _streakCharacter = _parse(
+      data,
+      'streak_character',
+      _fallbackStreakCharacter,
+    );
+
     _updatesController.add(null);
   }
 
@@ -141,7 +153,11 @@ class ImageBank {
     return enabled.isEmpty ? fallback : enabled;
   }
 
-  // ── PUBLIC API ────────────────────────────────────────────────────────────
+  /// Random image for the **Celebration** screen.
+  static String randomCelebrationImage() {
+    final pool = _celebrationImages ?? _fallbackCelebrationImages;
+    return pool[_rng.nextInt(pool.length)];
+  }
 
   /// Random image for the **Exercise Congratulation** screen.
   static String randomExerciseCongrats() {
