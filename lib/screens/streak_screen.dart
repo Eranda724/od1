@@ -550,24 +550,31 @@ class _StreakScreenState extends State<StreakScreen>
                         List<String> exActiveDates = List<String>.from(
                           exData['activeDates'] ?? [],
                         );
-                        final rawFreezes = (exData['freezesAvailable'] ?? 2) as int;
+                        final rawFreezes =
+                            (exData['freezesAvailable'] ?? 2) as int;
                         final rawFrozenDates = List<String>.from(
                           exData['frozenDates'] ?? [],
                         );
-                        final nextRecharge = exData['nextFreezeRechargeDate'] as String?;
-                        final lastEvaluatedDate = (exData['lastEvaluatedDate'] as String?) ?? lastDate;
+                        final nextRecharge =
+                            exData['nextFreezeRechargeDate'] as String?;
+                        final lastEvaluatedDate =
+                            (exData['lastEvaluatedDate'] as String?) ??
+                            lastDate;
 
-                        final effectiveData = StreakService.getEffectiveStreakData(
-                          streak: streak,
-                          freezesAvailable: rawFreezes,
-                          frozenDates: rawFrozenDates,
-                          lastEvaluatedDate: lastEvaluatedDate,
-                          nextFreezeRechargeDate: nextRecharge,
-                        );
+                        final effectiveData =
+                            StreakService.getEffectiveStreakData(
+                              streak: streak,
+                              freezesAvailable: rawFreezes,
+                              frozenDates: rawFrozenDates,
+                              lastEvaluatedDate: lastEvaluatedDate,
+                              nextFreezeRechargeDate: nextRecharge,
+                            );
 
                         final int effectiveStreak = effectiveData.streak;
-                        final List<String> exFrozenDates = effectiveData.frozenDates;
-                        final int exFreezesAvailable = effectiveData.freezesAvailable;
+                        final List<String> exFrozenDates =
+                            effectiveData.frozenDates;
+                        final int exFreezesAvailable =
+                            effectiveData.freezesAvailable;
 
                         // Fallback: If database has a legacy streak number but no saved dates yet, fill the UI to match
                         if (effectiveStreak > 0 &&
@@ -575,7 +582,9 @@ class _StreakScreenState extends State<StreakScreen>
                             exActiveDates.length < effectiveStreak) {
                           try {
                             final lastDateObj = DateTime.parse(lastDate);
-                            final int fillCount = effectiveStreak > 7 ? 7 : effectiveStreak;
+                            final int fillCount = effectiveStreak > 7
+                                ? 7
+                                : effectiveStreak;
                             for (int i = 0; i < fillCount; i++) {
                               final d = lastDateObj.subtract(Duration(days: i));
                               final key =
@@ -823,7 +832,7 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     ),
                     // Right Column: Mascot
                     Transform.translate(
-                      offset: const Offset(8, -8),
+                      offset: const Offset(-10, -8),
                       child: NetworkOrAssetImage(
                         _mascotImage,
                         height: 170,

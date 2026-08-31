@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../widgets/network_or_asset_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../app_settings.dart';
@@ -199,7 +198,9 @@ class _AdminCelebrationAssetsScreenState
     final picker = ImagePicker();
     final picked = await picker.pickImage(
       source: ImageSource.gallery,
-      imageQuality: 80,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 75,
     );
     if (picked == null) return;
 

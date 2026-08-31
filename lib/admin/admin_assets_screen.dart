@@ -44,7 +44,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
 
   Future<void> _uploadImage(List<dynamic> currentImages) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, maxWidth: 800, maxHeight: 800, imageQuality: 75);
     if (pickedFile == null) return;
 
     setState(() => _isUploading = true);
