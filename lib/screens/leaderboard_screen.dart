@@ -85,9 +85,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
             return Column(
               children: [
-                // ============================================================
                 // 1. HEADER + BANNER + PODIUM
-                // ============================================================
                 _PodiumSection(
                   period: _activePeriod,
                   entries: entries,
@@ -99,9 +97,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
 
                 const SizedBox(height: 12),
 
-                // ============================================================
                 // 2. DAILY / WEEKLY / MONTHLY TABS (Big Button)
-                // ============================================================
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
@@ -122,14 +118,18 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFFC72C).withValues(alpha: 0.25),
+                            color: const Color(
+                              0xFFFFC72C,
+                            ).withValues(alpha: 0.25),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       labelColor: Colors.black,
-                      unselectedLabelColor: colorScheme.onSurface.withValues(alpha: 0.55),
+                      unselectedLabelColor: colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
                       labelStyle: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
@@ -138,24 +138,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
-                      tabs: _periods.map((period) => Tab(text: period.label)).toList(),
+                      tabs: _periods
+                          .map((period) => Tab(text: period.label))
+                          .toList(),
                     ),
                   ),
                 ),
 
                 const SizedBox(height: 12),
 
-                // ============================================================
                 // 3. DIVIDER
-                // ============================================================
                 Container(
                   height: 1,
                   color: colorScheme.onSurface.withValues(alpha: 0.07),
                 ),
 
-                // ============================================================
                 // 4. RANKED LIST
-                // ============================================================
                 Expanded(
                   child: _buildList(
                     context,
@@ -183,9 +181,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
-        // ================================================================
         // LOADING
-        // ================================================================
         if (isLoading)
           const SliverFillRemaining(
             child: Center(
@@ -195,9 +191,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
             ),
           )
-        // ================================================================
         // ERROR
-        // ================================================================
         else if (hasError)
           SliverFillRemaining(
             child: Center(
@@ -232,14 +226,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               ),
             ),
           )
-        // ================================================================
         // EMPTY
-        // ================================================================
         else if (entries.isEmpty)
           SliverFillRemaining(child: _EmptyState(period: _activePeriod))
-        // ================================================================
         // RANKED USERS
-        // ================================================================
         else
           Builder(
             builder: (context) {
@@ -275,9 +265,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 }
 
-// ============================================================================
 // PODIUM SECTION
-// ============================================================================
 
 class _PodiumSection extends StatelessWidget {
   final LeaderboardPeriod period;
@@ -307,9 +295,7 @@ class _PodiumSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ==================================================================
           // TITLE
-          // ==================================================================
           Row(
             children: [
               Expanded(
@@ -340,63 +326,54 @@ class _PodiumSection extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ==================================================================
           // INVITE BANNER
-          // ==================================================================
-          if (friendCount < 3) ...[
-            GestureDetector(
-              onTap: () => onSwitchToSocial?.call(),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Colors.grey.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.people_outline_rounded,
-                      size: 18,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'invite_friends_podium'.tr(),
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
+          GestureDetector(
+            onTap: () => onSwitchToSocial?.call(),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 14,
+                vertical: 10,
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.people_outline_rounded,
+                    size: 18,
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      friendCount < 3
+                          ? 'invite_friends_podium'.tr()
+                          : 'invite_more_friends_podium'.tr(),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-          ],
-
-          // ==================================================================
-          // LITTLE TEXT (PERIOD)
-          // ==================================================================
-          Text(
-            period.label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
           ),
-          
           const SizedBox(height: 12),
 
-          // ==================================================================
           // PODIUM
-          // ==================================================================
           if (isLoading)
             const SizedBox(
               height: 230,
@@ -439,9 +416,7 @@ class _PodiumSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // ==========================================================
                   // SECOND PLACE
-                  // ==========================================================
                   if (entries.length >= 2)
                     Expanded(
                       child: _PodiumBar(
@@ -456,9 +431,7 @@ class _PodiumSection extends StatelessWidget {
 
                   const SizedBox(width: 10),
 
-                  // ==========================================================
                   // FIRST PLACE
-                  // ==========================================================
                   Expanded(
                     child: _PodiumBar(
                       rank: 1,
@@ -470,9 +443,7 @@ class _PodiumSection extends StatelessWidget {
 
                   const SizedBox(width: 10),
 
-                  // ==========================================================
                   // THIRD PLACE
-                  // ==========================================================
                   if (entries.length >= 3)
                     Expanded(
                       child: _PodiumBar(
@@ -493,9 +464,7 @@ class _PodiumSection extends StatelessWidget {
   }
 }
 
-// ============================================================================
 // PODIUM CARD
-// ============================================================================
 
 class _PodiumBar extends StatelessWidget {
   final int rank;
@@ -592,9 +561,7 @@ class _PodiumBar extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ============================================================
               // MEDAL / RANK LABEL
-              // ============================================================
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
@@ -632,9 +599,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 10),
 
-              // ============================================================
               // AVATAR
-              // ============================================================
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.center,
@@ -699,9 +664,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // ============================================================
               // NAME
-              // ============================================================
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
@@ -724,9 +687,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 3),
 
-              // ============================================================
               // CURRENT USER LABEL
-              // ============================================================
               SizedBox(
                 height: 16,
                 child: isCurrentUser
@@ -753,9 +714,7 @@ class _PodiumBar extends StatelessWidget {
 
               const SizedBox(height: 5),
 
-              // ============================================================
               // SCORE
-              // ============================================================
               Builder(
                 builder: (context) {
                   final isDark =
@@ -790,9 +749,7 @@ class _PodiumBar extends StatelessWidget {
                 },
               ),
 
-              // ============================================================
               // EXTRA PODIUM STEP HEIGHT
-              // ============================================================
               if (rank == 1) const SizedBox(height: 40),
               if (rank == 2) const SizedBox(height: 20),
               if (rank == 3) const SizedBox(height: 8),
@@ -800,9 +757,7 @@ class _PodiumBar extends StatelessWidget {
           ),
         ),
 
-        // ==================================================================
         // CROWN
-        // ==================================================================
         if (isFirst)
           Positioned(
             top: -20,
@@ -817,9 +772,7 @@ class _PodiumBar extends StatelessWidget {
   }
 }
 
-// ============================================================================
 // LEADERBOARD ROW
-// ============================================================================
 
 class _LeaderboardRow extends StatelessWidget {
   final int rank;
@@ -875,9 +828,7 @@ class _LeaderboardRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
-            // ==============================================================
             // RANK NUMBER
-            // ==============================================================
             SizedBox(
               width: 42,
               child: Text(
@@ -893,9 +844,7 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 8),
 
-            // ==============================================================
             // AVATAR
-            // ==============================================================
             Container(
               width: 52,
               height: 52,
@@ -944,9 +893,7 @@ class _LeaderboardRow extends StatelessWidget {
 
             const SizedBox(width: 14),
 
-            // ==============================================================
             // USER NAME + SCORE
-            // ==============================================================
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1011,9 +958,7 @@ class _LeaderboardRow extends StatelessWidget {
   }
 }
 
-// ============================================================================
 // EMPTY STATE
-// ============================================================================
 
 class _EmptyState extends StatelessWidget {
   final LeaderboardPeriod period;
@@ -1030,9 +975,7 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ==================================================================
             // ICON CONTAINER
-            // ==================================================================
             Container(
               width: 82,
               height: 82,
@@ -1049,9 +992,7 @@ class _EmptyState extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // ==================================================================
             // TITLE
-            // ==================================================================
             Text(
               'no_scores_yet'.tr(),
               textAlign: TextAlign.center,
@@ -1062,9 +1003,7 @@ class _EmptyState extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // ==================================================================
             // DESCRIPTION
-            // ==================================================================
             Text(
               'complete_exercises_appear_leaderboard'.tr(
                 args: [period.label.toLowerCase()],
