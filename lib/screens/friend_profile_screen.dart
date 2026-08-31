@@ -57,8 +57,7 @@ class FriendProfileScreen extends StatelessWidget {
               child: CircularProgressIndicator(color: PCColors.yellowDark),
             );
           }
-          final userData =
-              userSnap.data?.data() as Map<String, dynamic>? ?? {};
+          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
           final rawFreezesAvailable =
               (userData['freezesAvailable'] ?? 2) as int;
@@ -123,6 +122,7 @@ class FriendProfileScreen extends StatelessWidget {
                             fontWeight: FontWeight.w900,
                             color: context.textPrimary,
                           ),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -157,9 +157,11 @@ class FriendProfileScreen extends StatelessWidget {
                     builder: (context, pairSnap) {
                       final actuallyFriends =
                           pairSnap.hasData && pairSnap.data!.exists;
-                          
-                      final pairData = pairSnap.data?.data() as Map<String, dynamic>? ?? {};
-                      final liveSharedStreak = (pairData['sharedStreak'] ?? 0) as int;
+
+                      final pairData =
+                          pairSnap.data?.data() as Map<String, dynamic>? ?? {};
+                      final liveSharedStreak =
+                          (pairData['sharedStreak'] ?? 0) as int;
 
                       return Container(
                         width: double.infinity,
@@ -195,95 +197,123 @@ class FriendProfileScreen extends StatelessWidget {
                               ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // FRIEND STREAK label
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Text(
+                                            'friend_streak_caps'.tr(),
+                                            style: const TextStyle(
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.w900,
+                                              color: Color(0xFF5A3D00),
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 28),
+                                        // Fire + Number + DAY STREAK
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
                                           children: [
-                                            // FRIEND STREAK label
-                                            FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerLeft,
-                                              child: Text(
-                                                'friend_streak_caps'.tr(),
-                                                style: const TextStyle(
-                                                  fontSize: 32,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Color(0xFF5A3D00),
-                                                  letterSpacing: 1.2,
-                                                ),
+                                            SizedBox(
+                                              width: 74,
+                                              height: 60,
+                                              child: Stack(
+                                                clipBehavior: Clip.none,
+                                                children: [
+                                                  Positioned(
+                                                    left: 0,
+                                                    child: Image.asset(
+                                                      'assets/images/fire_3d.png',
+                                                      width: 60,
+                                                      height: 60,
+                                                    ),
+                                                  ),
+                                                  Positioned(
+                                                    left: 14,
+                                                    child: Image.asset(
+                                                      'assets/images/fire_3d.png',
+                                                      width: 60,
+                                                      height: 60,
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            const SizedBox(height: 28),
-                                            // Fire + Number + DAY STREAK
-                                            Row(
-                                              crossAxisAlignment: CrossAxisAlignment.center,
-                                              children: [
-                                                Image.asset(
-                                                  'assets/images/fire_3d.png',
-                                                  height: 52,
-                                                  width: 52,
-                                                  fit: BoxFit.contain,
-                                                ),
-                                                const SizedBox(width: 8),
-                                                // Number + DAY STREAK stacked
-                                                Flexible(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      FittedBox(
-                                                        fit: BoxFit.scaleDown,
-                                                        alignment: Alignment.center,
-                                                        child: Text(
-                                                          '$liveSharedStreak',
-                                                          style: const TextStyle(
-                                                            fontSize: 68,
-                                                            fontWeight: FontWeight.w900,
-                                                            color: Color(0xFF332200),
-                                                            height: 1.0,
-                                                          ),
+                                            const SizedBox(width: 8),
+                                            // Number + DAY STREAK stacked
+                                            Flexible(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      '$liveSharedStreak',
+                                                      style: const TextStyle(
+                                                        fontSize: 68,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color: Color(
+                                                          0xFF332200,
                                                         ),
+                                                        height: 1.0,
                                                       ),
-                                                      const SizedBox(height: 2),
-                                                      FittedBox(
-                                                        fit: BoxFit.scaleDown,
-                                                        alignment: Alignment.center,
-                                                        child: Text(
-                                                          'day_streak_caps'.tr(),
-                                                          style: const TextStyle(
-                                                            fontSize: 13,
-                                                            fontWeight: FontWeight.w800,
-                                                            color: Color(0xFF7A5000),
-                                                            letterSpacing: 2.0,
-                                                            height: 1.0,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
+                                                    ),
                                                   ),
-                                                ),
-                                              ],
+                                                  const SizedBox(height: 2),
+                                                  FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    alignment: Alignment.center,
+                                                    child: Text(
+                                                      'day_streak_caps'.tr(),
+                                                      style: const TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: Color(
+                                                          0xFF7A5000,
+                                                        ),
+                                                        letterSpacing: 2.0,
+                                                        height: 1.0,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
+                                      ],
+                                    ),
+                                  ),
+                                  Transform.translate(
+                                    offset: const Offset(8, -8),
+                                    child: Transform(
+                                      alignment: Alignment.center,
+                                      transform: Matrix4.rotationY(math.pi),
+                                      child: Image.asset(
+                                        'assets/images/login.png',
+                                        height: 160,
+                                        fit: BoxFit.contain,
                                       ),
-                                      Transform.translate(
-                                        offset: const Offset(8, -8),
-                                        child: Transform(
-                                          alignment: Alignment.center,
-                                          transform: Matrix4.rotationY(math.pi),
-                                          child: Image.asset(
-                                            'assets/images/login.png',
-                                            height: 160,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                            ),
 
                             // MIDDLE SECTION (Weekly Activity)
                             Padding(
@@ -321,12 +351,6 @@ class FriendProfileScreen extends StatelessWidget {
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Image.asset(
-                                          'assets/images/handshake.png',
-                                          width: 30,
-                                          height: 30,
-                                        ),
-                                        const SizedBox(width: 8),
                                         Text(
                                           'shared_streak_header'
                                               .tr()
@@ -334,7 +358,9 @@ class FriendProfileScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w900,
-                                            color: isDark ? Colors.orangeAccent : PCColors.brownDark,
+                                            color: isDark
+                                                ? Colors.orangeAccent
+                                                : PCColors.brownDark,
                                             letterSpacing: 1.4,
                                           ),
                                         ),
@@ -442,7 +468,9 @@ class _DayDot extends StatelessWidget {
         height: 36,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
         ),
       );
     }
@@ -458,7 +486,9 @@ class _DayDot extends StatelessWidget {
             fontWeight: isToday ? FontWeight.w900 : FontWeight.w700,
             color: isToday
                 ? Colors.red
-                : (Theme.of(context).brightness == Brightness.dark ? Colors.white54 : PCColors.brownDark.withValues(alpha: 0.5)),
+                : (Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white54
+                      : PCColors.brownDark.withValues(alpha: 0.5)),
           ),
         ),
       ],
@@ -508,24 +538,9 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
         final isFriend = pairSnap.data?.exists ?? false;
 
         if (isFriend) {
-          return Container(
+          return SizedBox(
             width: double.infinity,
             height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark ? Colors.red.shade900.withValues(alpha: 0.5) : Colors.red.shade200,
-                  offset: const Offset(0, 5),
-                  blurRadius: 0,
-                ),
-                const BoxShadow(
-                  color: Colors.black12,
-                  offset: Offset(0, 8),
-                  blurRadius: 6,
-                ),
-              ],
-            ),
             child: ElevatedButton.icon(
               onPressed: _isLoading
                   ? null
@@ -563,14 +578,17 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                         }
                       }
                     },
-              icon: const Icon(Icons.delete_outline, color: Colors.white),
+              icon: Icon(
+                Icons.delete_outline,
+                color: isDark ? Colors.white70 : Colors.black54,
+              ),
               label: _isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: isDark ? Colors.white70 : Colors.black54,
                       ),
                     )
                   : Text(
@@ -581,11 +599,19 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                       ),
                     ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+                backgroundColor: isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : Colors.black.withValues(alpha: 0.05),
+                foregroundColor: isDark ? Colors.white70 : Colors.black54,
                 elevation: 0,
+                shadowColor: Colors.transparent,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(30),
+                  side: BorderSide(
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : Colors.black.withValues(alpha: 0.10),
+                  ),
                 ),
               ),
             ),
@@ -610,6 +636,90 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
 
             final hasSentRequest = reqSnap.data?.docs.isNotEmpty ?? false;
 
+            if (hasSentRequest) {
+              return SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          try {
+                            await FriendsService.instance.removeFriendRequest(
+                              widget.currentUid,
+                              widget.friend.uid,
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('request_removed'.tr()),
+                                  backgroundColor: Colors.grey,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'error_msg'.tr(
+                                      args: [
+                                        e.toString().replaceFirst(
+                                          'Exception: ',
+                                          '',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          } finally {
+                            if (mounted) setState(() => _isLoading = false);
+                          }
+                        },
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                  label: _isLoading
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        )
+                      : Text(
+                          'remove_request'.tr().toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.10)
+                        : Colors.black.withValues(alpha: 0.05),
+                    foregroundColor: isDark ? Colors.white70 : Colors.black54,
+                    elevation: 0,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      side: BorderSide(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.black.withValues(alpha: 0.10),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
             return Container(
               width: double.infinity,
               height: 56,
@@ -617,7 +727,9 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: isDark ? const Color(0xFF997300) : const Color(0xFFE5A600),
+                    color: isDark
+                        ? const Color(0xFF997300)
+                        : const Color(0xFFE5A600),
                     offset: const Offset(0, 5),
                     blurRadius: 0,
                   ),
@@ -634,37 +746,21 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                     : () async {
                         setState(() => _isLoading = true);
                         try {
-                          if (hasSentRequest) {
-                            await FriendsService.instance.removeFriendRequest(
-                              widget.currentUid,
-                              widget.friend.uid,
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser != null) {
+                            await FriendsService.instance.sendFriendRequest(
+                              fromUid: currentUser.uid,
+                              fromName:
+                                  currentUser.displayName ?? 'a_user'.tr(),
+                              toUsername: widget.friend.displayName,
                             );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('request_removed'.tr()),
-                                  backgroundColor: Colors.grey,
+                                  content: Text('friend_request_sent'.tr()),
+                                  backgroundColor: Colors.green,
                                 ),
                               );
-                            }
-                          } else {
-                            final currentUser =
-                                FirebaseAuth.instance.currentUser;
-                            if (currentUser != null) {
-                              await FriendsService.instance.sendFriendRequest(
-                                fromUid: currentUser.uid,
-                                fromName:
-                                    currentUser.displayName ?? 'a_user'.tr(),
-                                toUsername: widget.friend.displayName,
-                              );
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('friend_request_sent'.tr()),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
                             }
                           }
                         } catch (e) {
@@ -689,6 +785,15 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                           if (mounted) setState(() => _isLoading = false);
                         }
                       },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: PCColors.yellow,
+                  foregroundColor: Colors.black87,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
                 child: _isLoading
                     ? const SizedBox(
                         width: 20,
@@ -699,25 +804,13 @@ class _FriendshipActionButtonsState extends State<_FriendshipActionButtons> {
                         ),
                       )
                     : Text(
-                        (hasSentRequest
-                                ? 'remove_request'.tr()
-                                : 'send_request'.tr())
-                            .toUpperCase(),
+                        'send_request'.tr().toUpperCase(),
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.2,
                         ),
                       ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: PCColors.yellow,
-                  foregroundColor: Colors.black87,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                ),
               ),
             );
           },

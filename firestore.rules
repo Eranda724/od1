@@ -57,6 +57,14 @@ service cloud.firestore {
       
       allow delete: if request.auth != null && request.auth.uid == userId;
       
+      // Specific rules for inAppNotifications
+      match /inAppNotifications/{notificationId} {
+        // Owner can read and update their own notifications
+        allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+        // Any authenticated user can send a notification to anyone
+        allow create: if request.auth != null;
+      }
+      
       match /{document=**} {
         allow read: if request.auth != null;
         // Owner can write their own subcollections; super admins and admins can write any

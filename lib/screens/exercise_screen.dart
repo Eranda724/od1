@@ -942,15 +942,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'tap_to_finish_routine'.tr(),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontStyle: FontStyle.italic,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
                                         ],
                                       ),
                                     ),
@@ -1167,7 +1158,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   libraryIds.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                    top: 16.0,
+                                    top: 8.0,
                                     bottom: 1.0,
                                   ),
                                   child: Row(

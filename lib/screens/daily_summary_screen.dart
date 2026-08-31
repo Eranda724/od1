@@ -94,15 +94,11 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
         children: [
           Column(
             children: [
-              // Yellow Hero Card
+              // Hero Section
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFffc226),
-                    borderRadius: BorderRadius.all(Radius.circular(32)),
-                  ),
                   child: SafeArea(
                     bottom: false,
                     child: Column(
@@ -116,30 +112,30 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                         const SizedBox(height: 4),
                         Text(
                           'personal_caps'.tr(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF5A3D00),
+                            color: context.textSecondary,
                             letterSpacing: 1.2,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           '${widget.overallStreak}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 72,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF332200),
+                            color: context.textPrimary,
                             height: 1.0,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'day_streak_caps'.tr(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF5A3D00),
+                            color: context.textSecondary,
                             letterSpacing: 1.2,
                           ),
                         ),

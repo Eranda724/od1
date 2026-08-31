@@ -9,6 +9,8 @@ import '../services/notification_service.dart';
 import '../services/iap_service.dart';
 import '../services/ad_service.dart';
 import 'premium_upgrade_screen.dart';
+import '../services/account_deletion_service.dart';
+import 'onboarding_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -22,6 +24,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   static const Color _yellow = Color(0xFFFFC72C);
   static const Color _yellowDark = Color(0xFFE3A900);
+
+  bool _isLoadingDelete = false;
+  final _deletePasswordController = TextEditingController();
+  bool _obscureDeletePassword = true;
+  bool _isDangerZoneExpanded = false;
+  bool _isSuperAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSuperAdmin();
+  }
+
+  @override
+  void dispose() {
+    _deletePasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkSuperAdmin() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!mounted || !doc.exists) return;
+
+      setState(() {
+        _isSuperAdmin = doc.data()?['adminRole'] == 'super';
+      });
+    } catch (_) {}
+  }
 
   // BUILD
 
@@ -288,7 +325,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            const SizedBox(height: 4),
+            const SizedBox(height: 12),
+
+            if (!_isSuperAdmin) ...[
+              _buildDeleteAccountSection(isDark: isDark),
+              const SizedBox(height: 4),
+            ],
           ],
         ),
       ),
@@ -325,16 +367,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.035)
-            : Colors.white.withValues(alpha: 0.72),
+    return Material(
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.035)
+          : Colors.white.withValues(alpha: 0.72),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
+        side: BorderSide(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
         ),
       ),
+      clipBehavior: Clip.antiAlias,
       child: child,
     );
   }
@@ -692,16 +735,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
           child: Row(
             children: [
               Container(
@@ -752,6 +797,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -769,5 +815,299 @@ class _SettingsScreenState extends State<SettingsScreen> {
         SnackBar(content: Text('privacy_error'.tr())),
       );
     }
+  }
+
+  // DELETE ACCOUNT
+  
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          icon: const Icon(
+            Icons.warning_amber_rounded,
+            color: Colors.red,
+            size: 40,
+          ),
+          title: Text(
+            'delete_account_title'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Text('delete_account_confirm_msg'.tr()),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx, false);
+              },
+              child: Text('cancel'.tr()),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx, true);
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text('yes_delete_my_account'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) {
+      return;
+    }
+
+    String? password;
+
+    if (AccountDeletionService.isEmailPasswordUser) {
+      _deletePasswordController.clear();
+
+      password = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (ctx, setDialogState) {
+              return AlertDialog(
+                title: Text('confirm_your_password'.tr()),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'enter_password_confirm_delete'.tr(),
+                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _deletePasswordController,
+                      obscureText: _obscureDeletePassword,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'password_label'.tr(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureDeletePassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              _obscureDeletePassword = !_obscureDeletePassword;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx, null);
+                    },
+                    child: Text('cancel'.tr()),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(ctx, _deletePasswordController.text);
+                    },
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: Text('delete_forever'.tr()),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (password == null || password.isEmpty || !mounted) {
+        return;
+      }
+    }
+
+    setState(() {
+      _isLoadingDelete = true;
+    });
+
+    try {
+      await AccountDeletionService.deleteAccount(password: password);
+
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        (route) => false,
+      );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+
+      String message;
+
+      switch (e.code) {
+        case 'invalid-credential':
+        case 'wrong-password':
+          message = 'err_wrong_password'.tr();
+          break;
+
+        case 'requires-recent-login':
+          message = 'err_requires_recent_login'.tr();
+          break;
+
+        case 'network-request-failed':
+          message = 'err_network'.tr();
+          break;
+
+        default:
+          message = 'failed_delete_account'.tr();
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('error_msg'.tr(args: [e.toString()])),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingDelete = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildDeleteAccountSection({required bool isDark}) {
+    return _settingsCard(
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.red.withValues(alpha: 0.05),
+          highlightColor: Colors.red.withValues(alpha: 0.03),
+        ),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 3),
+          childrenPadding: const EdgeInsets.fromLTRB(13, 0, 13, 13),
+
+          // Closed initially.
+          initiallyExpanded: false,
+          onExpansionChanged: (expanded) {
+            setState(() {
+              _isDangerZoneExpanded = expanded;
+            });
+          },
+
+          leading: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: _isDangerZoneExpanded
+                  ? Colors.red.withValues(alpha: 0.10)
+                  : Colors.grey.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.delete_outline_rounded,
+              color: _isDangerZoneExpanded ? Colors.red : Colors.grey,
+              size: 22,
+            ),
+          ),
+
+          title: Text(
+            _isDangerZoneExpanded ? 'danger_zone'.tr() : 'delete_account_title'.tr(),
+            style: TextStyle(
+              color: _isDangerZoneExpanded
+                  ? Colors.red
+                  : (isDark ? Colors.white : Colors.black),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+
+          children: [
+            Text(
+              'delete_account_confirm_msg'.tr(),
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.55),
+              ),
+            ),
+
+            const SizedBox(height: 9),
+
+            SizedBox(
+              height: 42,
+              width: double.infinity,
+              child: _isLoadingDelete
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.red,
+                        strokeWidth: 2.5,
+                      ),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('Delete Account'),
+                            content: const Text(
+                                'Are you sure you want to delete your account and data?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                child: const Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  _deleteAccount();
+                                },
+                                child: const Text('Yes',
+                                    style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.delete_forever_rounded,
+                        size: 19,
+                      ),
+                      label: Text(
+                        'delete_account_btn'.tr().toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: BorderSide(
+                          color: Colors.red.withValues(alpha: 0.55),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(13),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -111,6 +111,102 @@ class LeaderboardService {
     }
   }
 
+  /// Returns a stream of leaderboard entries filtered to only include
+  /// the current user + their friends (via friendPairs collection).
+  static Stream<List<LeaderboardEntry>> friendsStream(
+    LeaderboardPeriod period,
+    String currentUid,
+  ) {
+    // First, stream friend pair documents to get friend UIDs in real-time.
+    final pairsStream = _db
+        .collection('friendPairs')
+        .where('uids', arrayContains: currentUid)
+        .snapshots();
+
+    return pairsStream.asyncMap((pairsSnap) async {
+      // Collect friend UIDs
+      final friendUids = <String>{};
+      for (final doc in pairsSnap.docs) {
+        final uids = List<String>.from(doc.data()['uids'] as List? ?? []);
+        for (final uid in uids) {
+          if (uid != currentUid) friendUids.add(uid);
+        }
+      }
+
+      // The full set to fetch: current user + friends
+      final allUids = {currentUid, ...friendUids};
+
+      // Firestore `whereIn` supports max 30 items per query; split if needed.
+      final allEntries = <LeaderboardEntry>[];
+      final now = DateTime.now();
+      final dKey = localDailyKey(now);
+      final wKey = localWeekKey(now);
+      final mKey = localMonthKey(now);
+
+      final batches = <List<String>>[];
+      final uidList = allUids.toList();
+      for (int i = 0; i < uidList.length; i += 30) {
+        batches.add(uidList.sublist(
+          i,
+          i + 30 > uidList.length ? uidList.length : i + 30,
+        ));
+      }
+
+      for (final batch in batches) {
+        final snap = await _db
+            .collection('users')
+            .where(FieldPath.documentId, whereIn: batch)
+            .get();
+
+        for (final doc in snap.docs) {
+          final data = doc.data();
+          final scores = data['scores'] as Map<String, dynamic>? ?? {};
+          final dMap = scores['daily_scores'] as Map<String, dynamic>? ?? {};
+          final wMap = scores['weekly_scores'] as Map<String, dynamic>? ?? {};
+          final mMap = scores['monthly_scores'] as Map<String, dynamic>? ?? {};
+
+          final daily = (dMap[dKey] as num?)?.toInt() ?? 0;
+          final weekly = (wMap[wKey] as num?)?.toInt() ?? 0;
+          final monthly = (mMap[mKey] as num?)?.toInt() ?? 0;
+          final score = _scoreForPeriod(period, daily, weekly, monthly);
+
+          final name = _resolveName(data);
+          allEntries.add(LeaderboardEntry(
+            uid: doc.id,
+            displayName: name,
+            avatar: '',
+            score: score,
+            dailyScore: daily,
+            weeklyScore: weekly,
+            monthlyScore: monthly,
+            photoUrl: data['photoUrl'] as String?,
+          ));
+        }
+      }
+
+      // Sort descending by score
+      allEntries.sort((a, b) => b.score.compareTo(a.score));
+
+      // Assign avatars based on rank
+      final rankedEntries = <LeaderboardEntry>[];
+      for (int i = 0; i < allEntries.length; i++) {
+        final entry = allEntries[i];
+        rankedEntries.add(LeaderboardEntry(
+          uid: entry.uid,
+          displayName: entry.displayName,
+          avatar: _avatarFor(i + 1),
+          score: entry.score,
+          dailyScore: entry.dailyScore,
+          weeklyScore: entry.weeklyScore,
+          monthlyScore: entry.monthlyScore,
+          photoUrl: entry.photoUrl,
+        ));
+      }
+
+      return rankedEntries;
+    });
+  }
+
   /// Returns a stream of the top 50 users sorted by the given period's score.
   static Stream<List<LeaderboardEntry>> stream(LeaderboardPeriod period) {
     return _db

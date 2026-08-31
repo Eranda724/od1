@@ -138,7 +138,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ],
       ),
-      child: ListTile(
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(10),
@@ -196,10 +198,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           if (!notif.isRead) {
             InAppNotificationService.instance.markAsRead(notif.id);
           }
-          // Optionally, add navigation based on notification type here
+          if (notif.type == 'friend_activity' || 
+              notif.type == 'friend_request' || 
+              notif.type == 'friend_accepted') {
+            Navigator.pop(context, 'social');
+          }
         },
       ),
-    );
+    ));
   }
 
   String _formatTimestamp(DateTime date) {
