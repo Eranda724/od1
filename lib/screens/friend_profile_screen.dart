@@ -51,15 +51,42 @@ class FriendProfileScreen extends StatelessWidget {
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .doc(friend.uid)
+            .doc(currentUid.isEmpty ? 'dummy' : currentUid)
             .snapshots(),
-        builder: (context, userSnap) {
-          if (!userSnap.hasData) {
-            return const Center(
-              child: CircularProgressIndicator(color: PCColors.yellowDark),
-            );
-          }
-          final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
+        builder: (context, currentUserSnap) {
+          final currentUserData = currentUserSnap.data?.data() as Map<String, dynamic>? ?? {};
+
+          final myRawFreezesAvailable =
+              (currentUserData['freezesAvailable'] ?? 2) as int;
+          final myRawFrozenDates = List<String>.from(
+            currentUserData['frozenDates'] ?? [],
+          );
+          final myRawLastEvaluatedDate =
+              currentUserData['overallLastEvaluatedDate'] as String?;
+
+          final myEffectiveData = StreakService.getEffectiveStreakData(
+            streak: (currentUserData['overallStreak'] ?? 0) as int,
+            freezesAvailable: myRawFreezesAvailable,
+            frozenDates: myRawFrozenDates,
+            lastEvaluatedDate: myRawLastEvaluatedDate,
+          );
+          final myFrozenDates = myEffectiveData.frozenDates.toSet();
+          final myActiveDays = List<String>.from(
+            currentUserData['activeDates'] ?? [],
+          ).toSet();
+
+          return StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .doc(friend.uid)
+                .snapshots(),
+            builder: (context, userSnap) {
+              if (!userSnap.hasData) {
+                return const Center(
+                  child: CircularProgressIndicator(color: PCColors.yellowDark),
+                );
+              }
+              final userData = userSnap.data?.data() as Map<String, dynamic>? ?? {};
 
           final rawFreezesAvailable =
               (userData['freezesAvailable'] ?? 2) as int;
@@ -325,7 +352,9 @@ class FriendProfileScreen extends StatelessWidget {
                                     MainAxisAlignment.spaceBetween,
                                 children: last7.map((day) {
                                   // A frozen day in personal streak counts as a maintained (fire) day for friend streak
-                                  final isActive = activeDays.contains(day) || frozenDates.contains(day);
+                                  final friendMaintained = activeDays.contains(day) || frozenDates.contains(day);
+                                  final myMaintained = myActiveDays.contains(day) || myFrozenDates.contains(day);
+                                  final isActive = friendMaintained && myMaintained;
                                   final isToday = day == today;
                                   const bool isFrozen = false;
 
@@ -406,9 +435,11 @@ class FriendProfileScreen extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
+      );
+      },
+    ),
+  );
+}
 
   String _shortDay(BuildContext context, String key) {
     final d = DateTime.parse(key);
