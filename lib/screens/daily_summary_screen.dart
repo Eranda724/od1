@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/network_or_asset_image.dart';
+import '../services/image_bank.dart';
 
 /// One exercise's results for "today", used to populate the summary list.
 /// Build a list of [ExerciseDaySummary] as the user completes each exercise
@@ -45,7 +47,8 @@ class DailySummaryScreen extends StatefulWidget {
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  late final String _celebrationImage = 'assets/images/fire-congrads.png';
+  late final String _celebrationImage = ImageBank.randomDailySummary();
+
 
   @override
   void initState() {
@@ -104,7 +107,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
-                        Image.asset(
+                        NetworkOrAssetImage(
                           _celebrationImage,
                           height: 200,
                           fit: BoxFit.contain,

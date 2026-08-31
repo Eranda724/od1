@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../widgets/network_or_asset_image.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'congradulation_screen.dart';
 import '../app_settings.dart';
@@ -241,7 +242,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                         errorWidget: (_, __, ___) => const Icon(Icons.error),
                       )
                     : (_image != null
-                        ? Image.asset(_image!, height: 300, fit: BoxFit.contain)
+                        ? NetworkOrAssetImage(_image!, height: 300, fit: BoxFit.contain)
                         : const SizedBox(height: 300)),
               ),
 

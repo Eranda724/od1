@@ -7,7 +7,9 @@ import '../services/friends_service.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/network_or_asset_image.dart';
 import '../services/streak_service.dart';
+import '../services/image_bank.dart';
 
 class FriendProfileScreen extends StatelessWidget {
   final FriendInfo friend;
@@ -304,8 +306,8 @@ class FriendProfileScreen extends StatelessWidget {
                                     child: Transform(
                                       alignment: Alignment.center,
                                       transform: Matrix4.rotationY(math.pi),
-                                      child: Image.asset(
-                                        'assets/images/login.png',
+                                      child: NetworkOrAssetImage(
+                                        ImageBank.randomStreakCharacter(),
                                         height: 160,
                                         fit: BoxFit.contain,
                                       ),
@@ -322,9 +324,10 @@ class FriendProfileScreen extends StatelessWidget {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: last7.map((day) {
-                                  final isActive = activeDays.contains(day);
+                                  // A frozen day in personal streak counts as a maintained (fire) day for friend streak
+                                  final isActive = activeDays.contains(day) || frozenDates.contains(day);
                                   final isToday = day == today;
-                                  bool isFrozen = frozenDates.contains(day);
+                                  const bool isFrozen = false;
 
                                   return _DayDot(
                                     label: _shortDay(context, day),

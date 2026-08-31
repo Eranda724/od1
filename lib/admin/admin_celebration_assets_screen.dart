@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../widgets/network_or_asset_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../app_settings.dart';
 import 'admin_ui.dart';
@@ -18,74 +19,299 @@ const List<Map<String, dynamic>> kDefaultCelebrationImages = [
   {"url": "assets/images/p7.png", "isAsset": true, "enabled": true},
 ];
 
+const List<Map<String, dynamic>> kDefaultExerciseCongratsImages = [
+  {"url": "assets/images/login.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/register.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/streak.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p3.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p4.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p5.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p6.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p7.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po3.png", "isAsset": true, "enabled": true},
+];
+
+const List<Map<String, dynamic>> kDefaultDailySummaryImages = [
+  {"url": "assets/images/login.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/register.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/streak.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p3.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p4.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p5.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p6.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p7.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/fire-congrads.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po3.png", "isAsset": true, "enabled": true},
+];
+
+const List<Map<String, dynamic>> kDefaultStreakCharacterImages = [
+  {"url": "assets/images/login.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/register.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/streak.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p3.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p4.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p5.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p6.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/p7.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po1.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po2.png", "isAsset": true, "enabled": true},
+  {"url": "assets/images/congrads_po3.png", "isAsset": true, "enabled": true},
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
+
 class AdminCelebrationAssetsScreen extends StatefulWidget {
   const AdminCelebrationAssetsScreen({super.key});
 
   @override
-  State<AdminCelebrationAssetsScreen> createState() => _AdminCelebrationAssetsScreenState();
+  State<AdminCelebrationAssetsScreen> createState() =>
+      _AdminCelebrationAssetsScreenState();
 }
 
-class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScreen> {
-  final _db = FirebaseFirestore.instance;
-  DocumentReference get _docRef => _db.collection('app_config').doc('celebration_assets');
-  bool _isUploading = false;
+class _AdminCelebrationAssetsScreenState
+    extends State<AdminCelebrationAssetsScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
 
-  Future<void> _updateArray(String field, List<dynamic> newList) async {
+  final _db = FirebaseFirestore.instance;
+
+  // Each bank lives in a separate Firestore field inside the same doc.
+  DocumentReference get _docRef =>
+      _db.collection('app_config').doc('image_bank');
+
+  bool _isUploading = false;
+  bool _isLoading = true;
+  bool _hasChanges = false;
+  String? _error;
+
+  Map<String, List<dynamic>> _localData = {};
+
+  static const List<_BankDef> _banks = [
+    _BankDef(
+      label: 'Streak Screen',
+      field: 'streak_character',
+      storageFolder: 'celebration_images/streak_character',
+      defaults: kDefaultStreakCharacterImages,
+    ),
+    _BankDef(
+      label: 'Congrats Screen',
+      field: 'exercise_congrats',
+      storageFolder: 'celebration_images/exercise_congrats',
+      defaults: kDefaultExerciseCongratsImages,
+    ),
+    _BankDef(
+      label: 'Summary Screen',
+      field: 'daily_summary',
+      storageFolder: 'celebration_images/daily_summary',
+      defaults: kDefaultDailySummaryImages,
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _banks.length, vsync: this);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
-      await _docRef.set({field: newList}, SetOptions(merge: true));
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('update_failed'.tr(args: [e.toString()]))));
+      final snap = await _docRef.get();
+      final data = snap.data() as Map<String, dynamic>? ?? {};
+      _localData = {};
+      for (final bank in _banks) {
+        _localData[bank.field] = List<dynamic>.from(
+          data[bank.field] ?? bank.defaults,
+        );
       }
+      setState(() {
+        _isLoading = false;
+        _hasChanges = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
-  Future<void> _uploadImage(List<dynamic> currentImages) async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+
+  void _updateLocalField(String field, List<dynamic> newList) {
+    setState(() {
+      _localData[field] = newList;
+      _hasChanges = true;
+    });
+  }
+
+  Future<void> _saveAll() async {
+    setState(() => _isUploading = true);
+    try {
+      await _docRef.set(_localData, SetOptions(merge: true));
+      setState(() => _hasChanges = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Changes saved successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('update_failed'.tr(args: [e.toString()]))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
+  }
+
+  Future<void> _uploadImage(
+    String field,
+    String storageFolder,
+    List<dynamic> current,
+  ) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (pickedFile == null) return;
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (picked == null) return;
 
     setState(() => _isUploading = true);
     try {
-      final file = File(pickedFile.path);
-      final filename = 'celeb_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final ref = FirebaseStorage.instance.ref().child('celebration_images').child(filename);
-      
-      final uploadTask = await ref.putFile(file);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      final file = File(picked.path);
+      final filename = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child(storageFolder)
+          .child(filename);
+      final task = await ref.putFile(file);
+      final url = await task.ref.getDownloadURL();
 
-      final newList = List<dynamic>.from(currentImages);
-      newList.add({
-        "url": downloadUrl,
-        "isAsset": false,
-        "enabled": true,
-      });
-      await _updateArray('images', newList);
+      final newList = List<dynamic>.from(current);
+      newList.add({"url": url, "isAsset": false, "enabled": true});
+      _updateLocalField(field, newList);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('upload_failed'.tr(args: [e.toString()]))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('upload_failed'.tr(args: [e.toString()]))),
+        );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isUploading = false);
-      }
+      if (mounted) setState(() => _isUploading = false);
     }
   }
-  // Add by URL options removed as requested
 
-  Widget _buildImagesGrid(List<dynamic> images) {
+  // ── GRID VIEW (per tab) ──────────────────────────────────────────────────
+
+  Widget _buildGrid(_BankDef bank, List<dynamic> images) {
+    images.sort((a, b) {
+      final aEnabled = (a as Map<String, dynamic>)['enabled'] == true;
+      final bEnabled = (b as Map<String, dynamic>)['enabled'] == true;
+      if (aEnabled && !bEnabled) return -1;
+      if (!aEnabled && bEnabled) return 1;
+      return 0;
+    });
+
     return Scaffold(
+      key: ValueKey(bank.field),
+      // FAB to upload new image
       floatingActionButton: FloatingActionButton(
-        onPressed: _isUploading ? null : () => _uploadImage(images),
-        child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
+        heroTag: bank.field,
+        backgroundColor: const Color(0xFFFFC72C),
+        onPressed: _isUploading
+            ? null
+            : () => _uploadImage(bank.field, bank.storageFolder, images),
+        child: _isUploading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Icon(Icons.add, color: Colors.black),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'admin_celebration_assets_desc'.tr(),
-              style: TextStyle(color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Tap to enable/disable ',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Select All / Deselect All toggle
+                Builder(
+                  builder: (context) {
+                    final allEnabled = images.every(
+                      (i) => (i as Map<String, dynamic>)['enabled'] == true,
+                    );
+                    return TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                      ),
+                      icon: Icon(
+                        allEnabled
+                            ? Icons.check_box_rounded
+                            : Icons.indeterminate_check_box_rounded,
+                        size: 20,
+                        color: Colors.blue,
+                      ),
+                      label: Text(
+                        allEnabled ? 'Deselect All' : 'Select All',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      onPressed: () {
+                        final newEnabled = !allEnabled;
+                        final newList = images
+                            .map(
+                              (i) => Map<String, dynamic>.from(
+                                i as Map<String, dynamic>,
+                              )..['enabled'] = newEnabled,
+                            )
+                            .toList();
+                        _updateLocalField(bank.field, newList);
+                      },
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -93,9 +319,9 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.8,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+                childAspectRatio: 0.85,
+                crossAxisSpacing: 14,
+                mainAxisSpacing: 14,
               ),
               itemCount: images.length,
               itemBuilder: (context, index) {
@@ -105,76 +331,129 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
                 final enabled = item['enabled'] as bool? ?? true;
 
                 return Card(
+                  elevation: 3,
                   clipBehavior: Clip.antiAlias,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     side: BorderSide(
-                      color: enabled ? PCColors.green : Colors.grey,
-                      width: enabled ? 2 : 1,
+                      color: enabled ? PCColors.green : Colors.grey.shade400,
+                      width: enabled ? 2.5 : 1,
                     ),
                   ),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      isAsset
-                          ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.error))
-                          : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.error)),
-                      
-                      // Overlay for disabled state
-                      if (!enabled)
-                        Container(color: Colors.black.withValues(alpha: 0.5)),
+                      // Image
+                      NetworkOrAssetImage(
+                        url,
+                        fit: BoxFit.contain,
+                      ),
 
-                      // Top-left Delete
-                      // Top-left Delete (Only for uploaded images, not default assets)
+                      // Disabled overlay
+                      if (!enabled)
+                        Container(color: Colors.black.withValues(alpha: 0.45)),
+
+                      // Default badge
+                      if (isAsset)
+                        Positioned(
+                          bottom: 6,
+                          left: 6,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'DEFAULT',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      // Delete (uploaded only)
                       if (!isAsset)
                         Positioned(
-                          top: 0,
-                          left: 0,
-                          child: IconButton(
-                            iconSize: 20,
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () async {
+                          top: 2,
+                          left: 2,
+                          child: InkWell(
+                            onTap: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (c) => AlertDialog(
                                   title: Text('delete_btn'.tr()),
                                   content: Text('delete_image_confirm'.tr()),
                                   actions: [
-                                    TextButton(onPressed: () => Navigator.pop(c, false), child: Text('cancel_btn'.tr())),
-                                    TextButton(onPressed: () => Navigator.pop(c, true), child: Text('delete_btn'.tr(), style: const TextStyle(color: Colors.red))),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, false),
+                                      child: Text('cancel_btn'.tr()),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(c, true),
+                                      child: Text(
+                                        'delete_btn'.tr(),
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               );
                               if (confirm == true) {
-                                final newList = List<dynamic>.from(images)..removeAt(index);
-                                _updateArray('images', newList);
+                                final newList = List<dynamic>.from(images)
+                                  ..removeAt(index);
+                                _updateLocalField(bank.field, newList);
                               }
                             },
+                            child: Container(
+                              margin: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                            ),
                           ),
                         ),
-                      
-                      // Top-right Toggle (Round Tick)
+
+                      // Enable/Disable toggle
                       Positioned(
                         top: 4,
                         right: 4,
-                        child: IconButton(
-                          iconSize: 28,
-                          padding: EdgeInsets.zero,
-                          icon: Container(
+                        child: InkWell(
+                          onTap: () {
+                            final newList = List<dynamic>.from(images);
+                            newList[index] = Map<String, dynamic>.from(item)
+                              ..['enabled'] = !enabled;
+                            _updateLocalField(bank.field, newList);
+                          },
+                          child: Container(
                             decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
                               color: Colors.black45,
+                              shape: BoxShape.circle,
                             ),
+                            padding: const EdgeInsets.all(2),
                             child: Icon(
-                              enabled ? Icons.check_circle : Icons.circle_outlined,
+                              enabled
+                                  ? Icons.check_circle
+                                  : Icons.circle_outlined,
                               color: enabled ? PCColors.green : Colors.white,
+                              size: 26,
                             ),
                           ),
-                          onPressed: () {
-                            final newList = List<dynamic>.from(images);
-                            newList[index] = Map<String, dynamic>.from(item)..['enabled'] = !enabled;
-                            _updateArray('images', newList);
-                          },
                         ),
                       ),
                     ],
@@ -188,31 +467,76 @@ class _AdminCelebrationAssetsScreenState extends State<AdminCelebrationAssetsScr
     );
   }
 
+  // ── BUILD ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AdminUI.buildAppBar(
-        context,
-        title: 'Celebration Image Bank',
-      ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: _docRef.snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('error_loading'.tr(args: [snapshot.error.toString()])));
-          }
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-          final rawImages = data['images'] as List<dynamic>? ?? kDefaultCelebrationImages;
-          final images = rawImages.toList();
-
-          return _buildImagesGrid(images);
-        },
-      ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AdminUI.buildAppBar(
+          context,
+          title: 'Image Bank',
+          actions: [
+            if (_hasChanges)
+              TextButton.icon(
+                onPressed: _isUploading ? null : _saveAll,
+                icon: _isUploading
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_rounded, size: 20),
+                label: const Text('Save'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.blue,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+          ],
+          bottom: TabBar(
+            controller: _tabController,
+            indicatorColor: const Color(0xFFFFC72C),
+            labelColor: Theme.of(context).colorScheme.onSurface,
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+            tabs: _banks.map((b) => Tab(text: b.label)).toList(),
+          ),
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+            ? Center(child: Text('Error: $_error'))
+            : TabBarView(
+                controller: _tabController,
+                children: _banks.map((bank) {
+                  final raw = _localData[bank.field] ?? bank.defaults;
+                  return _buildGrid(bank, raw.toList());
+                }).toList(),
+              ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER DATA CLASS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _BankDef {
+  final String label;
+  final String field;
+  final String storageFolder;
+  final List<Map<String, dynamic>> defaults;
+
+  const _BankDef({
+    required this.label,
+    required this.field,
+    required this.storageFolder,
+    required this.defaults,
+  });
 }

@@ -14,6 +14,7 @@ import 'services/notification_service.dart';
 import 'services/ad_service.dart';
 import 'services/iap_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'services/image_bank.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,8 @@ void main() async {
   await AdService.instance.initialize();
   // Initialize In-App Purchases listener
   IapService.instance.initialize();
+  // Warm up image bank pools from Firestore
+  await ImageBank.initialize();
 
   runApp(
     EasyLocalization(

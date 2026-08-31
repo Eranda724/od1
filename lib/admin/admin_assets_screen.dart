@@ -112,6 +112,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   Widget _buildImagesGrid(List<dynamic> images) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'admin_assets_images_fab',
         onPressed: _isUploading ? null : () => _uploadImage(images),
         child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
       ),
@@ -195,8 +196,8 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
               fit: StackFit.expand,
               children: [
                 isAsset
-                    ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.error))
-                    : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.error)),
+                    ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.error))
+                    : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, _, _) => const Icon(Icons.error)),
                 
                 // Overlay for disabled state
                 if (!enabled)
@@ -268,6 +269,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   Widget _buildTipsList(List<dynamic> tips) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'admin_assets_tips_fab',
         onPressed: () => _showAddTipDialog(tips),
         child: const Icon(Icons.add),
       ),

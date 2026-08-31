@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +7,8 @@ import 'package:easy_localization/easy_localization.dart';
 import '../widgets/month_calendar_widget.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
+import '../widgets/network_or_asset_image.dart';
+import '../services/image_bank.dart';
 import '../widgets/exercise_thumbnail.dart';
 import 'exercise_start_screen.dart';
 import '../models/session_item.dart';
@@ -640,6 +643,27 @@ class _OverallStreakCard extends StatefulWidget {
 
 class _OverallStreakCardState extends State<_OverallStreakCard> {
   bool _isExpanded = false;
+  late String _mascotImage;
+  StreamSubscription? _imageBankSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _mascotImage = ImageBank.randomStreakCharacter();
+    _imageBankSub = ImageBank.onUpdates.listen((_) {
+      if (mounted) {
+        setState(() {
+          _mascotImage = ImageBank.randomStreakCharacter();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _imageBankSub?.cancel();
+    super.dispose();
+  }
 
   void collapse() {
     if (mounted && _isExpanded) {
@@ -800,8 +824,8 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     // Right Column: Mascot
                     Transform.translate(
                       offset: const Offset(8, -8),
-                      child: Image.asset(
-                        'assets/images/streak.png',
+                      child: NetworkOrAssetImage(
+                        _mascotImage,
                         height: 170,
                         fit: BoxFit.contain,
                       ),
