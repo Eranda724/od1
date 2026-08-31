@@ -345,15 +345,15 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AdminUI.buildAppBar(
           context,
-          title: 'Session Backgrounds & Tips',
+          title: 'session_backgrounds_tips'.tr(),
           bottom: TabBar(
             indicatorColor: Colors.blueGrey,
             labelColor: Theme.of(context).colorScheme.onSurface,
             unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'Background Overrides'),
-              Tab(text: 'Tips'),
+            tabs: [
+              Tab(text: 'background_overrides'.tr()),
+              Tab(text: 'tips_tab'.tr()),
             ],
           ),
         ),

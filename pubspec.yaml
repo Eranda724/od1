@@ -2,7 +2,7 @@ name: Potato
 description: "60 seconds routine"
 publish_to: 'none'
 
-version: 1.0.3+29
+version: 1.0.3+31
 
 environment:
   sdk: ^3.11.3
@@ -34,7 +34,6 @@ dependencies:
   easy_localization: ^3.0.8
   url_launcher: ^6.3.2
   translator: ^1.0.1
-
 dev_dependencies:
   flutter_test:
     sdk: flutter

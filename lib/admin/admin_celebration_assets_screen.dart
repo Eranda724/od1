@@ -100,19 +100,19 @@ class _AdminCelebrationAssetsScreenState
 
   static const List<_BankDef> _banks = [
     _BankDef(
-      label: 'Streak Screen',
+      label: 'streak_screen',
       field: 'streak_character',
       storageFolder: 'celebration_images/streak_character',
       defaults: kDefaultStreakCharacterImages,
     ),
     _BankDef(
-      label: 'Congrats Screen',
+      label: 'congrats_screen',
       field: 'exercise_congrats',
       storageFolder: 'celebration_images/exercise_congrats',
       defaults: kDefaultExerciseCongratsImages,
     ),
     _BankDef(
-      label: 'Summary Screen',
+      label: 'summary_screen',
       field: 'daily_summary',
       storageFolder: 'celebration_images/daily_summary',
       defaults: kDefaultDailySummaryImages,
@@ -174,8 +174,8 @@ class _AdminCelebrationAssetsScreenState
       setState(() => _hasChanges = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Changes saved successfully!'),
+          SnackBar(
+            content: Text('changes_saved_successfully'.tr()),
             backgroundColor: Colors.green,
           ),
         );
@@ -260,7 +260,7 @@ class _AdminCelebrationAssetsScreenState
               children: [
                 Expanded(
                   child: Text(
-                    'Tap to enable/disable ',
+                    'tap_to_enable_disable'.tr(),
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontStyle: FontStyle.italic,
@@ -290,7 +290,7 @@ class _AdminCelebrationAssetsScreenState
                         color: Colors.blue,
                       ),
                       label: Text(
-                        allEnabled ? 'Deselect All' : 'Select All',
+                        allEnabled ? 'deselect_all'.tr() : 'select_all'.tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -367,9 +367,9 @@ class _AdminCelebrationAssetsScreenState
                               color: Colors.black54,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: const Text(
-                              'DEFAULT',
-                              style: TextStyle(
+                            child: Text(
+                              'default_caps'.tr(),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w800,
@@ -475,7 +475,7 @@ class _AdminCelebrationAssetsScreenState
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AdminUI.buildAppBar(
           context,
-          title: 'Image Bank',
+          title: 'image_bank_title'.tr(),
           actions: [
             if (_hasChanges)
               TextButton.icon(
@@ -487,7 +487,7 @@ class _AdminCelebrationAssetsScreenState
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.save_rounded, size: 20),
-                label: const Text('Save'),
+                label: Text('save_btn'.tr()),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -505,13 +505,13 @@ class _AdminCelebrationAssetsScreenState
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
-            tabs: _banks.map((b) => Tab(text: b.label)).toList(),
+            tabs: _banks.map((b) => Tab(text: b.label.tr())).toList(),
           ),
         ),
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-            ? Center(child: Text('Error: $_error'))
+            ? Center(child: Text('error_loading'.tr(args: [_error ?? ''])))
             : TabBarView(
                 controller: _tabController,
                 children: _banks.map((bank) {
