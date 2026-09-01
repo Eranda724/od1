@@ -55,8 +55,9 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
         .collection('users')
         .doc(user.uid)
         .snapshots()
-        .listen((snapshot) {
-          if (_premiumHandled) return;
+        .listen(
+          (snapshot) {
+            if (_premiumHandled) return;
 
           final data = snapshot.data();
           final isPremium = data?['isPremium'] == true;
@@ -85,7 +86,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               Navigator.of(context).pop();
             }
           });
-        });
+        }, onError: (e) => print('PremiumUpgrade stream error: $e'));
   }
 
   @override

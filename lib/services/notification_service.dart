@@ -135,11 +135,14 @@ class NotificationService {
         .collection('app_config')
         .doc('notifications')
         .snapshots()
-        .listen((_) {
-          // Clear debounce cache to force an immediate reschedule
-          _lastSyncTime = null;
-          refreshSchedule();
-        });
+        .listen(
+          (_) {
+            // Clear debounce cache to force an immediate reschedule
+            _lastSyncTime = null;
+            refreshSchedule();
+          },
+          onError: (e) => print('Notification stream error: $e'),
+        );
   }
 
   // Public API

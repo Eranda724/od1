@@ -108,7 +108,10 @@ class ImageBank {
       _updateCaches(snap);
 
       // 2. Listen for live changes from the admin panel
-      _docRef.snapshots().listen(_updateCaches);
+      _docRef.snapshots().listen(
+        _updateCaches,
+        onError: (e) => print('ImageBank stream error: $e'),
+      );
     } catch (_) {
       // Firestore unavailable — keep/use fallbacks.
     }

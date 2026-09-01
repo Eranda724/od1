@@ -199,7 +199,7 @@ class FriendsService {
         meSub = FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots().listen((snap) {
           myDoc = snap;
           emit();
-        });
+        }, onError: (e) => print('meSub error: $e'));
 
         pairsSub = FirebaseFirestore.instance
             .collection('friendPairs')
@@ -233,11 +233,11 @@ class FriendsService {
               friendSubs[fUid] = FirebaseFirestore.instance.collection('users').doc(fUid).snapshots().listen((snap) {
                 friendDocs[fUid] = snap;
                 emit();
-              });
+              }, onError: (e) => print('friendSub error: $e'));
             }
           }
           emit();
-        });
+        }, onError: (e) => print('pairsSub error: $e'));
       },
       onCancel: () {
         meSub?.cancel();
