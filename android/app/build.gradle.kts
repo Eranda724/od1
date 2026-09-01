@@ -26,7 +26,7 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.ghiolabs.potato60secondroutine"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -51,7 +51,7 @@ android {
     defaultConfig {
         applicationId = "com.ghiolabs.potato60secondroutine"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["ADMOB_APP_ID_ANDROID"] = envProperties.getProperty("ADMOB_APP_ID_ANDROID", "ca-app-pub-3940256099942544~3347511713").toString()
