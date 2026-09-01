@@ -137,25 +137,9 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
       ),
 
       body: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: isLightMode
-                  ? const [
-                      Color(0xFFFFF7DA),
-                      Color(0xFFFFFBF0),
-                      Color(0xFFF8F7F3),
-                    ]
-                  : const [
-                      Color(0xFF211C08),
-                      Color(0xFF121212),
-                      Color(0xFF0B0B0B),
-                    ],
-            ),
-          ),
-
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
           child: ListenableBuilder(
             listenable: IapService.instance,
             builder: (context, _) {
@@ -275,23 +259,10 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
   // BENEFITS CARD
 
   Widget _benefitsCard({required bool isLightMode, required Color textColor}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-
-      decoration: BoxDecoration(
-        color: isLightMode
-            ? Colors.white.withValues(alpha: 0.72)
-            : Colors.white.withValues(alpha: 0.045),
-
-        borderRadius: BorderRadius.circular(18),
-
-        border: Border.all(
-          color: isLightMode
-              ? Colors.black.withValues(alpha: 0.055)
-              : Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
 
       child: Column(
         children: [
@@ -317,6 +288,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
             textColor: textColor,
           ),
         ],
+      ),
       ),
     );
   }
@@ -393,52 +365,28 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
         // PURCHASE BUTTON
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-
-            boxShadow: [
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
               BoxShadow(
-                color: _yellow.withValues(alpha: 0.20),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
+                color: _yellowDark,
+                offset: Offset(0, 4),
+                blurRadius: 0,
               ),
             ],
           ),
-
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_yellowLight, _yellow],
+          child: ElevatedButton(
+            onPressed: canPurchase ? () => iap.buyRemoveAds() : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _yellow,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              minimumSize: const Size.fromHeight(56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide.none, // Removes the black border
               ),
-
-              borderRadius: BorderRadius.circular(16),
             ),
-
-            child: ElevatedButton(
-              onPressed: canPurchase
-                  ? () {
-                      iap.buyRemoveAds();
-                    }
-                  : null,
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                disabledBackgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.black,
-                disabledForegroundColor: Colors.black45,
-
-                minimumSize: const Size.fromHeight(56),
-
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-
-              child: Row(
+            child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.star_rounded, size: 21),
@@ -462,7 +410,6 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               ),
             ),
           ),
-        ),
 
         const SizedBox(height: 6),
 
