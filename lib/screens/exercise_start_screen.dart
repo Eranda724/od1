@@ -10,6 +10,7 @@ import '../models/exercise_item.dart';
 import 'session_screen.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/network_or_asset_image.dart';
+import '../services/ad_service.dart';
 
 // Design Tokens
 class _PCSpacing {
@@ -114,6 +115,9 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     super.initState();
     _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
     _loadSavedPrefs();
+    
+    // Preload the interstitial ad so it's ready for the session screen
+    AdService.instance.loadInterstitialAd();
 
     final images = [
       'assets/images/p1.png',
@@ -316,7 +320,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   const SizedBox(height: 16),
                   SwitchListTile(
                     title: Text(
-                      'Enable Ready Time',
+                      'enable_ready_time'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -335,7 +339,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
                   if (_wantsReadyTime) ...[
                     const SizedBox(height: 16),
                     Text(
-                      'Duration',
+                      'duration'.tr(),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -390,7 +394,7 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 8.0, bottom: 12.0),
           child: Text(
-            'PARAMÈTRES',
+            'parameters'.tr(),
             style: _PCTextStyles.sectionLabel(context).copyWith(
               fontSize: 14,
               letterSpacing: 0,

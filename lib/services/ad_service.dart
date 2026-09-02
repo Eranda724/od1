@@ -181,6 +181,16 @@ class AdService {
       return;
     }
 
+    // If the ad is currently loading, wait for it for up to 10 seconds.
+    if (_isInterstitialAdLoading) {
+      debugPrint('Waiting for interstitial ad to finish loading...');
+      int waited = 0;
+      while (_isInterstitialAdLoading && waited < 100) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        waited++;
+      }
+    }
+
     if (_interstitialAd == null) {
       debugPrint('Warning: attempt to show interstitial before loaded.');
       onAdDismissed();
