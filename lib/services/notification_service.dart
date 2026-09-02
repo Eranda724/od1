@@ -88,11 +88,10 @@ class NotificationService {
     );
 
     // Request permission on Android 13+ and iOS for local notifications
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    
+    await androidImplementation?.requestNotificationsPermission();
 
     // Setup FCM
     final fcm = FirebaseMessaging.instance;
@@ -302,7 +301,6 @@ class NotificationService {
         channelName,
         importance: importance,
         priority: priority,
-        icon: '@mipmap/ic_launcher',
       ),
       iOS: const DarwinNotificationDetails(),
     );
