@@ -128,8 +128,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             : Colors.black,
                     ),
                   ),
-                  const Text(
-                    '60 Second Routine',
+                  Text(
+                    'sixty_second_routine'.tr(),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,

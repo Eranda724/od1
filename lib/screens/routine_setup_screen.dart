@@ -80,14 +80,14 @@ class _RoutineSetupScreenState extends State<RoutineSetupScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  const Text(
-                    'Welcome!',
+                  Text(
+                    'welcome'.tr(),
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    "Let's create your daily routine.\nSelect at least one exercise.",
+                  Text(
+                    'create_routine_desc'.tr(),
                     style: TextStyle(fontSize: 18, color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
@@ -157,8 +157,8 @@ class _RoutineSetupScreenState extends State<RoutineSetupScreen> {
                       ),
                       child: _isSaving
                           ? const CircularProgressIndicator(color: Colors.black)
-                          : const Text(
-                              'Save Routine',
+                          : Text(
+                              'save_routine'.tr(),
                               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                             ),
                     ),

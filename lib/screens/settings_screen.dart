@@ -1063,21 +1063,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         showDialog(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Account'),
-                            content: const Text(
-                                'Are you sure you want to delete your account and data?'),
+                            title: Text('delete_account_dialog_title'.tr()),
+                            content: Text('delete_account_dialog_desc'.tr()),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(ctx),
-                                child: const Text('No'),
+                                child: Text('no'.tr()),
                               ),
                               TextButton(
                                 onPressed: () {
                                   Navigator.pop(ctx);
                                   _deleteAccount();
                                 },
-                                child: const Text('Yes',
-                                    style: TextStyle(color: Colors.red)),
+                                child: Text('yes'.tr(),
+                                    style: const TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),

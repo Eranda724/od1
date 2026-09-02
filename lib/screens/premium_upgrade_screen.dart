@@ -418,7 +418,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 2),
             child: Text(
-              'Premium purchase is currently unavailable.',
+              'premium_unavailable'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
@@ -453,11 +453,11 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
   // LOADING
 
   Widget _loadingWidget() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 25),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 25),
       child: Column(
         children: [
-          SizedBox(
+          const SizedBox(
             width: 28,
             height: 28,
             child: CircularProgressIndicator(
@@ -465,10 +465,10 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               color: _yellowDark,
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Loading premium...',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            'loading_premium'.tr(),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),

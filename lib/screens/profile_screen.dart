@@ -124,8 +124,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile image updated!'),
+        SnackBar(
+          content: const Text('profile_image_updated').tr(),
           backgroundColor: Colors.green,
         ),
       );
@@ -134,7 +134,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to upload image: $e'),
+          content: Text('failed_upload_image'.tr(args: [e.toString()])),
           backgroundColor: Colors.red,
         ),
       );
@@ -954,7 +954,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
           subtitle: Text(
-            'Tap to change your password',
+            'tap_change_password'.tr(),
             style: TextStyle(
               fontSize: 10,
               color: Theme.of(
