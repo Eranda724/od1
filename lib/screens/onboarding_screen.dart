@@ -236,7 +236,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Dot indicators
           Positioned(
-            bottom: 140,
+            bottom: 140 + MediaQuery.of(context).padding.bottom,
             left: 0,
             right: 0,
             child: Row(
@@ -261,7 +261,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Dynamic Bottom Control
           Positioned(
-            bottom: 40,
+            bottom: 40 + MediaQuery.of(context).padding.bottom,
             left: 24,
             right: 24,
             child: _buildBottomControl(),

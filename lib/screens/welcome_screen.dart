@@ -84,7 +84,12 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: EdgeInsets.fromLTRB(
+                    24.0,
+                    24.0,
+                    24.0,
+                    24.0 + MediaQuery.of(context).padding.bottom,
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

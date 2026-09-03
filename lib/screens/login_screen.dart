@@ -180,9 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
         elevation: 0,
         actions: const [LanguageSwitcher(), SizedBox(width: 8)],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
             // Only scrollable when keyboard is open (bottomInset > 0)
             physics: bottomInset > 0
                 ? const ClampingScrollPhysics()
@@ -527,6 +528,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

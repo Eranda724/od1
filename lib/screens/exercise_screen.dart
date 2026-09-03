@@ -632,10 +632,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       );
                       if (!context.mounted) return;
 
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.clearSnackBars();
+                      messenger.showSnackBar(
                         SnackBar(
-                          duration: const Duration(seconds: 3),
+                          duration: const Duration(milliseconds: 1500),
                           content: Text('exercise_removed'.tr()),
                           action: SnackBarAction(
                             label: 'undo'.tr(),
@@ -648,6 +649,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           ),
                         ),
                       );
+                      
+                      // Force dismiss it since some devices/settings block auto-dismiss
+                      Future.delayed(const Duration(milliseconds: 1600), () {
+                        try {
+                          messenger.hideCurrentSnackBar();
+                        } catch (_) {}
+                      });
                     }
 
                     final cardContainer = Container(
