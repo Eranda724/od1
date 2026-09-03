@@ -124,7 +124,19 @@ class _StartRouterState extends State<StartRouter> {
   Future<void> _route() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-    final user = FirebaseAuth.instance.currentUser;
+    
+    // Wait for Firebase Auth to initialize from disk
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      try {
+        user = await FirebaseAuth.instance.authStateChanges().first.timeout(
+          const Duration(milliseconds: 1500),
+        );
+      } catch (_) {
+        // Fallback if timeout happens
+        user = FirebaseAuth.instance.currentUser;
+      }
+    }
 
     if (!mounted) return;
 
@@ -135,7 +147,7 @@ class _StartRouterState extends State<StartRouter> {
         context,
         MaterialPageRoute(
           builder: (context) => FutureBuilder<bool>(
-            future: checkIsAdmin(user.uid),
+            future: checkIsAdmin(user!.uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return Scaffold(
