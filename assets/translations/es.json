@@ -452,8 +452,6 @@
   "summary_screen": "Pantalla de resumen",
   "changes_saved_successfully": "¡Cambios guardados con éxito!",
   "tap_to_enable_disable": "Toque para habilitar/deshabilitar ",
-  "deselect_all": "Deseleccionar todo",
-  "select_all": "Seleccionar todo",
   "default_caps": "POR DEFECTO",
   "image_bank_title": "Banco de Imágenes",
   "theme": "Tema",
@@ -472,5 +470,6 @@
   "profile_image_updated": "¡Imagen de perfil actualizada!",
   "failed_upload_image": "Error al subir la imagen: {}",
   "tap_change_password": "Toca para cambiar tu contraseña",
-  "sixty_second_routine": "Rutina de 60 Segundos"
+  "sixty_second_routine": "Rutina de 60 Segundos",
+  "add_minimum_exercise_msg": "¡Añade al menos un ejercicio para empezar tu rutina! Incluso el mínimo cuenta para tu racha diaria. La constancia es la clave, iremos evolucionando poco a poco."
 }

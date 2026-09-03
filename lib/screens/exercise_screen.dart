@@ -114,8 +114,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         // null means the field was never set (new user) — treat as "all selected".
         // An explicit empty list [] means the user deliberately deselected everything.
         final rawSelected = userData['selectedExercises'];
-        final bool neverConfigured = rawSelected == null;
-        final selectedExercises = neverConfigured
+        final selectedExercises = rawSelected == null
             ? null
             : List<String>.from(rawSelected);
 
@@ -171,9 +170,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 final todoExercises = <String>[];
                 final doneExercises = <String>[];
 
-                final idsToShow = neverConfigured
-                    ? exerciseDefs.keys.toList()
-                    : (selectedExercises ?? []);
+                final idsToShow = (selectedExercises ?? []);
 
                 final libraryIds = exerciseDefs.keys
                     .where((id) => !idsToShow.contains(id))
@@ -954,10 +951,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'choose_first_exercise'.tr(),
+                                      'add_minimum_exercise_msg'.tr(),
                                       style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                         color: Colors.grey,
                                       ),
                                       textAlign: TextAlign.center,

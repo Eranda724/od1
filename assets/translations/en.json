@@ -452,8 +452,6 @@
   "summary_screen": "Summary Screen",
   "changes_saved_successfully": "Changes saved successfully!",
   "tap_to_enable_disable": "Tap to enable/disable ",
-  "deselect_all": "Deselect All",
-  "select_all": "Select All",
   "default_caps": "DEFAULT",
   "image_bank_title": "Image Bank",
   "theme": "Theme",
@@ -472,5 +470,6 @@
   "profile_image_updated": "Profile image updated!",
   "failed_upload_image": "Failed to upload image: {}",
   "tap_change_password": "Tap to change your password",
-  "sixty_second_routine": "60 Second Routine"
+  "sixty_second_routine": "60 Second Routine",
+  "add_minimum_exercise_msg": "Add at least one exercise to start your routine! Even the minimum counts for your personal daily streak. Consistency is the key, we'll grow from there."
 }

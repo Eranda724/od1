@@ -163,14 +163,11 @@ class _StreakScreenState extends State<StreakScreen>
                   }
                 }
 
-                final neverConfigured = data['selectedExercises'] == null;
                 final selectedExercises =
                     (data['selectedExercises'] as List<dynamic>?)
                         ?.map((e) => e.toString())
                         .toList();
-                final idsToShow = neverConfigured
-                    ? defs.keys.toList()
-                    : (selectedExercises ?? []);
+                final idsToShow = (selectedExercises ?? []);
 
                 final todoExercises = <String>[];
                 final doneExercises = <String>[];

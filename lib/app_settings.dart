@@ -8,12 +8,14 @@ class AppSettings extends ChangeNotifier {
 
   ThemeMode _themeMode = ThemeMode.light;
   bool _notificationsEnabled = true;
+  bool _isFirstLaunch = true;
 
   final ValueNotifier<bool> gridViewNotifier = ValueNotifier<bool>(false);
 
   ThemeMode get themeMode => _themeMode;
   bool get isGridView => gridViewNotifier.value;
   bool get notificationsEnabled => _notificationsEnabled;
+  bool get isFirstLaunch => _isFirstLaunch;
 
   static const _keyTheme = 'themeMode';
   static const _keyGrid = 'isGridView';
@@ -25,6 +27,10 @@ class AppSettings extends ChangeNotifier {
     _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     gridViewNotifier.value = prefs.getBool(_keyGrid) ?? false; // default: list view
     _notificationsEnabled = prefs.getBool(_keyNotifications) ?? true;
+    _isFirstLaunch = prefs.getBool('isFirstLaunch') ?? true;
+    if (_isFirstLaunch) {
+      await prefs.setBool('isFirstLaunch', false);
+    }
     notifyListeners();
   }
 
