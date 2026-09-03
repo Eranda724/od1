@@ -264,6 +264,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final monthly = exerciseData['monthlyTotal'] ?? 0;
                   final todayReps = exerciseData['todayReps'] ?? 0;
+                  final lifetime = exerciseData['lifetimeTotal'] ?? 0;
                   final def = exerciseDefs[id];
                   if (def == null) return const SizedBox.shrink();
                   final displayName = def.name;
@@ -337,22 +338,23 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    if (isDone)
-                                      Text(
-                                        '$todayReps $unit',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color:
-                                              Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? Colors.white70
-                                              : Colors.blueGrey,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
+                                    Text(
+                                      'total_streak_lifetime'.tr(
+                                        args: [lifetime.toString(), unit],
                                       ),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white70
+                                            : Colors.blueGrey,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
                                     const SizedBox(height: 8),
                                     if (isLibrary)
                                       Center(
@@ -496,38 +498,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      if (isDone)
-                                        Text(
-                                          '$todayReps $unit',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white70
-                                                : Colors.blueGrey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      else if (!isLibrary)
-                                        Text(
-                                          'exercise_streak_label'.tr(
-                                            args: [streak.toString()],
-                                          ),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white70
-                                                : Colors.blueGrey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                      Text(
+                                        'total_streak_lifetime'.tr(
+                                          args: [lifetime.toString(), unit],
                                         ),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white70
+                                              : Colors.blueGrey,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -1208,7 +1194,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               ),
 
                               buildSection(
-                                'All', // The user requested "All" for the library section
+                                'all_title'.tr(), // The user requested "All" for the library section
                                 libraryIds,
                                 Theme.of(context).colorScheme.onSurface,
                                 isLibrary: true,
