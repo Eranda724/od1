@@ -655,12 +655,14 @@ class _SocialScreenState extends State<SocialScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Image.asset(
-                                        'assets/images/fire_3d.png',
-                                        width: 18,
-                                        height: 18,
-                                      ),
-                                      const SizedBox(width: 4),
+                                      if (f.overallStreak > 0)
+                                        Image.asset(
+                                          'assets/images/fire_3d.png',
+                                          width: 18,
+                                          height: 18,
+                                        ),
+                                      if (f.overallStreak > 0)
+                                        const SizedBox(width: 4),
                                       Text(
                                         '${f.overallStreak}',
                                         style: const TextStyle(
@@ -675,32 +677,34 @@ class _SocialScreenState extends State<SocialScreen> {
 
                                 Row(
                                   children: [
-                                    SizedBox(
-                                      width: 38,
-                                      height: 28,
-                                      child: Stack(
-                                        clipBehavior: Clip.none,
-                                        children: [
-                                          Positioned(
-                                            left: 0,
-                                            child: Image.asset(
-                                              'assets/images/fire_3d.png',
-                                              width: 28,
-                                              height: 28,
+                                    if (f.sharedStreak > 0)
+                                      SizedBox(
+                                        width: 38,
+                                        height: 28,
+                                        child: Stack(
+                                          clipBehavior: Clip.none,
+                                          children: [
+                                            Positioned(
+                                              left: 0,
+                                              child: Image.asset(
+                                                'assets/images/fire_3d.png',
+                                                width: 28,
+                                                height: 28,
+                                              ),
                                             ),
-                                          ),
-                                          Positioned(
-                                            left: 10,
-                                            child: Image.asset(
-                                              'assets/images/fire_3d.png',
-                                              width: 28,
-                                              height: 28,
+                                            Positioned(
+                                              left: 10,
+                                              child: Image.asset(
+                                                'assets/images/fire_3d.png',
+                                                width: 28,
+                                                height: 28,
+                                              ),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
+                                    if (f.sharedStreak > 0)
+                                      const SizedBox(width: 4),
                                     Text(
                                       '${f.sharedStreak}',
                                       style: TextStyle(

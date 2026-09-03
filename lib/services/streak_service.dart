@@ -588,6 +588,8 @@ class StreakService {
           .map((d) => d.reference)
           .toList();
 
+      int? updatedOverallStreak;
+
       await FirebaseFirestore.instance.runTransaction<void>((tx) async {
         final userSnap = await tx.get(userRef);
         if (!userSnap.exists) return;
@@ -633,6 +635,7 @@ class StreakService {
 
             if (result.streakBroken) {
               updates['overallStreak'] = 0;
+              updatedOverallStreak = 0;
             }
             // Note: Do NOT tx.set here! All tx.get must happen before any tx.set.
           }
@@ -684,6 +687,15 @@ class StreakService {
           tx.set(userRef, updates, SetOptions(merge: true));
         }
       });
+      
+      // If the overall streak broke (became 0), update shared streaks accordingly.
+      // We do this outside the transaction to avoid interfering with the user doc tx.
+      if (updatedOverallStreak != null) {
+        await _updateSharedStreaks(
+          uid: uid,
+          newOverallStreak: updatedOverallStreak!,
+        );
+      }
     } catch (e) {
       debugPrint('Error in checkAndUpdateStreak: $e');
     }
