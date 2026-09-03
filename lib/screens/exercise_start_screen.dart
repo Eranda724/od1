@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
@@ -97,25 +96,12 @@ class ExerciseStartScreen extends StatefulWidget {
 }
 
 class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
-  // Ready Time
-  bool _wantsReadyTime = false;
-  int _readyTimeSeconds = 3;
-
-  late final AudioPlayer _player;
-
-  // Countdown
-  bool _isCountingDown = false;
-  int _currentCount = 3;
-  Timer? _countdownTimer;
-
   late final String _randomImage;
 
   @override
   void initState() {
     super.initState();
-    _player = AudioPlayer()..setPlayerMode(PlayerMode.lowLatency);
-    _loadSavedPrefs();
-    
+
     // Preload the interstitial ad so it's ready for the session screen
     AdService.instance.loadInterstitialAd();
 
@@ -131,114 +117,30 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     _randomImage = images[Random().nextInt(images.length)];
   }
 
-  // Persistence
-  Future<void> _loadSavedPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedTime = prefs.getInt('globalReadyTime');
-    final wantsTime = prefs.getBool('globalWantsReadyTime');
-    if (mounted) {
-      setState(() {
-        if (savedTime != null) _readyTimeSeconds = savedTime;
-        if (wantsTime != null) _wantsReadyTime = wantsTime;
-      });
-    }
-  }
-
-  Future<void> _saveTime(int t) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('globalReadyTime', t);
-  }
-
-  Future<void> _saveWantsReadyTime(bool v) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('globalWantsReadyTime', v);
-  }
-
   @override
   void dispose() {
-    _countdownTimer?.cancel();
-    _player.dispose();
     super.dispose();
   }
 
-  // Countdown
-  void _stopCountdown() {
-    if (!_isCountingDown) return;
-    _countdownTimer?.cancel();
-    if (mounted) {
-      setState(() {
-        _isCountingDown = false;
-      });
-    }
-    try {
-      _player.stop();
-    } catch (_) {}
-  }
-
-  void _startCountdown() async {
-    if (_isCountingDown) return;
-
-    try {
-      await _player.stop();
-      await _player.setVolume(0.25);
-      await _player.play(AssetSource('sounds/stop.mp3'));
-    } catch (_) {}
-
-    void navigate() {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ActiveSessionScreen(
-            exerciseId: widget.exerciseId,
-            exerciseName: widget.exerciseName,
-            backgroundImageUrl: _randomImage,
-            unit: widget.unit,
-            exerciseDef: widget.exerciseDef,
-            challengeSeconds: widget.defaultTimer,
-            streak: widget.streak,
-            monthlyTotal: widget.monthlyTotal,
-            defaultReps: widget.defaultReps,
-            sessionQueue: widget.sessionQueue,
-            exerciseIndex: widget.exerciseIndex,
-            totalExercises: widget.totalExercises,
-          ),
+  void _startExercise() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => ActiveSessionScreen(
+          exerciseId: widget.exerciseId,
+          exerciseName: widget.exerciseName,
+          backgroundImageUrl: _randomImage,
+          unit: widget.unit,
+          exerciseDef: widget.exerciseDef,
+          challengeSeconds: widget.defaultTimer,
+          streak: widget.streak,
+          monthlyTotal: widget.monthlyTotal,
+          defaultReps: widget.defaultReps,
+          sessionQueue: widget.sessionQueue,
+          exerciseIndex: widget.exerciseIndex,
+          totalExercises: widget.totalExercises,
         ),
-      );
-    }
-
-    if (_wantsReadyTime && _readyTimeSeconds > 0) {
-      setState(() {
-        _isCountingDown = true;
-        _currentCount = _readyTimeSeconds;
-      });
-      _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (!mounted) {
-          timer.cancel();
-          return;
-        }
-        setState(() {
-          _currentCount--;
-        });
-        if (_currentCount <= 0) {
-          timer.cancel();
-          try {
-            _player.stop().then((_) {
-              _player.play(AssetSource('sounds/pope.mp3'));
-            });
-          } catch (_) {}
-          Future.delayed(const Duration(milliseconds: 200), () {
-            if (mounted) navigate();
-          });
-        } else {
-          try {
-            _player.stop().then((_) {
-              _player.play(AssetSource('sounds/pops.mp3'));
-            });
-          } catch (_) {}
-        }
-      });
-    } else {
-      navigate();
-    }
+      ),
+    );
   }
 
   // Detail Card
@@ -293,202 +195,12 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
     );
   }
 
-  void _showReadyTimeBottomSheet() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            return Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ready_time_label'.tr(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SwitchListTile(
-                    title: Text(
-                      'enable_ready_time'.tr(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    value: _wantsReadyTime,
-                    activeColor: PCColors.green,
-                    onChanged: (val) {
-                      setSheetState(() => _wantsReadyTime = val);
-                      setState(() => _wantsReadyTime = val);
-                      _saveWantsReadyTime(val);
-                    },
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  if (_wantsReadyTime) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      'duration'.tr(),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      children: [3, 5, 10, 15].map((seconds) {
-                        final isSelected = _readyTimeSeconds == seconds;
-                        return ChoiceChip(
-                          label: Text('${seconds}s'),
-                          selected: isSelected,
-                          selectedColor: PCColors.yellow,
-                          labelStyle: TextStyle(
-                            color: isSelected
-                                ? Colors.black
-                                : Theme.of(context).colorScheme.onSurface,
-                            fontWeight: isSelected
-                                ? FontWeight.w900
-                                : FontWeight.w600,
-                          ),
-                          onSelected: (selected) {
-                            if (selected) {
-                              setSheetState(() => _readyTimeSeconds = seconds);
-                              setState(() => _readyTimeSeconds = seconds);
-                              _saveTime(seconds);
-                            }
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Ready Time widget
-  Widget _buildReadyTimeWidget() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0, bottom: 12.0),
-          child: Text(
-            'parameters'.tr(),
-            style: _PCTextStyles.sectionLabel(context).copyWith(
-              fontSize: 14,
-              letterSpacing: 0,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-        InkWell(
-          onTap: _showReadyTimeBottomSheet,
-          borderRadius: BorderRadius.circular(_PCRadii.md),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              horizontal: _PCSpacing.lg,
-              vertical: _PCSpacing.lg,
-            ),
-            decoration: BoxDecoration(
-              color:
-                  Theme.of(context).cardTheme.color ??
-                  Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(_PCRadii.md),
-              border: Border.all(
-                color: PCColors.brown.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.tune_rounded,
-                      size: 24,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                    const SizedBox(width: _PCSpacing.md),
-                    Text(
-                      'ready_time_label'.tr(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Text(
-                      _wantsReadyTime
-                          ? '${_readyTimeSeconds}s'
-                          : 'off_label'.tr(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        color: _wantsReadyTime
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.chevron_right_rounded,
-                      size: 24,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // Start Button
   Widget _buildStartButton() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
       child: InkWell(
-        onTap: _isCountingDown ? _stopCountdown : _startCountdown,
+        onTap: _startExercise,
         borderRadius: BorderRadius.circular(32),
         child: Container(
           width: double.infinity,
@@ -510,61 +222,30 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
             ],
           ),
           alignment: Alignment.center,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (child, animation) =>
-                ScaleTransition(scale: animation, child: child),
-            child: _isCountingDown
-                ? Row(
-                    key: const ValueKey('countdown_row'),
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$_currentCount',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'cancel_btn'.tr().toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.black54,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    key: const ValueKey('start_row'),
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.play_arrow_rounded,
-                        size: 32,
-                        color: Colors.black,
-                      ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            'start_btn'.tr().toUpperCase(),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.black,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.play_arrow_rounded,
+                size: 32,
+                color: Colors.black,
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    'start_btn'.tr().toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.black,
+                      letterSpacing: 1.2,
+                    ),
                   ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -590,220 +271,283 @@ class _ExerciseStartScreenState extends State<ExerciseStartScreen> {
         ),
         actions: const [SizedBox(width: 8)],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Header Section
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                _PCSpacing.xl,
-                _PCSpacing.lg,
-                _PCSpacing.xl,
-                _PCSpacing.sm,
-              ),
-              child: Column(
-                children: [
-                  // Exercise name
-                  Text(
-                    widget.exerciseName.toUpperCase(),
-                    style: _PCTextStyles.screenTitle(context),
-                    textAlign: TextAlign.center,
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                // Header Section
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    _PCSpacing.xl,
+                    _PCSpacing.lg,
+                    _PCSpacing.xl,
+                    _PCSpacing.sm,
                   ),
-                  const SizedBox(height: _PCSpacing.sm),
-                  Builder(
-                    builder: (context) {
-                      String displayDesc = '';
-                      final langCode = context.locale.languageCode;
-
-                      if (widget.exerciseDef != null) {
-                        final def = widget.exerciseDef!;
-                        if (def.descriptions != null &&
-                            def.descriptions!.containsKey(langCode) &&
-                            def.descriptions![langCode]!.isNotEmpty) {
-                          displayDesc = def.descriptions![langCode]!;
-                        } else if (def.description != null &&
-                            def.description!.isNotEmpty) {
-                          displayDesc = def.description!;
-                        }
-                      }
-
-                      if (displayDesc.isEmpty) {
-                        final fallbacks = [
-                          'Get ready to crush this exercise! 💪',
-                          'Push yourself to the limit! 🔥',
-                          'Consistency is key to results! 💯',
-                          'Let\'s make every rep count! 🎯',
-                        ];
-                        // Consistent pseudo-random based on exercise name
-                        displayDesc =
-                            fallbacks[widget.exerciseName.hashCode.abs() %
-                                fallbacks.length];
-                      }
-
-                      return Text(
-                        displayDesc,
-                        style: _PCTextStyles.bodyText(context).copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.8),
-                        ),
+                  child: Column(
+                    children: [
+                      // Exercise name
+                      Text(
+                        widget.exerciseName.toUpperCase(),
+                        style: _PCTextStyles.screenTitle(context),
                         textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      );
-                    },
+                      ),
+                      const SizedBox(height: _PCSpacing.sm),
+                      Builder(
+                        builder: (context) {
+                          String displayDesc = '';
+                          final langCode = context.locale.languageCode;
+
+                          if (widget.exerciseDef != null) {
+                            final def = widget.exerciseDef!;
+                            if (def.descriptions != null &&
+                                def.descriptions!.containsKey(langCode) &&
+                                def.descriptions![langCode]!.isNotEmpty) {
+                              displayDesc = def.descriptions![langCode]!;
+                            } else if (def.description != null &&
+                                def.description!.isNotEmpty) {
+                              displayDesc = def.description!;
+                            }
+                          }
+
+                          if (displayDesc.isEmpty) {
+                            final fallbacks = [
+                              'Get ready to crush this exercise! 💪',
+                              'Push yourself to the limit! 🔥',
+                              'Consistency is key to results! 💯',
+                              'Let\'s make every rep count! 🎯',
+                            ];
+                            // Consistent pseudo-random based on exercise name
+                            displayDesc =
+                                fallbacks[widget.exerciseName.hashCode.abs() %
+                                    fallbacks.length];
+                          }
+
+                          return Text(
+                            displayDesc,
+                            style: _PCTextStyles.bodyText(context).copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.8),
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            const SizedBox(height: _PCSpacing.lg),
+                const SizedBox(height: _PCSpacing.lg),
 
-            // Stats Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color:
-                      Theme.of(context).cardTheme.color ??
-                      Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(_PCRadii.lg),
-                  border: Border.all(
-                    color: PCColors.brown.withValues(alpha: 0.2),
-                    width: 1.5,
+                // Stats Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _PCSpacing.xl,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: _PCSpacing.lg,
-                  vertical: _PCSpacing.md,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _StatPill(
-                      iconWidget: Image.asset(
-                        'assets/images/fire_3d.png',
-                        width: 24,
-                        height: 24,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color:
+                          Theme.of(context).cardTheme.color ??
+                          Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(_PCRadii.lg),
+                      border: Border.all(
+                        color: PCColors.brown.withValues(alpha: 0.2),
+                        width: 1.5,
                       ),
-                      label: 'day_streak_count'.tr(
-                        args: [widget.streak.toString()],
-                      ),
-                    ),
-                    Container(
-                      width: 1,
-                      height: 28,
-                      color: PCColors.brown.withValues(alpha: 0.35),
-                    ),
-                    _StatPill(
-                      iconWidget: Image.asset(
-                        'assets/images/trophy.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                      label: 'this_month_count'.tr(
-                        args: [widget.monthlyTotal.toString()],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: _PCSpacing.xl),
-
-            // Detail Cards
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
-              child: Column(
-                children: [
-                  if (widget.defaultReps > 0 || widget.defaultTimer > 0) ...[
-                    Row(
-                      children: [
-                        if (widget.defaultReps > 0)
-                          Expanded(child: _buildRepCounter()),
-                        if (widget.defaultReps > 0 && widget.defaultTimer > 0)
-                          const SizedBox(width: _PCSpacing.md),
-                        if (widget.defaultTimer > 0)
-                          Expanded(child: _buildExerciseTimer()),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
                       ],
                     ),
-                  ],
-                ],
-              ),
-            ),
-
-            // Random Image Spacer
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: _PCSpacing.xl,
-                horizontal: _PCSpacing.xl,
-              ),
-              child: SizedBox(
-                height: 220,
-                child:
-                    (widget.exerciseDef != null &&
-                        widget.exerciseDef!.mediaItems.isNotEmpty)
-                    ? CachedNetworkImage(
-                        imageUrl: widget.exerciseDef!.mediaItems.first.url,
-                        fit: BoxFit.contain,
-                        placeholder: (context, url) => const Center(
-                          child: CircularProgressIndicator(
-                            color: PCColors.yellow,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: _PCSpacing.lg,
+                      vertical: _PCSpacing.md,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Streak Stat
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/fire_3d.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${widget.streak}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'day_streak_caps'.tr(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                                  letterSpacing: 0.6,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
-                        errorWidget: (context, url, error) =>
-                            NetworkOrAssetImage(
-                              _randomImage,
-                              fit: BoxFit.contain,
+                        Container(
+                          width: 1,
+                          height: 36,
+                          color: PCColors.brown.withValues(alpha: 0.35),
+                        ),
+                        // Monthly Stat
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Image.asset(
+                                    'assets/images/trophy.png',
+                                    width: 24,
+                                    height: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${widget.monthlyTotal}',
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w900,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'this_month_label'.tr(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                                  letterSpacing: 0.6,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: _PCSpacing.xl),
+
+                // Detail Cards
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: _PCSpacing.xl,
+                  ),
+                  child: Column(
+                    children: [
+                      if (widget.defaultReps > 0 ||
+                          widget.defaultTimer > 0) ...[
+                        Row(
+                          children: [
+                            if (widget.defaultReps > 0)
+                              Expanded(child: _buildRepCounter()),
+                            if (widget.defaultReps > 0 &&
+                                widget.defaultTimer > 0)
+                              const SizedBox(width: _PCSpacing.md),
+                            if (widget.defaultTimer > 0)
+                              Expanded(child: _buildExerciseTimer()),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+
+                // Random Image Spacer
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: _PCSpacing.xl,
+                    horizontal: _PCSpacing.xl,
+                  ),
+                  child: SizedBox(
+                    height: 220,
+                    child:
+                        (widget.exerciseDef != null &&
+                            widget.exerciseDef!.mediaItems.isNotEmpty)
+                        ? CachedNetworkImage(
+                            imageUrl: widget.exerciseDef!.mediaItems.first.url,
+                            fit: BoxFit.contain,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(
+                                color: PCColors.yellow,
+                              ),
                             ),
-                      )
-                    : NetworkOrAssetImage(_randomImage, fit: BoxFit.contain),
-              ),
+                            errorWidget: (context, url, error) =>
+                                NetworkOrAssetImage(
+                                  _randomImage,
+                                  fit: BoxFit.contain,
+                                ),
+                          )
+                        : NetworkOrAssetImage(
+                            _randomImage,
+                            fit: BoxFit.contain,
+                          ),
+                  ),
+                ),
+              ],
             ),
+          ),
 
-            // Ready Time Widget
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _PCSpacing.xl),
-              child: _buildReadyTimeWidget(),
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Large Start Button
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: _PCSpacing.xl * 4,
+                  ), // Move it up slightly from the bottom edge
+                  child: _buildStartButton(),
+                ),
+              ],
             ),
-
-            const SizedBox(height: _PCSpacing.xl),
-
-            // Large Start Button
-            Padding(
-              padding: const EdgeInsets.only(bottom: _PCSpacing.xl),
-              child: _buildStartButton(),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-}
-
-// Stat pill
-class _StatPill extends StatelessWidget {
-  final Widget iconWidget;
-  final String label;
-
-  const _StatPill({required this.iconWidget, required this.label});
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      iconWidget,
-      const SizedBox(width: _PCSpacing.sm),
-      Text(label, style: _PCTextStyles.statLabel(context)),
-    ],
-  );
 }
