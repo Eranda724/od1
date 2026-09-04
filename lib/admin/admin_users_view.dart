@@ -113,7 +113,10 @@ class _AdminUsersViewState extends State<AdminUsersView> {
                       leading: CircleAvatar(
                         backgroundColor: Colors.amber.shade200,
                         backgroundImage: data['photoUrl'] != null 
-                            ? CachedNetworkImageProvider(data['photoUrl']) 
+                            ? CachedNetworkImageProvider(
+                                data['photoUrl'],
+                                errorListener: (e) => debugPrint('Image error: $e'),
+                              ) 
                             : null,
                         child: data['photoUrl'] == null 
                             ? Text(

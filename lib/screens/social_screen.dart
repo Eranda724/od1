@@ -624,6 +624,7 @@ class _SocialScreenState extends State<SocialScreen> {
                                     backgroundImage: f.photoUrl != null
                                         ? CachedNetworkImageProvider(
                                             f.photoUrl!,
+                                            errorListener: (e) => debugPrint('Image error: $e'),
                                           )
                                         : null,
                                     child: f.photoUrl == null
@@ -762,7 +763,10 @@ class _UserSearchResultRow extends StatelessWidget {
           radius: 24,
           backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
           backgroundImage: photoUrl != null
-              ? CachedNetworkImageProvider(photoUrl!)
+              ? CachedNetworkImageProvider(
+                  photoUrl!,
+                  errorListener: (e) => debugPrint('Image error: $e'),
+                )
               : null,
           child: photoUrl == null
               ? Icon(Icons.person, color: isDark ? Colors.white38 : Colors.black38)

@@ -307,6 +307,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                             child: CachedNetworkImage(
                               imageUrl: _existingLabelImage!,
                               fit: BoxFit.cover,
+                              errorWidget: (context, url, error) => const Icon(Icons.error_outline),
                             ),
                           )
                         : Icon(Icons.image, color: context.textSecondary),
@@ -388,6 +389,7 @@ class _AdminExerciseScreenState extends State<AdminExerciseScreen> {
                   width: double.infinity,
                   height: 200,
                   fit: BoxFit.contain,
+                  errorWidget: (context, url, error) => const Icon(Icons.error_outline),
                 ),
               )
             else

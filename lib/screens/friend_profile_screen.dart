@@ -134,7 +134,10 @@ class FriendProfileScreen extends StatelessWidget {
                             radius: 32,
                             backgroundColor: context.cardColor,
                             backgroundImage: friend.photoUrl != null
-                                ? CachedNetworkImageProvider(friend.photoUrl!)
+                                ? CachedNetworkImageProvider(
+                                    friend.photoUrl!,
+                                    errorListener: (e) => debugPrint('Image error: $e'),
+                                  )
                                 : null,
                             child: friend.photoUrl == null
                                 ? Icon(

@@ -59,5 +59,11 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Query for Google Play services to fix Google Sign-In crash on Android 11+ -->
+        <package android:name="com.google.android.gms" />
+        <!-- Query for Custom Tabs (often used by auth flows) -->
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
     </queries>
 </manifest>

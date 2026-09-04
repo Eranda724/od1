@@ -34,7 +34,11 @@ void main() async {
 
   FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
   PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    final errorString = error.toString();
+    // Prevent StreamBuilder unhandled permission-denied errors from registering as fatal crashes.
+    final isFatal = !errorString.contains('permission-denied');
+    
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: isFatal);
     return true;
   };
 

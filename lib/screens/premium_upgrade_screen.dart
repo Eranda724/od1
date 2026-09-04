@@ -59,34 +59,36 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
           (snapshot) {
             if (_premiumHandled) return;
 
-          final data = snapshot.data();
-          final isPremium = data?['isPremium'] == true;
+            final data = snapshot.data();
+            final isPremium = data?['isPremium'] == true;
 
-          if (!isPremium) return;
+            if (!isPremium) return;
 
-          _premiumHandled = true;
+            _premiumHandled = true;
 
-          if (!mounted) return;
+            if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('purchase_successful'.tr()),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('purchase_successful'.tr()),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-          );
+            );
 
-          // Give the SnackBar a moment to appear before leaving.
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              Navigator.of(context).pop();
-            }
-          });
-        }, onError: (e) => print('PremiumUpgrade stream error: $e'));
+            // Give the SnackBar a moment to appear before leaving.
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            });
+          }, 
+          onError: (e) => print('PremiumUpgrade stream error: $e'),
+        );
   }
 
   @override
