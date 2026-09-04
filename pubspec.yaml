@@ -36,6 +36,7 @@ dependencies:
   translator: ^1.0.1
   firebase_crashlytics: ^4.3.10
   firebase_app_check: ^0.3.2+10
+  superwallkit_flutter: ^2.0.8
 dev_dependencies:
   flutter_test:
     sdk: flutter

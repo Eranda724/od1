@@ -50,7 +50,7 @@ android {
 
     defaultConfig {
         applicationId = "com.ghiolabs.potato60secondroutine"
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName

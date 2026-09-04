@@ -18,6 +18,9 @@ import 'services/ad_service.dart';
 import 'services/iap_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'services/image_bank.dart';
+import 'package:superwallkit_flutter/superwallkit_flutter.dart';
+
+import 'services/superwall_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,6 +49,9 @@ void main() async {
   IapService.instance.initialize();
   // Warm up image bank pools from Firestore
   await ImageBank.initialize();
+  
+  // Initialize Superwall SDK
+  await SuperwallService.initialize();
 
   runApp(
     EasyLocalization(
@@ -56,6 +62,8 @@ void main() async {
     ),
   );
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -93,6 +101,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Potato',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -164,10 +173,40 @@ class _StartRouterState extends State<StartRouter> {
         ),
       );
     } else if (!hasSeenOnboarding) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      try {
+        final handler = PaywallPresentationHandler();
+        handler.onError((String error) {
+          debugPrint('Superwall presentation error: $error');
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            );
+          }
+        });
+        handler.onSkip((PaywallSkippedReason reason) {
+          debugPrint('Superwall presentation skipped: $reason');
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            );
+          }
+        });
+
+        Superwall.shared.registerPlacement(
+          'onboarding_start',
+          handler: handler,
+        );
+      } catch (e) {
+        debugPrint('Superwall registerEvent error: $e');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+          );
+        }
+      }
     } else {
       Navigator.pushReplacement(
         context,
