@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../app_settings.dart';
 import '../models/session_item.dart';
@@ -21,7 +19,6 @@ class _PCSpacing {
 }
 
 class _PCRadii {
-  static const double md = 14.0;
   static const double lg = 20.0;
 }
 
@@ -43,12 +40,6 @@ class _PCTextStyles {
   static TextStyle heroNumber(BuildContext context) => TextStyle(
     fontSize: 42,
     fontWeight: FontWeight.w900,
-    color: Theme.of(context).colorScheme.onSurface,
-  );
-
-  static TextStyle statLabel(BuildContext context) => TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w800,
     color: Theme.of(context).colorScheme.onSurface,
   );
 

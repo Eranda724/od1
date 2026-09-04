@@ -263,7 +263,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   );
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final monthly = exerciseData['monthlyTotal'] ?? 0;
-                  final todayReps = exerciseData['todayReps'] ?? 0;
                   final lifetime = exerciseData['lifetimeTotal'] ?? 0;
                   final def = exerciseDefs[id];
                   if (def == null) return const SizedBox.shrink();
