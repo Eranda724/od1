@@ -479,23 +479,19 @@ class _CongratulationScreenState extends State<CongratulationScreen>
         final exData = snapshot.data!.data() as Map<String, dynamic>;
 
         final rawCurrentStreak = (exData['currentStreak'] ?? 0) as int;
-        final rawFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
-        final rawFrozenDates = List<String>.from(exData['frozenDates'] ?? []);
         final rawLastEvaluatedDate = exData['lastEvaluatedDate'] as String?;
         final activeDatesList = List<String>.from(exData['activeDates'] ?? []);
 
-        final effectiveData = StreakService.getEffectiveStreakData(
+        final effectiveData = StreakService.getEffectiveExerciseStreakData(
           streak: rawCurrentStreak,
-          freezesAvailable: rawFreezesAvailable,
-          frozenDates: rawFrozenDates,
           lastEvaluatedDate: rawLastEvaluatedDate,
+          globalFrozenDates: [], // Safe because the exercise was just completed today, so no missing days will be evaluated
         );
 
         return WeekStreakRow(
           activeDates: activeDatesList,
-          frozenDates: effectiveData.frozenDates.toList(),
+          frozenDates: [], // Optional: We could query user doc to show past freezes, but usually congratulation screen doesn't need to show past ice cubes.
           today: DateTime.now(),
-          freezesAvailable: effectiveData.freezesAvailable,
           streak: effectiveData.streak,
         );
       },

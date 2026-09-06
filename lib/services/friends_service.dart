@@ -168,7 +168,7 @@ class FriendsService {
         if (fDoc == null) continue;
         final fData = fDoc.data() as Map<String, dynamic>? ?? {};
         
-        final fEffective = StreakService.getEffectiveStreakData(
+        final fEffective = StreakService.getEffectiveOverallStreakData(
           streak: fData['overallStreak'] ?? 0,
           freezesAvailable: fData['freezesAvailable'] ?? 2,
           frozenDates: List<String>.from(fData['frozenDates'] ?? []),

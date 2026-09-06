@@ -6,7 +6,6 @@ class WeekStreakRow extends StatelessWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
   final DateTime today;
-  final int freezesAvailable;
   final int streak;
 
   const WeekStreakRow({
@@ -14,7 +13,6 @@ class WeekStreakRow extends StatelessWidget {
     required this.activeDates,
     required this.frozenDates,
     required this.today,
-    required this.freezesAvailable,
     required this.streak,
   });
 

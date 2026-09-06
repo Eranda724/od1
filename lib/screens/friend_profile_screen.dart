@@ -65,7 +65,7 @@ class FriendProfileScreen extends StatelessWidget {
           final myRawLastEvaluatedDate =
               currentUserData['overallLastEvaluatedDate'] as String?;
 
-          final myEffectiveData = StreakService.getEffectiveStreakData(
+          final myEffectiveData = StreakService.getEffectiveOverallStreakData(
             streak: (currentUserData['overallStreak'] ?? 0) as int,
             freezesAvailable: myRawFreezesAvailable,
             frozenDates: myRawFrozenDates,
@@ -98,7 +98,7 @@ class FriendProfileScreen extends StatelessWidget {
               final rawLastEvaluatedDate =
                   userData['overallLastEvaluatedDate'] as String?;
 
-              final effectiveData = StreakService.getEffectiveStreakData(
+              final effectiveData = StreakService.getEffectiveOverallStreakData(
                 streak: (userData['overallStreak'] ?? 0) as int,
                 freezesAvailable: rawFreezesAvailable,
                 frozenDates: rawFrozenDates,
