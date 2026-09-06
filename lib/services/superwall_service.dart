@@ -125,7 +125,9 @@ class SuperwallService {
           : dotenv.env['SUPERWALL_ANDROID_KEY'];
 
       if (apiKey != null && apiKey.isNotEmpty) {
-        Superwall.configure(apiKey);
+        final options = SuperwallOptions()
+          ..testModeBehavior = TestModeBehavior.always; // TODO: Remove before production
+        Superwall.configure(apiKey, options: options);
         Superwall.shared.setDelegate(AppSuperwallDelegate());
         _initialized = true;
         debugPrint('Superwall initialized successfully.');
