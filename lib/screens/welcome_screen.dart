@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
-import 'onboarding_screen.dart';
 import '../app_settings.dart';
 import '../widgets/language_switcher.dart';
 
@@ -165,22 +164,6 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-          // Back button overlay
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
-            left: 8,
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded),
-              onPressed: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const OnboardingScreen(),
-                  ),
-                );
-              },
             ),
           ),
           // Language switcher overlay (Top Right)

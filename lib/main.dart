@@ -6,8 +6,7 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/onboarding_screen.dart';
+import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'app_theme.dart';
 import 'app_settings.dart';
@@ -180,20 +179,22 @@ class _StartRouterState extends State<StartRouter> {
       try {
         final handler = PaywallPresentationHandler();
         handler.onError((String error) {
+          // Superwall failed — send user to login as a clean fallback
           debugPrint('Superwall presentation error: $error');
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
             );
           }
         });
         handler.onSkip((PaywallSkippedReason reason) {
+          // Superwall skipped — send user to login as a clean fallback
           debugPrint('Superwall presentation skipped: $reason');
           if (mounted) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
             );
           }
         });
@@ -207,14 +208,15 @@ class _StartRouterState extends State<StartRouter> {
         if (mounted) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
           );
         }
       }
     } else {
+      // hasSeenOnboarding==true but no user logged in → go straight to login
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }

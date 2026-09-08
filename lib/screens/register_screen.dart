@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
-import 'welcome_screen.dart';
 import '../main.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/language_switcher.dart';
@@ -752,14 +751,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomeScreen(),
-                      ),
-                    );
                   }
+                  // If nothing to pop, stay here — Superwall owns the back flow.
                 },
               ),
             ),

@@ -75,7 +75,9 @@ class AppSuperwallDelegate extends SuperwallDelegate {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
 
-    final screen = _pendingScreen ?? const WelcomeScreen();
+    // If the user tapped Register or Login inside Superwall, _pendingScreen is set.
+    // If they dismissed without tapping anything, send them to LoginScreen.
+    final screen = _pendingScreen ?? const LoginScreen();
     _pendingScreen = null;
 
     navigatorKey.currentState?.pushReplacement(
@@ -125,9 +127,7 @@ class SuperwallService {
           : dotenv.env['SUPERWALL_ANDROID_KEY'];
 
       if (apiKey != null && apiKey.isNotEmpty) {
-        final options = SuperwallOptions()
-          ..testModeBehavior = TestModeBehavior.always; // TODO: Remove before production
-        Superwall.configure(apiKey, options: options);
+        Superwall.configure(apiKey);
         Superwall.shared.setDelegate(AppSuperwallDelegate());
         _initialized = true;
         debugPrint('Superwall initialized successfully.');
