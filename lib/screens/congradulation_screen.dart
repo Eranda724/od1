@@ -8,7 +8,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/week_streak_row.dart';
+import '../widgets/network_or_asset_image.dart';
 import '../services/streak_service.dart';
+import '../services/image_bank.dart';
 
 /// Shown right after a user submits reps for one exercise.
 /// Celebrates the streak with mascot, confetti, and sound, displays 3-column
@@ -68,12 +70,7 @@ class _CongratulationScreenState extends State<CongratulationScreen>
   void initState() {
     super.initState();
 
-    final images = [
-      'assets/images/congrads_po1.png',
-      'assets/images/congrads_po2.png',
-      'assets/images/congrads_po3.png',
-    ];
-    _randomImage = images[math.Random().nextInt(images.length)];
+    _randomImage = ImageBank.randomExerciseCongrats();
 
     _controller = AnimationController(
       vsync: this,
@@ -148,43 +145,10 @@ class _CongratulationScreenState extends State<CongratulationScreen>
                         alignment: Alignment.center,
                         clipBehavior: Clip.none,
                         children: [
-                          Image.asset(
+                          NetworkOrAssetImage(
                             _randomImage,
                             height: 280,
                             fit: BoxFit.contain,
-                          ),
-                          Positioned(
-                            right: 4,
-                            top: 76,
-                            child: Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: const Color(0xFFFFB800),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(
-                                      0xFFD49C19,
-                                    ).withValues(alpha: 0.8),
-                                    offset: const Offset(0, 3),
-                                    blurRadius: 0,
-                                  ),
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.15),
-                                    offset: const Offset(0, 4),
-                                    blurRadius: 6,
-                                  ),
-                                ],
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.star_rounded,
-                                  color: Colors.white,
-                                  size: 38,
-                                ),
-                              ),
-                            ),
                           ),
                         ],
                       ),
@@ -500,38 +464,51 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('exercises')
-          .doc(widget.exerciseId)
-          .snapshots(),
+    // Fetch both the user doc (for frozenDates) and the exercise doc in parallel
+    return StreamBuilder<List<DocumentSnapshot>>(
+      stream: Stream.fromFuture(
+        Future.wait([
+          FirebaseFirestore.instance.collection('users').doc(uid).get(),
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('exercises')
+              .doc(widget.exerciseId)
+              .get(),
+        ]),
+      ),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || !snapshot.data!.exists) {
+        if (!snapshot.hasData) {
           return const SizedBox(height: 70); // Placeholder
         }
 
-        final exData = snapshot.data!.data() as Map<String, dynamic>;
+        final userDoc = snapshot.data![0];
+        final exDoc = snapshot.data![1];
+
+        if (!exDoc.exists) return const SizedBox(height: 70);
+
+        final userData =
+            userDoc.exists ? userDoc.data() as Map<String, dynamic> : {};
+        final exData = exDoc.data() as Map<String, dynamic>;
+
+        // Global frozen dates live on the user document (same source as streak screen)
+        final frozenDates =
+            List<String>.from(userData['frozenDates'] ?? []);
 
         final rawCurrentStreak = (exData['currentStreak'] ?? 0) as int;
-        final rawFreezesAvailable = (exData['freezesAvailable'] ?? 2) as int;
-        final rawFrozenDates = List<String>.from(exData['frozenDates'] ?? []);
         final rawLastEvaluatedDate = exData['lastEvaluatedDate'] as String?;
         final activeDatesList = List<String>.from(exData['activeDates'] ?? []);
 
-        final effectiveData = StreakService.getEffectiveStreakData(
+        final effectiveData = StreakService.getEffectiveExerciseStreakData(
           streak: rawCurrentStreak,
-          freezesAvailable: rawFreezesAvailable,
-          frozenDates: rawFrozenDates,
           lastEvaluatedDate: rawLastEvaluatedDate,
+          globalFrozenDates: frozenDates,
         );
 
         return WeekStreakRow(
           activeDates: activeDatesList,
-          frozenDates: effectiveData.frozenDates.toList(),
+          frozenDates: frozenDates,
           today: DateTime.now(),
-          freezesAvailable: effectiveData.freezesAvailable,
           streak: effectiveData.streak,
         );
       },

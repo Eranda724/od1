@@ -14,6 +14,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    // Delete notifications older than 7 days
+    InAppNotificationService.instance.deleteOldNotifications();
     // Mark all as read when opening the screen
     InAppNotificationService.instance.markAllAsRead();
   }

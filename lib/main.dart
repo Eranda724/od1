@@ -1,6 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
@@ -14,12 +17,31 @@ import 'services/notification_service.dart';
 import 'services/ad_service.dart';
 import 'services/iap_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'services/image_bank.dart';
+import 'package:superwallkit_flutter/superwallkit_flutter.dart';
+
+import 'services/superwall_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+  );
+
+  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    final errorString = error.toString();
+    // Prevent StreamBuilder unhandled permission-denied errors from registering as fatal crashes.
+    final isFatal = !errorString.contains('permission-denied');
+    
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: isFatal);
+    return true;
+  };
+
   // Load persisted settings before first frame
   await AppSettings().load();
   // Initialize notifications and schedule daily reminders
@@ -29,6 +51,11 @@ void main() async {
   await AdService.instance.initialize();
   // Initialize In-App Purchases listener
   IapService.instance.initialize();
+  // Warm up image bank pools from Firestore
+  await ImageBank.initialize();
+  
+  // Initialize Superwall SDK
+  await SuperwallService.initialize();
 
   runApp(
     EasyLocalization(
@@ -39,6 +66,8 @@ void main() async {
     ),
   );
 }
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -76,6 +105,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'Potato',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -107,7 +137,19 @@ class _StartRouterState extends State<StartRouter> {
   Future<void> _route() async {
     final prefs = await SharedPreferences.getInstance();
     final hasSeenOnboarding = prefs.getBool('hasSeenOnboarding') ?? false;
-    final user = FirebaseAuth.instance.currentUser;
+    
+    // Wait for Firebase Auth to initialize from disk
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      try {
+        user = await FirebaseAuth.instance.authStateChanges().first.timeout(
+          const Duration(milliseconds: 1500),
+        );
+      } catch (_) {
+        // Fallback if timeout happens
+        user = FirebaseAuth.instance.currentUser;
+      }
+    }
 
     if (!mounted) return;
 
@@ -118,7 +160,7 @@ class _StartRouterState extends State<StartRouter> {
         context,
         MaterialPageRoute(
           builder: (context) => FutureBuilder<bool>(
-            future: checkIsAdmin(user.uid),
+            future: checkIsAdmin(user!.uid),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return Scaffold(
@@ -135,10 +177,40 @@ class _StartRouterState extends State<StartRouter> {
         ),
       );
     } else if (!hasSeenOnboarding) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-      );
+      try {
+        final handler = PaywallPresentationHandler();
+        handler.onError((String error) {
+          debugPrint('Superwall presentation error: $error');
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            );
+          }
+        });
+        handler.onSkip((PaywallSkippedReason reason) {
+          debugPrint('Superwall presentation skipped: $reason');
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+            );
+          }
+        });
+
+        Superwall.shared.registerPlacement(
+          'onboarding_start',
+          handler: handler,
+        );
+      } catch (e) {
+        debugPrint('Superwall registerEvent error: $e');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+          );
+        }
+      }
     } else {
       Navigator.pushReplacement(
         context,

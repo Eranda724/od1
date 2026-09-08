@@ -30,7 +30,11 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this, initialIndex: 2);
+    _tabController = TabController(
+      length: 5,
+      vsync: this,
+      initialIndex: _settings.isFirstLaunch ? 1 : 2,
+    );
     _tabController.addListener(() {
       if (mounted) setState(() {});
     });

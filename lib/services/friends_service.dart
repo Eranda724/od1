@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'streak_service.dart';
 import 'in_app_notification_service.dart';
-import 'dart:math' as math;
+
 
 class FriendsService {
   FriendsService._();
@@ -160,14 +160,6 @@ class FriendsService {
       if (myDoc == null) return;
       if (friendDocs.length != currentFriendUids.length) return;
       
-      final cData = myDoc!.data() as Map<String, dynamic>? ?? {};
-      final cEffective = StreakService.getEffectiveStreakData(
-        streak: cData['overallStreak'] ?? 0,
-        freezesAvailable: cData['freezesAvailable'] ?? 2,
-        frozenDates: List<String>.from(cData['frozenDates'] ?? []),
-        lastEvaluatedDate: cData['overallLastEvaluatedDate'] as String?,
-      );
-      final myStreak = cEffective.streak;
       final today = _todayKey();
 
       final friends = <FriendInfo>[];
@@ -176,7 +168,7 @@ class FriendsService {
         if (fDoc == null) continue;
         final fData = fDoc.data() as Map<String, dynamic>? ?? {};
         
-        final fEffective = StreakService.getEffectiveStreakData(
+        final fEffective = StreakService.getEffectiveOverallStreakData(
           streak: fData['overallStreak'] ?? 0,
           freezesAvailable: fData['freezesAvailable'] ?? 2,
           frozenDates: List<String>.from(fData['frozenDates'] ?? []),
@@ -207,7 +199,7 @@ class FriendsService {
         meSub = FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots().listen((snap) {
           myDoc = snap;
           emit();
-        });
+        }, onError: (e) => print('meSub error: $e'));
 
         pairsSub = FirebaseFirestore.instance
             .collection('friendPairs')
@@ -241,11 +233,11 @@ class FriendsService {
               friendSubs[fUid] = FirebaseFirestore.instance.collection('users').doc(fUid).snapshots().listen((snap) {
                 friendDocs[fUid] = snap;
                 emit();
-              });
+              }, onError: (e) => print('friendSub error: $e'));
             }
           }
           emit();
-        });
+        }, onError: (e) => print('pairsSub error: $e'));
       },
       onCancel: () {
         meSub?.cancel();

@@ -5,6 +5,7 @@ plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -25,7 +26,7 @@ if (keyPropertiesFile.exists()) {
 
 android {
     namespace = "com.ghiolabs.potato60secondroutine"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -49,8 +50,8 @@ android {
 
     defaultConfig {
         applicationId = "com.ghiolabs.potato60secondroutine"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 26
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["ADMOB_APP_ID_ANDROID"] = envProperties.getProperty("ADMOB_APP_ID_ANDROID", "ca-app-pub-3940256099942544~3347511713").toString()

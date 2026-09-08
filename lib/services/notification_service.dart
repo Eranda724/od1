@@ -88,11 +88,10 @@ class NotificationService {
     );
 
     // Request permission on Android 13+ and iOS for local notifications
-    await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.requestNotificationsPermission();
+    final androidImplementation = _plugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    
+    await androidImplementation?.requestNotificationsPermission();
 
     // Setup FCM
     final fcm = FirebaseMessaging.instance;
@@ -135,11 +134,14 @@ class NotificationService {
         .collection('app_config')
         .doc('notifications')
         .snapshots()
-        .listen((_) {
-          // Clear debounce cache to force an immediate reschedule
-          _lastSyncTime = null;
-          refreshSchedule();
-        });
+        .listen(
+          (_) {
+            // Clear debounce cache to force an immediate reschedule
+            _lastSyncTime = null;
+            refreshSchedule();
+          },
+          onError: (e) => print('Notification stream error: $e'),
+        );
   }
 
   // Public API
@@ -299,7 +301,6 @@ class NotificationService {
         channelName,
         importance: importance,
         priority: priority,
-        icon: '@mipmap/ic_launcher',
       ),
       iOS: const DarwinNotificationDetails(),
     );

@@ -6,7 +6,6 @@ class MonthCalendarWidget extends StatefulWidget {
   final List<String> activeDates;
   final List<String> frozenDates;
   final String? userStartDate; // first day the user ever logged an exercise
-  final int freezesAvailable;
   final int streak;
 
   const MonthCalendarWidget({
@@ -14,7 +13,6 @@ class MonthCalendarWidget extends StatefulWidget {
     required this.activeDates,
     required this.frozenDates,
     this.userStartDate,
-    required this.freezesAvailable,
     required this.streak,
   });
 

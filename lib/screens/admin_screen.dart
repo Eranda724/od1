@@ -28,7 +28,9 @@ class AdminScreen extends StatelessWidget {
           bottom: TabBar(
             indicatorColor: Colors.blueGrey,
             labelColor: Theme.of(context).colorScheme.onSurface,
-            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            unselectedLabelColor: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [
               Tab(text: 'exercises_tab'.tr()),
@@ -93,98 +95,95 @@ class AdminScreen extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: ListTile(
-                    leading: Container(
-                      width: 48,
-                      height: 48,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: buildExerciseVisual(
-                          exercise,
-                          size: 26,
-                          width: 48,
-                          height: 48,
-                        ),
-                      ),
+                  leading: Container(
+                    width: 48,
+                    height: 48,
+                    clipBehavior: Clip.antiAlias,
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    title: Text(
-                      exercise.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                    child: Center(
+                      child: buildExerciseVisual(
+                        exercise,
+                        size: 26,
+                        width: 48,
+                        height: 48,
                       ),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4.0),
-                      child: Text(
-                        'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : 'any_label'.tr()}\n'
-                        'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : 'any_label'.tr()}\n'
-                        'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : 'any_label'.tr()}',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    isThreeLine: true,
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AdminExerciseScreen(existing: exercise),
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.delete,
-                            color: Colors.redAccent,
-                          ),
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (c) => AlertDialog(
-                                title: Text('delete_exercise_title'.tr()),
-                                content: Text(
-                                  'delete_exercise_desc'.tr(
-                                    args: [exercise.name],
-                                  ),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c, false),
-                                    child: Text('cancel_btn'.tr()),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(c, true),
-                                    child: Text(
-                                      'delete_btn'.tr(),
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirm == true) {
-                              await FirebaseFirestore.instance
-                                  .collection('exercises')
-                                  .doc(exercise.id)
-                                  .delete();
-                            }
-                          },
-                        ),
-                      ],
                     ),
                   ),
-                );
+                  title: Text(
+                    exercise.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      'Reps: ${exercise.defaultReps > 0 ? exercise.defaultReps : 'any_label'.tr()}\n'
+                      'Timer: ${exercise.defaultTimer > 0 ? '${exercise.defaultTimer}s' : 'any_label'.tr()}\n'
+                      'Days: ${exercise.defaultDays > 0 ? exercise.defaultDays : 'any_label'.tr()}',
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                  isThreeLine: true,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                AdminExerciseScreen(existing: exercise),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        onPressed: () async {
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (c) => AlertDialog(
+                              title: Text('delete_exercise_title'.tr()),
+                              content: Text(
+                                'delete_exercise_desc'.tr(
+                                  args: [exercise.name],
+                                ),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(c, false),
+                                  child: Text('cancel_btn'.tr()),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(c, true),
+                                  child: Text(
+                                    'delete_btn'.tr(),
+                                    style: const TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await FirebaseFirestore.instance
+                                .collection('exercises')
+                                .doc(exercise.id)
+                                .delete();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
             },
           );
         },
@@ -285,7 +284,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   horizontal: 20,
                   vertical: 8,
                 ),
-                leading: Image.asset('assets/images/sun.png', width: 32, height: 32),
+                leading: Image.asset(
+                  'assets/images/sun.png',
+                  width: 32,
+                  height: 32,
+                ),
                 title: Text(
                   'morning_reminder_label'.tr(),
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -327,7 +330,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   horizontal: 20,
                   vertical: 8,
                 ),
-                leading: Image.asset('assets/images/moon.png', width: 32, height: 32),
+                leading: Image.asset(
+                  'assets/images/moon.png',
+                  width: 32,
+                  height: 32,
+                ),
                 title: Text(
                   'evening_streak_saver_label'.tr(),
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -387,7 +394,11 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   horizontal: 20,
                   vertical: 8,
                 ),
-                leading: Image.asset('assets/images/session.png', width: 32, height: 32),
+                leading: Image.asset(
+                  'assets/images/session.png',
+                  width: 32,
+                  height: 32,
+                ),
                 title: Text(
                   'admin_session_assets'.tr(),
                   style: const TextStyle(fontWeight: FontWeight.w700),
@@ -413,9 +424,13 @@ class _AdminSettingsTabState extends State<_AdminSettingsTab> {
                   horizontal: 20,
                   vertical: 8,
                 ),
-                leading: Image.asset('assets/images/congrads.png', width: 32, height: 32),
+                leading: Image.asset(
+                  'assets/images/streak.png',
+                  width: 32,
+                  height: 32,
+                ),
                 title: Text(
-                  'admin_celebration_assets'.tr(),
+                  'image_bank_title'.tr(),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
@@ -453,7 +468,7 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
   Future<void> _pickDays(BuildContext context, int currentDays) async {
     final messenger = ScaffoldMessenger.of(context);
     final controller = TextEditingController(text: currentDays.toString());
-    
+
     final result = await showDialog<int>(
       context: context,
       builder: (context) => AlertDialog(
@@ -461,11 +476,13 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
         content: TextField(
           controller: controller,
           keyboardType: TextInputType.number,
-          decoration: InputDecoration(hintText: 'admin_freeze_recharge_period_hint'.tr()),
+          decoration: InputDecoration(
+            hintText: 'admin_freeze_recharge_period_hint'.tr(),
+          ),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), 
+            onPressed: () => Navigator.pop(context),
             child: Text('cancel_btn'.tr()),
           ),
           TextButton(
@@ -487,7 +504,9 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
         'freezeRechargePeriodDays': result,
       }, SetOptions(merge: true));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))));
+      messenger.showSnackBar(
+        SnackBar(content: Text('save_failed'.tr(args: [e.toString()]))),
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -504,8 +523,15 @@ class _AdminFreezeSettingState extends State<_AdminFreezeSetting> {
         return AdminUI.buildCard(
           context,
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            leading: Image.asset('assets/images/ice_cube_3d.png', width: 32, height: 32),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 8,
+            ),
+            leading: Image.asset(
+              'assets/images/ice_cube_3d.png',
+              width: 32,
+              height: 32,
+            ),
             title: Text(
               'admin_freeze_recharge_period'.tr(),
               style: const TextStyle(fontWeight: FontWeight.w700),

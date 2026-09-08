@@ -8,15 +8,18 @@ class InAppNotificationService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Stream of notifications for current user
+  // Stream of notifications for current user (limited to last 7 days)
   Stream<List<InAppNotification>> streamNotifications() {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const Stream.empty();
+
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
 
     return _firestore
         .collection('users')
         .doc(user.uid)
         .collection('inAppNotifications')
+        .where('createdAt', isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
@@ -72,6 +75,35 @@ class InAppNotificationService {
 
     if (snapshot.docs.isNotEmpty) {
       await batch.commit();
+    }
+  }
+
+  // Auto-delete notifications older than 7 days
+  Future<void> deleteOldNotifications() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+    
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('inAppNotifications')
+          .where('createdAt', isLessThan: Timestamp.fromDate(sevenDaysAgo))
+          .get();
+
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = _firestore.batch();
+      for (var doc in snapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      
+      await batch.commit();
+      // debugPrint('Deleted ${snapshot.docs.length} old notifications');
+    } catch (e) {
+      // debugPrint('Error deleting old notifications: $e');
     }
   }
 

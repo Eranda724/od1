@@ -4,6 +4,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:confetti/confetti.dart';
 import '../app_settings.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../widgets/network_or_asset_image.dart';
+import '../services/image_bank.dart';
 
 /// One exercise's results for "today", used to populate the summary list.
 /// Build a list of [ExerciseDaySummary] as the user completes each exercise
@@ -45,7 +47,8 @@ class DailySummaryScreen extends StatefulWidget {
 class _DailySummaryScreenState extends State<DailySummaryScreen> {
   late ConfettiController _confettiController;
   final AudioPlayer _audioPlayer = AudioPlayer();
-  late final String _celebrationImage = 'assets/images/fire-congrads.png';
+  late final String _celebrationImage = ImageBank.randomDailySummary();
+
 
   @override
   void initState() {
@@ -104,7 +107,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
-                        Image.asset(
+                        NetworkOrAssetImage(
                           _celebrationImage,
                           height: 200,
                           fit: BoxFit.contain,
@@ -274,7 +277,6 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 }
 
-// One row per exercise: today's reps + streak + lifetime total
 class _ExerciseSummaryCard extends StatelessWidget {
   final ExerciseDaySummary item;
 
@@ -289,55 +291,80 @@ class _ExerciseSummaryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.borderColor, width: 1.5),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Exercise name + streak
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.exerciseName,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    color: context.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+          // Exercise name
+          Text(
+            item.exerciseName,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: context.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Stats Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Streak stat
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Image.asset(
-                      'assets/images/fire_3d.png',
-                      width: 14,
-                      height: 14,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/images/fire_3d.png',
+                          width: 16,
+                          height: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${item.currentStreak}',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            color: context.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 4),
                     Text(
-                      'day_streak_count'.tr(
-                        args: [item.currentStreak.toString()],
-                      ),
+                      'day_streak_caps'.tr(),
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
                         color: context.textSecondary,
+                        letterSpacing: 0.6,
                       ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-
-          // Today's reps
-          _MiniStat(label: 'today_label'.tr(), value: '${item.todayReps}'),
-          const SizedBox(width: 16),
-          // Lifetime total
-          _MiniStat(
-            label: 'this_month_label'.tr(),
-            value: '${item.monthlyTotal}',
-            highlight: true,
+              ),
+              // Today's reps
+              Expanded(
+                child: _MiniStat(
+                  label: 'today_label'.tr(), 
+                  value: '${item.todayReps}'
+                ),
+              ),
+              // Lifetime total (Monthly total)
+              Expanded(
+                child: _MiniStat(
+                  label: 'this_month_label'.tr(),
+                  value: '${item.monthlyTotal}',
+                  highlight: true,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -38,7 +38,6 @@ class AdminUI {
     );
   }
 
-  /// Custom Card styling matching the premium UI
   static Widget buildCard(
     BuildContext context, {
     required Widget child,
@@ -50,17 +49,23 @@ class AdminUI {
 
     return Container(
       margin: margin,
-      padding: padding,
-      decoration: BoxDecoration(
+      child: Material(
         color: isDark
             ? Colors.white.withValues(alpha: 0.035)
             : Colors.white.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
+        clipBehavior: Clip.antiAlias,
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.055),
+            ),
+          ),
+          child: child,
         ),
       ),
-      child: child,
     );
   }
 }

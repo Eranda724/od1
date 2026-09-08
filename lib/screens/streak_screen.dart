@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,6 +7,8 @@ import 'package:easy_localization/easy_localization.dart';
 import '../widgets/month_calendar_widget.dart';
 import '../widgets/week_streak_row.dart';
 import '../services/streak_service.dart';
+import '../widgets/network_or_asset_image.dart';
+import '../services/image_bank.dart';
 import '../widgets/exercise_thumbnail.dart';
 import 'exercise_start_screen.dart';
 import '../models/session_item.dart';
@@ -160,14 +163,11 @@ class _StreakScreenState extends State<StreakScreen>
                   }
                 }
 
-                final neverConfigured = data['selectedExercises'] == null;
                 final selectedExercises =
                     (data['selectedExercises'] as List<dynamic>?)
                         ?.map((e) => e.toString())
                         .toList();
-                final idsToShow = neverConfigured
-                    ? defs.keys.toList()
-                    : (selectedExercises ?? []);
+                final idsToShow = (selectedExercises ?? []);
 
                 final todoExercises = <String>[];
                 final doneExercises = <String>[];
@@ -547,24 +547,20 @@ class _StreakScreenState extends State<StreakScreen>
                         List<String> exActiveDates = List<String>.from(
                           exData['activeDates'] ?? [],
                         );
-                        final rawFreezes = (exData['freezesAvailable'] ?? 2) as int;
-                        final rawFrozenDates = List<String>.from(
-                          exData['frozenDates'] ?? [],
-                        );
-                        final nextRecharge = exData['nextFreezeRechargeDate'] as String?;
-                        final lastEvaluatedDate = (exData['lastEvaluatedDate'] as String?) ?? lastDate;
 
-                        final effectiveData = StreakService.getEffectiveStreakData(
-                          streak: streak,
-                          freezesAvailable: rawFreezes,
-                          frozenDates: rawFrozenDates,
-                          lastEvaluatedDate: lastEvaluatedDate,
-                          nextFreezeRechargeDate: nextRecharge,
-                        );
+                        final lastEvaluatedDate =
+                            (exData['lastEvaluatedDate'] as String?) ??
+                            lastDate;
+
+                        final effectiveData =
+                            StreakService.getEffectiveExerciseStreakData(
+                              streak: streak,
+                              lastEvaluatedDate: lastEvaluatedDate,
+                              globalFrozenDates: frozenDates,
+                            );
 
                         final int effectiveStreak = effectiveData.streak;
-                        final List<String> exFrozenDates = effectiveData.frozenDates;
-                        final int exFreezesAvailable = effectiveData.freezesAvailable;
+                        final List<String> exFrozenDates = frozenDates;
 
                         // Fallback: If database has a legacy streak number but no saved dates yet, fill the UI to match
                         if (effectiveStreak > 0 &&
@@ -572,7 +568,9 @@ class _StreakScreenState extends State<StreakScreen>
                             exActiveDates.length < effectiveStreak) {
                           try {
                             final lastDateObj = DateTime.parse(lastDate);
-                            final int fillCount = effectiveStreak > 7 ? 7 : effectiveStreak;
+                            final int fillCount = effectiveStreak > 7
+                                ? 7
+                                : effectiveStreak;
                             for (int i = 0; i < fillCount; i++) {
                               final d = lastDateObj.subtract(Duration(days: i));
                               final key =
@@ -593,7 +591,6 @@ class _StreakScreenState extends State<StreakScreen>
                           lastCompletedDate: lastDate,
                           activeDates: exActiveDates,
                           frozenDates: exFrozenDates,
-                          freezesAvailable: exFreezesAvailable,
                         );
                       }),
                   ],
@@ -640,6 +637,27 @@ class _OverallStreakCard extends StatefulWidget {
 
 class _OverallStreakCardState extends State<_OverallStreakCard> {
   bool _isExpanded = false;
+  late String _mascotImage;
+  StreamSubscription? _imageBankSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _mascotImage = ImageBank.randomStreakCharacter();
+    _imageBankSub = ImageBank.onUpdates.listen((_) {
+      if (mounted) {
+        setState(() {
+          _mascotImage = ImageBank.randomStreakCharacter();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _imageBankSub?.cancel();
+    super.dispose();
+  }
 
   void collapse() {
     if (mounted && _isExpanded) {
@@ -799,9 +817,9 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                     ),
                     // Right Column: Mascot
                     Transform.translate(
-                      offset: const Offset(8, -8),
-                      child: Image.asset(
-                        'assets/images/streak.png',
+                      offset: const Offset(-10, -8),
+                      child: NetworkOrAssetImage(
+                        _mascotImage,
                         height: 170,
                         fit: BoxFit.contain,
                       ),
@@ -846,7 +864,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                           activeDates: widget.activeDates,
                           frozenDates: widget.frozenDates,
                           today: DateTime.now(),
-                          freezesAvailable: widget.freezesAvailable,
                           streak: widget.overallStreak,
                         ),
                         const SizedBox(height: 16),
@@ -922,7 +939,6 @@ class _OverallStreakCardState extends State<_OverallStreakCard> {
                       activeDates: widget.activeDates,
                       frozenDates: widget.frozenDates,
                       userStartDate: widget.userStartDate,
-                      freezesAvailable: widget.freezesAvailable,
                       streak: widget.overallStreak,
                     ),
                   ),
@@ -945,7 +961,6 @@ class _ExerciseStreakCard extends StatelessWidget {
   final String? lastCompletedDate;
   final List<String> activeDates;
   final List<String> frozenDates;
-  final int freezesAvailable;
 
   const _ExerciseStreakCard({
     required this.def,
@@ -955,12 +970,10 @@ class _ExerciseStreakCard extends StatelessWidget {
     required this.lastCompletedDate,
     required this.activeDates,
     required this.frozenDates,
-    required this.freezesAvailable,
   });
 
   @override
   Widget build(BuildContext context) {
-    int displayFreezes = freezesAvailable;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1035,43 +1048,7 @@ class _ExerciseStreakCard extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.blueAccent.withValues(alpha: 0.5),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Transform.translate(
-                          offset: const Offset(0, 1.5),
-                          child: Image.asset(
-                            'assets/images/ice_cube_3d.png',
-                            width: 12,
-                            height: 12,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$displayFreezes/2',
-                          style: const TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.blueAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
                 ],
               ),
             ],
@@ -1081,7 +1058,6 @@ class _ExerciseStreakCard extends StatelessWidget {
             activeDates: activeDates,
             frozenDates: frozenDates,
             today: DateTime.now(),
-            freezesAvailable: freezesAvailable,
             streak: streak,
           ),
         ],

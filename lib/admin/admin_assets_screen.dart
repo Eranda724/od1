@@ -44,7 +44,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
 
   Future<void> _uploadImage(List<dynamic> currentImages) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, maxWidth: 800, maxHeight: 800, imageQuality: 75);
     if (pickedFile == null) return;
 
     setState(() => _isUploading = true);
@@ -112,6 +112,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   Widget _buildImagesGrid(List<dynamic> images) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'admin_assets_images_fab',
         onPressed: _isUploading ? null : () => _uploadImage(images),
         child: _isUploading ? const CircularProgressIndicator(color: Colors.white) : const Icon(Icons.add),
       ),
@@ -195,8 +196,8 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
               fit: StackFit.expand,
               children: [
                 isAsset
-                    ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.error))
-                    : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.error)),
+                    ? Image.asset(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const Icon(Icons.error))
+                    : CachedNetworkImage(imageUrl: url, fit: BoxFit.cover, errorWidget: (_, _, _) => const Icon(Icons.error)),
                 
                 // Overlay for disabled state
                 if (!enabled)
@@ -268,6 +269,7 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
   Widget _buildTipsList(List<dynamic> tips) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
+        heroTag: 'admin_assets_tips_fab',
         onPressed: () => _showAddTipDialog(tips),
         child: const Icon(Icons.add),
       ),
@@ -343,15 +345,15 @@ class _AdminAssetsScreenState extends State<AdminAssetsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AdminUI.buildAppBar(
           context,
-          title: 'Session Backgrounds & Tips',
+          title: 'session_backgrounds_tips'.tr(),
           bottom: TabBar(
             indicatorColor: Colors.blueGrey,
             labelColor: Theme.of(context).colorScheme.onSurface,
             unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            tabs: const [
-              Tab(text: 'Background Overrides'),
-              Tab(text: 'Tips'),
+            tabs: [
+              Tab(text: 'background_overrides'.tr()),
+              Tab(text: 'tips_tab'.tr()),
             ],
           ),
         ),

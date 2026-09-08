@@ -83,85 +83,90 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 snapshot.connectionState == ConnectionState.waiting &&
                 entries.isEmpty;
 
-            return Column(
-              children: [
-                // 1. HEADER + BANNER + PODIUM
-                _PodiumSection(
-                  period: _activePeriod,
-                  entries: entries,
-                  isLoading: isLoading,
-                  currentUid: widget.currentUid,
-                  friendCount: friendCount,
-                  onSwitchToSocial: widget.onSwitchToSocial,
-                ),
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      // 1. HEADER + BANNER + PODIUM
+                      _PodiumSection(
+                        period: _activePeriod,
+                        entries: entries,
+                        isLoading: isLoading,
+                        currentUid: widget.currentUid,
+                        friendCount: friendCount,
+                        onSwitchToSocial: widget.onSwitchToSocial,
+                      ),
 
-                const SizedBox(height: 12),
+                      const SizedBox(height: 12),
 
-                // 2. DAILY / WEEKLY / MONTHLY TABS (Big Button)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    height: 52,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : const Color(0xFFF1EBDD),
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      dividerColor: Colors.transparent,
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicator: BoxDecoration(
-                        color: const Color(0xFFFFC72C),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFFFC72C,
-                            ).withValues(alpha: 0.25),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+                      // 2. DAILY / WEEKLY / MONTHLY TABS (Big Button)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Container(
+                          height: 52,
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : const Color(0xFFF1EBDD),
+                            borderRadius: BorderRadius.circular(18),
                           ),
-                        ],
+                          child: TabBar(
+                            controller: _tabController,
+                            dividerColor: Colors.transparent,
+                            indicatorSize: TabBarIndicatorSize.tab,
+                            indicator: BoxDecoration(
+                              color: const Color(0xFFFFC72C),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFFFC72C,
+                                  ).withValues(alpha: 0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            labelColor: Colors.black,
+                            unselectedLabelColor: colorScheme.onSurface.withValues(
+                              alpha: 0.55,
+                            ),
+                            labelStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            unselectedLabelStyle: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            tabs: _periods
+                                .map((period) => Tab(text: period.label))
+                                .toList(),
+                          ),
+                        ),
                       ),
-                      labelColor: Colors.black,
-                      unselectedLabelColor: colorScheme.onSurface.withValues(
-                        alpha: 0.55,
+
+                      const SizedBox(height: 12),
+
+                      // 3. DIVIDER
+                      Container(
+                        height: 1,
+                        color: colorScheme.onSurface.withValues(alpha: 0.07),
                       ),
-                      labelStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      unselectedLabelStyle: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      tabs: _periods
-                          .map((period) => Tab(text: period.label))
-                          .toList(),
-                    ),
+                    ],
                   ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // 3. DIVIDER
-                Container(
-                  height: 1,
-                  color: colorScheme.onSurface.withValues(alpha: 0.07),
                 ),
 
                 // 4. RANKED LIST
-                Expanded(
-                  child: _buildList(
-                    context,
-                    entries,
-                    isLoading,
-                    snapshot.hasError,
-                    snapshot.error,
-                  ),
+                ..._buildListSlivers(
+                  context,
+                  entries,
+                  isLoading,
+                  snapshot.hasError,
+                  snapshot.error,
                 ),
               ],
             );
@@ -171,97 +176,99 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     );
   }
 
-  Widget _buildList(
+  List<Widget> _buildListSlivers(
     BuildContext context,
     List<LeaderboardEntry> entries,
     bool isLoading,
     bool hasError,
     Object? error,
   ) {
-    return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
-      slivers: [
-        // LOADING
-        if (isLoading)
-          const SliverFillRemaining(
-            child: Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFFFC72C),
-                strokeWidth: 3,
-              ),
+    return [
+      // LOADING
+      if (isLoading)
+        const SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: Color(0xFFFFC72C),
+              strokeWidth: 3,
             ),
-          )
-        // ERROR
-        else if (hasError)
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.wifi_off_rounded,
-                      size: 30,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'could_not_load_leaderboard'.tr(),
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        // EMPTY
-        else if (entries.isEmpty)
-          SliverFillRemaining(child: _EmptyState(period: _activePeriod))
-        // RANKED USERS
-        else
-          Builder(
-            builder: (context) {
-              final listEntries = entries.length > 3
-                  ? entries.sublist(3)
-                  : <LeaderboardEntry>[];
-
-              if (listEntries.isEmpty) {
-                return const SliverToBoxAdapter(child: SizedBox.shrink());
-              }
-
-              return SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final entry = listEntries[index];
-                    final rank = index + 4;
-                    final isMe = entry.uid == widget.currentUid;
-
-                    return _LeaderboardRow(
-                      rank: rank,
-                      entry: entry,
-                      isCurrentUser: isMe,
-                      period: _activePeriod,
-                    );
-                  }, childCount: listEntries.length),
-                ),
-              );
-            },
           ),
-      ],
-    );
+        )
+      // ERROR
+      else if (hasError)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.wifi_off_rounded,
+                    size: 30,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'could_not_load_leaderboard'.tr(),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+      // EMPTY
+      else if (entries.isEmpty)
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _EmptyState(period: _activePeriod),
+        )
+      // RANKED USERS
+      else
+        Builder(
+          builder: (context) {
+            final listEntries = entries.length > 3
+                ? entries.sublist(3)
+                : <LeaderboardEntry>[];
+
+            if (listEntries.isEmpty) {
+              return const SliverToBoxAdapter(child: SizedBox.shrink());
+            }
+
+            return SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final entry = listEntries[index];
+                  final rank = index + 4;
+                  final isMe = entry.uid == widget.currentUid;
+
+                  return _LeaderboardRow(
+                    rank: rank,
+                    entry: entry,
+                    isCurrentUser: isMe,
+                    period: _activePeriod,
+                  );
+                }, childCount: listEntries.length),
+              ),
+            );
+          },
+        ),
+    ];
   }
 }
 

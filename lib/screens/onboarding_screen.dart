@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:superwallkit_flutter/superwallkit_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'welcome_screen.dart';
@@ -58,6 +59,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _getStarted() async {
     _timer?.cancel();
+
+    // Register the onboarding event with Superwall.
+    final handler = PaywallPresentationHandler();
+    handler.onSkip((PaywallSkippedReason skipReason) async {
+      _fallbackNavigation();
+    });
+    handler.onError((String error) async {
+      debugPrint('Superwall presentation error: $error');
+      _fallbackNavigation();
+    });
+
+    Superwall.shared.registerPlacement('onboarding_start', handler: handler);
+  }
+
+  Future<void> _fallbackNavigation() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
     if (mounted) {
@@ -236,7 +252,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Dot indicators
           Positioned(
-            bottom: 140,
+            bottom: 140 + MediaQuery.of(context).padding.bottom,
             left: 0,
             right: 0,
             child: Row(
@@ -261,7 +277,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           // Dynamic Bottom Control
           Positioned(
-            bottom: 40,
+            bottom: 40 + MediaQuery.of(context).padding.bottom,
             left: 24,
             right: 24,
             child: _buildBottomControl(),

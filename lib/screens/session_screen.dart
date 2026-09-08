@@ -410,6 +410,44 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
 
                 const Spacer(),
 
+                // Pre-Ad Popup Overlay
+                if (_showAdOverlay)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.play_circle_fill,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: Text(
+                            'ad_starts_in'.tr(args: [_adSkipCountdown.toString()]),
+                            key: ValueKey(_adSkipCountdown),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Big timer with Progress Ring
                 SizedBox(
                   width: 250,
@@ -514,46 +552,7 @@ class _ActiveSessionScreenState extends State<ActiveSessionScreen> {
             ),
           ),
 
-          // Pre-Ad Popup Overlay
-          if (_showAdOverlay)
-            Align(
-              alignment: const Alignment(-1.0, -0.1),
-              child: Container(
-                margin: const EdgeInsets.only(left: 24),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.play_circle_fill,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: Text(
-                        'Ad in $_adSkipCountdown',
-                        key: ValueKey(_adSkipCountdown),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+
         ],
       ),
     );

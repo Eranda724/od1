@@ -55,37 +55,40 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
         .collection('users')
         .doc(user.uid)
         .snapshots()
-        .listen((snapshot) {
-          if (_premiumHandled) return;
+        .listen(
+          (snapshot) {
+            if (_premiumHandled) return;
 
-          final data = snapshot.data();
-          final isPremium = data?['isPremium'] == true;
+            final data = snapshot.data();
+            final isPremium = data?['isPremium'] == true;
 
-          if (!isPremium) return;
+            if (!isPremium) return;
 
-          _premiumHandled = true;
+            _premiumHandled = true;
 
-          if (!mounted) return;
+            if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('purchase_successful'.tr()),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('purchase_successful'.tr()),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                margin: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ),
-          );
+            );
 
-          // Give the SnackBar a moment to appear before leaving.
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) {
-              Navigator.of(context).pop();
-            }
-          });
-        });
+            // Give the SnackBar a moment to appear before leaving.
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                Navigator.of(context).pop();
+              }
+            });
+          }, 
+          onError: (e) => print('PremiumUpgrade stream error: $e'),
+        );
   }
 
   @override
@@ -136,25 +139,9 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
       ),
 
       body: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: isLightMode
-                  ? const [
-                      Color(0xFFFFF7DA),
-                      Color(0xFFFFFBF0),
-                      Color(0xFFF8F7F3),
-                    ]
-                  : const [
-                      Color(0xFF211C08),
-                      Color(0xFF121212),
-                      Color(0xFF0B0B0B),
-                    ],
-            ),
-          ),
-
+        child: SizedBox(
+          width: double.infinity,
+          height: double.infinity,
           child: ListenableBuilder(
             listenable: IapService.instance,
             builder: (context, _) {
@@ -274,23 +261,10 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
   // BENEFITS CARD
 
   Widget _benefitsCard({required bool isLightMode, required Color textColor}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(15),
-
-      decoration: BoxDecoration(
-        color: isLightMode
-            ? Colors.white.withValues(alpha: 0.72)
-            : Colors.white.withValues(alpha: 0.045),
-
-        borderRadius: BorderRadius.circular(18),
-
-        border: Border.all(
-          color: isLightMode
-              ? Colors.black.withValues(alpha: 0.055)
-              : Colors.white.withValues(alpha: 0.08),
-        ),
-      ),
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
 
       child: Column(
         children: [
@@ -316,6 +290,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
             textColor: textColor,
           ),
         ],
+      ),
       ),
     );
   }
@@ -392,52 +367,28 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
         // PURCHASE BUTTON
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-
-            boxShadow: [
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
               BoxShadow(
-                color: _yellow.withValues(alpha: 0.20),
-                blurRadius: 18,
-                offset: const Offset(0, 7),
+                color: _yellowDark,
+                offset: Offset(0, 4),
+                blurRadius: 0,
               ),
             ],
           ),
-
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [_yellowLight, _yellow],
+          child: ElevatedButton(
+            onPressed: canPurchase ? () => iap.buyRemoveAds() : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _yellow,
+              foregroundColor: Colors.black,
+              elevation: 0,
+              minimumSize: const Size.fromHeight(56),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide.none, // Removes the black border
               ),
-
-              borderRadius: BorderRadius.circular(16),
             ),
-
-            child: ElevatedButton(
-              onPressed: canPurchase
-                  ? () {
-                      iap.buyRemoveAds();
-                    }
-                  : null,
-
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                disabledBackgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.black,
-                disabledForegroundColor: Colors.black45,
-
-                minimumSize: const Size.fromHeight(56),
-
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-
-              child: Row(
+            child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Icon(Icons.star_rounded, size: 21),
@@ -461,7 +412,6 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               ),
             ),
           ),
-        ),
 
         const SizedBox(height: 6),
 
@@ -470,7 +420,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 2),
             child: Text(
-              'Premium purchase is currently unavailable.',
+              'premium_unavailable'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 10,
@@ -505,11 +455,11 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
   // LOADING
 
   Widget _loadingWidget() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 25),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 25),
       child: Column(
         children: [
-          SizedBox(
+          const SizedBox(
             width: 28,
             height: 28,
             child: CircularProgressIndicator(
@@ -517,10 +467,10 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               color: _yellowDark,
             ),
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
-            'Loading premium...',
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            'loading_premium'.tr(),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),

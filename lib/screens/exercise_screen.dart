@@ -114,8 +114,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         // null means the field was never set (new user) — treat as "all selected".
         // An explicit empty list [] means the user deliberately deselected everything.
         final rawSelected = userData['selectedExercises'];
-        final bool neverConfigured = rawSelected == null;
-        final selectedExercises = neverConfigured
+        final selectedExercises = rawSelected == null
             ? null
             : List<String>.from(rawSelected);
 
@@ -171,9 +170,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 final todoExercises = <String>[];
                 final doneExercises = <String>[];
 
-                final idsToShow = neverConfigured
-                    ? exerciseDefs.keys.toList()
-                    : (selectedExercises ?? []);
+                final idsToShow = (selectedExercises ?? []);
 
                 final libraryIds = exerciseDefs.keys
                     .where((id) => !idsToShow.contains(id))
@@ -266,7 +263,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                   );
                   final streak = exerciseData['currentStreak'] ?? 0;
                   final monthly = exerciseData['monthlyTotal'] ?? 0;
-                  final todayReps = exerciseData['todayReps'] ?? 0;
+                  final lifetime = exerciseData['lifetimeTotal'] ?? 0;
                   final def = exerciseDefs[id];
                   if (def == null) return const SizedBox.shrink();
                   final displayName = def.name;
@@ -340,22 +337,23 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    if (isDone)
-                                      Text(
-                                        '$todayReps $unit',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color:
-                                              Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? Colors.white70
-                                              : Colors.blueGrey,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
+                                    Text(
+                                      'total_streak_lifetime'.tr(
+                                        args: [lifetime.toString(), unit],
                                       ),
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.white70
+                                            : Colors.blueGrey,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
                                     const SizedBox(height: 8),
                                     if (isLibrary)
                                       Center(
@@ -499,38 +497,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      if (isDone)
-                                        Text(
-                                          '$todayReps $unit',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white70
-                                                : Colors.blueGrey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      else if (!isLibrary)
-                                        Text(
-                                          'exercise_streak_label'.tr(
-                                            args: [streak.toString()],
-                                          ),
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.white70
-                                                : Colors.blueGrey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                      Text(
+                                        'total_streak_lifetime'.tr(
+                                          args: [lifetime.toString(), unit],
                                         ),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color:
+                                              Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white70
+                                              : Colors.blueGrey,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -649,10 +631,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                       );
                       if (!context.mounted) return;
 
-                      ScaffoldMessenger.of(context).clearSnackBars();
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      final messenger = ScaffoldMessenger.of(context);
+                      messenger.clearSnackBars();
+                      messenger.showSnackBar(
                         SnackBar(
-                          duration: const Duration(seconds: 3),
+                          duration: const Duration(milliseconds: 1500),
                           content: Text('exercise_removed'.tr()),
                           action: SnackBarAction(
                             label: 'undo'.tr(),
@@ -665,6 +648,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           ),
                         ),
                       );
+                      
+                      // Force dismiss it since some devices/settings block auto-dismiss
+                      Future.delayed(const Duration(milliseconds: 1600), () {
+                        try {
+                          messenger.hideCurrentSnackBar();
+                        } catch (_) {}
+                      });
                     }
 
                     final cardContainer = Container(
@@ -954,10 +944,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      'choose_first_exercise'.tr(),
+                                      'add_minimum_exercise_msg'.tr(),
                                       style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
                                         color: Colors.grey,
                                       ),
                                       textAlign: TextAlign.center,
@@ -1211,7 +1201,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               ),
 
                               buildSection(
-                                'All', // The user requested "All" for the library section
+                                'all_title'.tr(), // The user requested "All" for the library section
                                 libraryIds,
                                 Theme.of(context).colorScheme.onSurface,
                                 isLibrary: true,
