@@ -464,19 +464,36 @@ class _CongratulationScreenState extends State<CongratulationScreen>
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return const SizedBox.shrink();
 
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('exercises')
-          .doc(widget.exerciseId)
-          .snapshots(),
+    // Fetch both the user doc (for frozenDates) and the exercise doc in parallel
+    return StreamBuilder<List<DocumentSnapshot>>(
+      stream: Stream.fromFuture(
+        Future.wait([
+          FirebaseFirestore.instance.collection('users').doc(uid).get(),
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .collection('exercises')
+              .doc(widget.exerciseId)
+              .get(),
+        ]),
+      ),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || !snapshot.data!.exists) {
+        if (!snapshot.hasData) {
           return const SizedBox(height: 70); // Placeholder
         }
 
-        final exData = snapshot.data!.data() as Map<String, dynamic>;
+        final userDoc = snapshot.data![0];
+        final exDoc = snapshot.data![1];
+
+        if (!exDoc.exists) return const SizedBox(height: 70);
+
+        final userData =
+            userDoc.exists ? userDoc.data() as Map<String, dynamic> : {};
+        final exData = exDoc.data() as Map<String, dynamic>;
+
+        // Global frozen dates live on the user document (same source as streak screen)
+        final frozenDates =
+            List<String>.from(userData['frozenDates'] ?? []);
 
         final rawCurrentStreak = (exData['currentStreak'] ?? 0) as int;
         final rawLastEvaluatedDate = exData['lastEvaluatedDate'] as String?;
@@ -485,12 +502,12 @@ class _CongratulationScreenState extends State<CongratulationScreen>
         final effectiveData = StreakService.getEffectiveExerciseStreakData(
           streak: rawCurrentStreak,
           lastEvaluatedDate: rawLastEvaluatedDate,
-          globalFrozenDates: [], // Safe because the exercise was just completed today, so no missing days will be evaluated
+          globalFrozenDates: frozenDates,
         );
 
         return WeekStreakRow(
           activeDates: activeDatesList,
-          frozenDates: [], // Optional: We could query user doc to show past freezes, but usually congratulation screen doesn't need to show past ice cubes.
+          frozenDates: frozenDates,
           today: DateTime.now(),
           streak: effectiveData.streak,
         );
