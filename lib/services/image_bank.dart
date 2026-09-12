@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -110,7 +111,7 @@ class ImageBank {
       // 2. Listen for live changes from the admin panel
       _docRef.snapshots().listen(
         _updateCaches,
-        onError: (e) => print('ImageBank stream error: $e'),
+        onError: (e) => debugPrint('ImageBank stream error: $e'),
       );
     } catch (_) {
       // Firestore unavailable — keep/use fallbacks.

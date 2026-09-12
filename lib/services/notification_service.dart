@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -72,7 +73,7 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
     } catch (e) {
       // ignore: avoid_print
-      print('Could not get local timezone: $e');
+      debugPrint('Could not get local timezone: $e');
     }
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -140,7 +141,7 @@ class NotificationService {
             _lastSyncTime = null;
             refreshSchedule();
           },
-          onError: (e) => print('Notification stream error: $e'),
+          onError: (e) => debugPrint('Notification stream error: $e'),
         );
   }
 

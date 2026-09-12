@@ -28,3 +28,6 @@
 -dontwarn com.google.android.play.core.tasks.OnFailureListener
 -dontwarn com.google.android.play.core.tasks.OnSuccessListener
 -dontwarn com.google.android.play.core.tasks.Task
+
+# Superwall — prevent R8 from stripping paywall SDK classes
+-keep class com.superwall.** { *; }

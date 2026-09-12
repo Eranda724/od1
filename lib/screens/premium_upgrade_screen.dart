@@ -87,7 +87,7 @@ class _PremiumUpgradeScreenState extends State<PremiumUpgradeScreen>
               }
             });
           }, 
-          onError: (e) => print('PremiumUpgrade stream error: $e'),
+          onError: (e) => debugPrint('PremiumUpgrade stream error: $e'),
         );
   }
 

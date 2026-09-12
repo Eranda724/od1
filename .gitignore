@@ -61,4 +61,11 @@ firebase.json
 .env
 .env.*
 node_modules/
-firebase-debug.log  
+firebase-debug.log
+
+# Android Signing — NEVER commit these to version control
+# Losing the keystore = you can never update your app on Google Play
+android/key.properties
+android/app/release.keystore
+android/app/*.keystore
+android/app/*.jks

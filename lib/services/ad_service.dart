@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -220,9 +221,15 @@ class AdService {
   /// Returns the configured ad unit ID for banners.
   String get _bannerAdUnitId {
     if (Platform.isAndroid) {
-      return dotenv.env['ADMOB_BANNER_ID_ANDROID'] ?? 'ca-app-pub-3940256099942544/6300978111';
+      final id = dotenv.env['ADMOB_BANNER_ID_ANDROID'];
+      if (id != null && id.isNotEmpty) return id;
+      if (kReleaseMode) throw StateError('ADMOB_BANNER_ID_ANDROID is missing in .env for production!');
+      return 'ca-app-pub-3940256099942544/6300978111'; // test ID for debug
     } else if (Platform.isIOS) {
-      return dotenv.env['ADMOB_BANNER_ID_IOS'] ?? 'ca-app-pub-3940256099942544/2934735716';
+      final id = dotenv.env['ADMOB_BANNER_ID_IOS'];
+      if (id != null && id.isNotEmpty) return id;
+      if (kReleaseMode) throw StateError('ADMOB_BANNER_ID_IOS is missing in .env for production!');
+      return 'ca-app-pub-3940256099942544/2934735716'; // test ID for debug
     }
     throw UnsupportedError('Unsupported platform');
   }
@@ -230,9 +237,15 @@ class AdService {
   /// Returns the configured ad unit ID for standard interstitials.
   String get _interstitialAdUnitId {
     if (Platform.isAndroid) {
-      return dotenv.env['ADMOB_INTERSTITIAL_ID_ANDROID'] ?? 'ca-app-pub-3940256099942544/1033173712';
+      final id = dotenv.env['ADMOB_INTERSTITIAL_ID_ANDROID'];
+      if (id != null && id.isNotEmpty) return id;
+      if (kReleaseMode) throw StateError('ADMOB_INTERSTITIAL_ID_ANDROID is missing in .env for production!');
+      return 'ca-app-pub-3940256099942544/1033173712'; // test ID for debug
     } else if (Platform.isIOS) {
-      return dotenv.env['ADMOB_INTERSTITIAL_ID_IOS'] ?? 'ca-app-pub-3940256099942544/4411468910';
+      final id = dotenv.env['ADMOB_INTERSTITIAL_ID_IOS'];
+      if (id != null && id.isNotEmpty) return id;
+      if (kReleaseMode) throw StateError('ADMOB_INTERSTITIAL_ID_IOS is missing in .env for production!');
+      return 'ca-app-pub-3940256099942544/4411468910'; // test ID for debug
     }
     throw UnsupportedError('Unsupported platform');
   }

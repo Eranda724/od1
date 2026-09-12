@@ -8,7 +8,6 @@ import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/welcome_screen.dart';
 
 class AppSuperwallDelegate extends SuperwallDelegate {
   Widget? _pendingScreen;
@@ -107,10 +106,20 @@ class AppSuperwallDelegate extends SuperwallDelegate {
   void paywallWillOpenDeepLink(Uri url) {}
 
   @override
-  void handleLog(String level, String scope, String? message, Map<dynamic, dynamic>? info, String? error) {}
+  void handleLog(
+    String level,
+    String scope,
+    String? message,
+    Map<dynamic, dynamic>? info,
+    String? error,
+  ) {}
 
   @override
-  void handleSuperwallDeepLink(Uri fullURL, List<String> pathComponents, Map<String, String> queryParameters) {}
+  void handleSuperwallDeepLink(
+    Uri fullURL,
+    List<String> pathComponents,
+    Map<String, String> queryParameters,
+  ) {}
 }
 
 class SuperwallService {
@@ -139,4 +148,3 @@ class SuperwallService {
     }
   }
 }
-
