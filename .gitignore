@@ -50,10 +50,8 @@ lib/generated_plugin_registrant.dart
 Thumbs.db
 
 # Firebase Configuration
-# Firebase config kept out of version control for security
-ios/Runner/GoogleService-Info.plist
-android/app/google-services.json
-lib/firebase_options.dart
+# NOTE: Firebase API keys are safe to commit to version control. 
+# Security is handled by Firestore Rules, not hiding these files.
 firebase.json
 .firebaserc
 
