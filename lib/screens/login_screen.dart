@@ -258,10 +258,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 12),
-                          ],
-                          OutlinedButton.icon(
-                            onPressed: _signInWithGoogle,
-                            icon: Image.asset(
+                          ] else ...[
+                            OutlinedButton.icon(
+                              onPressed: _signInWithGoogle,
+                              icon: Image.asset(
                               'assets/images/google.png',
                               height: 22,
                               width: 22,
@@ -286,7 +286,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(28),
                               ),
                             ),
-                          ),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Row(
                             children: [
