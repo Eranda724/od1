@@ -26,7 +26,7 @@ class NotificationService {
   static const int _eveningId = 2;
   static const int _friendId = 3;
 
-  // Morning message bank (Potato Couch voice)
+  // Morning message bank (Potato 60 Second Routine voice)
   static const List<String> _morningMessages = [
     "Your couch misses you. Do 60 seconds first. 🥔",
     "Rise and… well, at least do some squats.",
