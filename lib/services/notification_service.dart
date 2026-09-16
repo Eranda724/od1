@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -25,7 +26,7 @@ class NotificationService {
   static const int _eveningId = 2;
   static const int _friendId = 3;
 
-  // Morning message bank (Potato Couch voice)
+  // Morning message bank (Potato 60 Second Routine voice)
   static const List<String> _morningMessages = [
     "Your couch misses you. Do 60 seconds first. 🥔",
     "Rise and… well, at least do some squats.",
@@ -72,7 +73,7 @@ class NotificationService {
       tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
     } catch (e) {
       // ignore: avoid_print
-      print('Could not get local timezone: $e');
+      debugPrint('Could not get local timezone: $e');
     }
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -140,7 +141,7 @@ class NotificationService {
             _lastSyncTime = null;
             refreshSchedule();
           },
-          onError: (e) => print('Notification stream error: $e'),
+          onError: (e) => debugPrint('Notification stream error: $e'),
         );
   }
 

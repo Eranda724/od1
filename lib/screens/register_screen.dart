@@ -7,7 +7,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 import '../app_settings.dart';
 import '../services/social_auth_service.dart';
-import 'welcome_screen.dart';
 import '../main.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../widgets/language_switcher.dart';
@@ -403,35 +402,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
+                              ] else ...[
+                                OutlinedButton.icon(
+                                  onPressed: _signInWithGoogle,
+                                  icon: Image.asset(
+                                    'assets/images/google.png',
+                                    height: 22,
+                                    width: 22,
+                                  ),
+                                  label: Text(
+                                    'continue_google'.tr(),
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(double.infinity, 48),
+                                    foregroundColor: Colors.black87,
+                                    backgroundColor: Colors.white,
+                                    side: BorderSide(
+                                      color: Colors.grey.shade300,
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(28),
+                                    ),
+                                  ),
+                                ),
                               ],
-                              OutlinedButton.icon(
-                                onPressed: _signInWithGoogle,
-                                icon: Image.asset(
-                                  'assets/images/google.png',
-                                  height: 22,
-                                  width: 22,
-                                ),
-                                label: Text(
-                                  'continue_google'.tr(),
-                                  style: const TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(double.infinity, 48),
-                                  foregroundColor: Colors.black87,
-                                  backgroundColor: Colors.white,
-                                  side: BorderSide(
-                                    color: Colors.grey.shade300,
-                                    width: 1.5,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                ),
-                              ),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
@@ -752,14 +752,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onPressed: () {
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
-                  } else {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const WelcomeScreen(),
-                      ),
-                    );
                   }
+                  // If nothing to pop, stay here — Superwall owns the back flow.
                 },
               ),
             ),

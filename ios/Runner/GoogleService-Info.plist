@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>455680836900-8pjqvc8l3e6ei1udtf1jg5po3p299rk9.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.455680836900-8pjqvc8l3e6ei1udtf1jg5po3p299rk9</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>455680836900-3vvg3ga8h57mvsa9um3susk5397orfre.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBo7laZ7af4RJAS-l-d9HHbfVgYwAgB1Hg</string>
+	<key>GCM_SENDER_ID</key>
+	<string>455680836900</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.ghiolabs.potato60secondroutine</string>
+	<key>PROJECT_ID</key>
+	<string>streak-couch-app</string>
+	<key>STORAGE_BUCKET</key>
+	<string>streak-couch-app.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:455680836900:ios:ab75baf755af21bf6d9fb1</string>
+	<key>DATABASE_URL</key>
+	<string>https://streak-couch-app-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>

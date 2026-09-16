@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/friend_info.dart';
 import 'streak_service.dart';
@@ -199,7 +200,7 @@ class FriendsService {
         meSub = FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots().listen((snap) {
           myDoc = snap;
           emit();
-        }, onError: (e) => print('meSub error: $e'));
+        }, onError: (e) => debugPrint('meSub error: $e'));
 
         pairsSub = FirebaseFirestore.instance
             .collection('friendPairs')
@@ -233,11 +234,11 @@ class FriendsService {
               friendSubs[fUid] = FirebaseFirestore.instance.collection('users').doc(fUid).snapshots().listen((snap) {
                 friendDocs[fUid] = snap;
                 emit();
-              }, onError: (e) => print('friendSub error: $e'));
+              }, onError: (e) => debugPrint('friendSub error: $e'));
             }
           }
           emit();
-        }, onError: (e) => print('pairsSub error: $e'));
+        }, onError: (e) => debugPrint('pairsSub error: $e'));
       },
       onCancel: () {
         meSub?.cancel();

@@ -50,7 +50,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 _friendUids = uids;
               });
             }
-          }, onError: (e) => print('SocialScreen friends stream error: $e'));
+          }, onError: (e) => debugPrint('SocialScreen friends stream error: $e'));
 
       _requestsSub = FirebaseFirestore.instance
           .collection('friendRequests')
@@ -67,7 +67,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 _sentRequests = sent;
               });
             }
-          }, onError: (e) => print('SocialScreen requests stream error: $e'));
+          }, onError: (e) => debugPrint('SocialScreen requests stream error: $e'));
     }
   }
 

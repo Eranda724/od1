@@ -8,7 +8,6 @@ import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import '../screens/welcome_screen.dart';
 
 class AppSuperwallDelegate extends SuperwallDelegate {
   Widget? _pendingScreen;
@@ -75,7 +74,9 @@ class AppSuperwallDelegate extends SuperwallDelegate {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
 
-    final screen = _pendingScreen ?? const WelcomeScreen();
+    // If the user tapped Register or Login inside Superwall, _pendingScreen is set.
+    // If they dismissed without tapping anything, send them to LoginScreen.
+    final screen = _pendingScreen ?? const LoginScreen();
     _pendingScreen = null;
 
     navigatorKey.currentState?.pushReplacement(
@@ -105,10 +106,20 @@ class AppSuperwallDelegate extends SuperwallDelegate {
   void paywallWillOpenDeepLink(Uri url) {}
 
   @override
-  void handleLog(String level, String scope, String? message, Map<dynamic, dynamic>? info, String? error) {}
+  void handleLog(
+    String level,
+    String scope,
+    String? message,
+    Map<dynamic, dynamic>? info,
+    String? error,
+  ) {}
 
   @override
-  void handleSuperwallDeepLink(Uri fullURL, List<String> pathComponents, Map<String, String> queryParameters) {}
+  void handleSuperwallDeepLink(
+    Uri fullURL,
+    List<String> pathComponents,
+    Map<String, String> queryParameters,
+  ) {}
 }
 
 class SuperwallService {
@@ -125,9 +136,7 @@ class SuperwallService {
           : dotenv.env['SUPERWALL_ANDROID_KEY'];
 
       if (apiKey != null && apiKey.isNotEmpty) {
-        final options = SuperwallOptions()
-          ..testModeBehavior = TestModeBehavior.always; // TODO: Remove before production
-        Superwall.configure(apiKey, options: options);
+        Superwall.configure(apiKey);
         Superwall.shared.setDelegate(AppSuperwallDelegate());
         _initialized = true;
         debugPrint('Superwall initialized successfully.');
@@ -139,4 +148,3 @@ class SuperwallService {
     }
   }
 }
-

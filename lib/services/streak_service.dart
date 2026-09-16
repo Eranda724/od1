@@ -296,11 +296,12 @@ class StreakService {
             (userData['overallLastEvaluatedDate'] as String?) ??
             overallLastDate;
 
-        if (overallLastDate == null) {
-          // First ever exercise
+        if (overallLastDate == null || prevOverallStreak == 0) {
+          // First ever exercise or fresh start after broken streak
           newOverallStreak = 1;
           globalFreezesAvailable = 2;
           newOverallNextFreezeRechargeDate = null;
+          globalFrozenDates.clear();
         } else {
           // Sequential freeze evaluation
           final fromDate = DateTime.parse(lastEvaluatedDate!);
@@ -569,6 +570,7 @@ class StreakService {
         newOverallStreak = 1;
         freezesAvailable = 2;
         newOverallNextFreezeRechargeDate = null;
+        frozenDates.clear();
       } else {
         final fromDate = DateTime.parse(lastEvaluatedDate!);
         final result = _applyOverallMissedDays(
@@ -693,6 +695,9 @@ class StreakService {
             if (result.streakBroken) {
               updates['overallStreak'] = 0;
               updatedOverallStreak = 0;
+              updates['frozenDates'] = <String>[];
+              updates['freezesAvailable'] = 2;
+              updates['nextFreezeRechargeDate'] = null;
             }
             // Note: Do NOT tx.set here! All tx.get must happen before any tx.set.
           }
