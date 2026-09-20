@@ -26,3 +26,34 @@ Future<String?> getAdminRole(String uid) async {
     return null;
   }
 }
+
+/// Returns the current freeze recharge period in days from Firestore.
+/// Defaults to 15 if not set.
+Future<int> getFreezeRechargePeriod() async {
+  try {
+    final doc = await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('settings')
+        .get();
+    return (doc.data()?['freezeRechargePeriodDays'] as int?) ?? 15;
+  } catch (e) {
+    debugPrint('Error getting freeze recharge period: $e');
+    return 15;
+  }
+}
+
+/// Saves the freeze recharge period (in days) to Firestore.
+/// This immediately affects all users' freeze countdown display and
+/// all future streak evaluations.
+Future<void> updateFreezeRechargePeriod(int days) async {
+  try {
+    await FirebaseFirestore.instance
+        .collection('app_config')
+        .doc('settings')
+        .set({'freezeRechargePeriodDays': days}, SetOptions(merge: true));
+    debugPrint('Freeze recharge period updated to $days days');
+  } catch (e) {
+    debugPrint('Error updating freeze recharge period: $e');
+    rethrow;
+  }
+}

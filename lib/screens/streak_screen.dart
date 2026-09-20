@@ -77,169 +77,189 @@ class _StreakScreenState extends State<StreakScreen>
 
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
+          .collection('app_config')
+          .doc('settings')
           .snapshots(),
-      builder: (context, userSnap) {
-        if (userSnap.hasError) {
-          return Center(
-            child: Text('error_loading'.tr(args: [userSnap.error.toString()])),
-          );
-        }
-        if (!userSnap.hasData) {
-          return const Center(
-            key: ValueKey('userSnap_loading'),
-            child: CircularProgressIndicator(),
-          );
-        }
+      builder: (context, settingsSnap) {
+        final settingsData =
+            settingsSnap.data?.data() as Map<String, dynamic>? ?? {};
+        final freezeRechargePeriod =
+            (settingsData['freezeRechargePeriodDays'] as int?) ?? 15;
 
-        final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
-        final overallStreak = (data['overallStreak'] ?? 0) as int;
-        final overallLastDate = data['overallLastDate'] as String?;
-        final freezesAvailable = (data['freezesAvailable'] ?? 2) as int;
-        final activeDates = List<String>.from(data['activeDates'] ?? []);
-        final frozenDates = List<String>.from(data['frozenDates'] ?? []);
-        final nextFreezeRechargeDate =
-            data['nextFreezeRechargeDate'] as String?;
-        final today = _todayKey();
-
-        // Earliest active date = first day the user ever logged an exercise
-        final String? userStartDate = activeDates.isNotEmpty
-            ? (List<String>.from(activeDates)..sort()).first
-            : null;
-
-        return StreamBuilder<QuerySnapshot>(
+        return StreamBuilder<DocumentSnapshot>(
           stream: FirebaseFirestore.instance
               .collection('users')
               .doc(uid)
-              .collection('exercises')
               .snapshots(),
-          builder: (context, userExSnap) {
-            if (userExSnap.hasError) {
+          builder: (context, userSnap) {
+            if (userSnap.hasError) {
               return Center(
-                child: Text(
-                  'error_loading'.tr(args: [userExSnap.error.toString()]),
-                ),
+                child: Text('error_loading'.tr(args: [userSnap.error.toString()])),
               );
             }
-            if (!userExSnap.hasData) {
+            if (!userSnap.hasData) {
               return const Center(
-                key: ValueKey('userExSnap_loading'),
+                key: ValueKey('userSnap_loading'),
                 child: CircularProgressIndicator(),
               );
             }
-            final exercisesMap = <String, dynamic>{};
-            if (userExSnap.hasData) {
-              for (final doc in userExSnap.data!.docs) {
-                exercisesMap[doc.id] = doc.data() as Map<String, dynamic>;
-              }
-            }
+
+            final data = userSnap.data?.data() as Map<String, dynamic>? ?? {};
+            final overallStreak = (data['overallStreak'] ?? 0) as int;
+            final overallLastDate = data['overallLastDate'] as String?;
+            final activeDates = List<String>.from(data['activeDates'] ?? []);
+            final frozenDates = List<String>.from(data['frozenDates'] ?? []);
+            final today = _todayKey();
+            final todayObj = DateTime.parse(today);
+
+            // Recompute freezes live using the current admin period.
+            // This ensures the count and countdown are always correct even if the app
+            // is left open across a day boundary or if the admin changes the period.
+            final freezeData = StreakService.recalculateFreezes(
+              frozenDates: frozenDates,
+              freezeRechargePeriod: freezeRechargePeriod,
+              currentDay: todayObj,
+            );
+            final int liveFreezesAvailable = freezeData.freezesAvailable;
+            final String? liveNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
+
+            // Earliest active date = first day the user ever logged an exercise
+            final String? userStartDate = activeDates.isNotEmpty
+                ? (List<String>.from(activeDates)..sort()).first
+                : null;
 
             return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(uid)
                   .collection('exercises')
                   .snapshots(),
-              builder: (context, exSnap) {
-                if (exSnap.hasError) {
+              builder: (context, userExSnap) {
+                if (userExSnap.hasError) {
                   return Center(
                     child: Text(
-                      'error_loading'.tr(args: [exSnap.error.toString()]),
+                      'error_loading'.tr(args: [userExSnap.error.toString()]),
                     ),
                   );
                 }
-                if (!exSnap.hasData) {
+                if (!userExSnap.hasData) {
                   return const Center(
-                    key: ValueKey('exSnap_loading'),
+                    key: ValueKey('userExSnap_loading'),
                     child: CircularProgressIndicator(),
                   );
                 }
-                final defs = <String, ExerciseItem>{};
-                if (exSnap.hasData) {
-                  for (final doc in exSnap.data!.docs) {
-                    defs[doc.id] = ExerciseItem.fromMap(
-                      doc.id,
-                      doc.data() as Map<String, dynamic>,
-                    );
+                final exercisesMap = <String, dynamic>{};
+                if (userExSnap.hasData) {
+                  for (final doc in userExSnap.data!.docs) {
+                    exercisesMap[doc.id] = doc.data() as Map<String, dynamic>;
                   }
                 }
 
-                final selectedExercises =
-                    (data['selectedExercises'] as List<dynamic>?)
-                        ?.map((e) => e.toString())
+                return StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('exercises')
+                      .snapshots(),
+                  builder: (context, exSnap) {
+                    if (exSnap.hasError) {
+                      return Center(
+                        child: Text(
+                          'error_loading'.tr(args: [exSnap.error.toString()]),
+                        ),
+                      );
+                    }
+                    if (!exSnap.hasData) {
+                      return const Center(
+                        key: ValueKey('exSnap_loading'),
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+                    final defs = <String, ExerciseItem>{};
+                    if (exSnap.hasData) {
+                      for (final doc in exSnap.data!.docs) {
+                        defs[doc.id] = ExerciseItem.fromMap(
+                          doc.id,
+                          doc.data() as Map<String, dynamic>,
+                        );
+                      }
+                    }
+
+                    final selectedExercises =
+                        (data['selectedExercises'] as List<dynamic>?)
+                            ?.map((e) => e.toString())
+                            .toList();
+                    final idsToShow = (selectedExercises ?? []);
+
+                    final todoExercises = <String>[];
+                    final doneExercises = <String>[];
+                    for (final id in idsToShow) {
+                      if (!defs.containsKey(id)) continue;
+                      final exData = Map<String, dynamic>.from(
+                        exercisesMap[id] ?? {},
+                      );
+                      if (exData['lastCompletedDate'] == today) {
+                        doneExercises.add(id);
+                      } else {
+                        todoExercises.add(id);
+                      }
+                    }
+
+                    final routineExercises = idsToShow
+                        .where((id) => defs.containsKey(id))
                         .toList();
-                final idsToShow = (selectedExercises ?? []);
+                    final totalRoutine = routineExercises.length;
+                    final completedRoutine = totalRoutine - todoExercises.length;
 
-                final todoExercises = <String>[];
-                final doneExercises = <String>[];
-                for (final id in idsToShow) {
-                  if (!defs.containsKey(id)) continue;
-                  final exData = Map<String, dynamic>.from(
-                    exercisesMap[id] ?? {},
-                  );
-                  if (exData['lastCompletedDate'] == today) {
-                    doneExercises.add(id);
-                  } else {
-                    todoExercises.add(id);
-                  }
-                }
+                    final userExercises = defs.entries.where((entry) {
+                      final id = entry.key;
+                      final exData = Map<String, dynamic>.from(
+                        exercisesMap[id] ?? {},
+                      );
+                      final currentStreak = (exData['currentStreak'] ?? 0) as int;
+                      return currentStreak > 0;
+                    }).toList();
 
-                final routineExercises = idsToShow
-                    .where((id) => defs.containsKey(id))
-                    .toList();
-                final totalRoutine = routineExercises.length;
-                final completedRoutine = totalRoutine - todoExercises.length;
+                    userExercises.sort((a, b) {
+                      final aData = Map<String, dynamic>.from(
+                        exercisesMap[a.key] ?? {},
+                      );
+                      final bData = Map<String, dynamic>.from(
+                        exercisesMap[b.key] ?? {},
+                      );
+                      final aStreak = (aData['currentStreak'] ?? 0) as int;
+                      final bStreak = (bData['currentStreak'] ?? 0) as int;
 
-                final userExercises = defs.entries.where((entry) {
-                  final id = entry.key;
-                  final exData = Map<String, dynamic>.from(
-                    exercisesMap[id] ?? {},
-                  );
-                  final currentStreak = (exData['currentStreak'] ?? 0) as int;
-                  return currentStreak > 0;
-                }).toList();
+                      if (aStreak > 0 && bStreak == 0) return -1;
+                      if (bStreak > 0 && aStreak == 0) return 1;
 
-                userExercises.sort((a, b) {
-                  final aData = Map<String, dynamic>.from(
-                    exercisesMap[a.key] ?? {},
-                  );
-                  final bData = Map<String, dynamic>.from(
-                    exercisesMap[b.key] ?? {},
-                  );
-                  final aStreak = (aData['currentStreak'] ?? 0) as int;
-                  final bStreak = (bData['currentStreak'] ?? 0) as int;
+                      if (aStreak != bStreak) return bStreak.compareTo(aStreak);
 
-                  if (aStreak > 0 && bStreak == 0) return -1;
-                  if (bStreak > 0 && aStreak == 0) return 1;
+                      return a.value.name.compareTo(b.value.name);
+                    });
 
-                  if (aStreak != bStreak) return bStreak.compareTo(aStreak);
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                      children: [
+                        // Overall streak hero card
+                        _OverallStreakCard(
+                          key: _overallCardKey,
+                          overallStreak: overallStreak,
+                          lastDate: overallLastDate,
+                          today: today,
+                          activeDates: activeDates,
+                          frozenDates: frozenDates,
+                          freezesAvailable: liveFreezesAvailable,
+                          totalRoutine: totalRoutine,
+                          completedRoutine: completedRoutine,
+                          userStartDate: userStartDate,
+                          nextFreezeRechargeDate: liveNextFreezeRechargeDate,
+                        ),
 
-                  return a.value.name.compareTo(b.value.name);
-                });
-
-                return ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                  children: [
-                    // Overall streak hero card
-                    _OverallStreakCard(
-                      key: _overallCardKey,
-                      overallStreak: overallStreak,
-                      lastDate: overallLastDate,
-                      today: today,
-                      activeDates: activeDates,
-                      frozenDates: frozenDates,
-                      freezesAvailable: freezesAvailable,
-                      totalRoutine: totalRoutine,
-                      completedRoutine: completedRoutine,
-                      userStartDate: userStartDate,
-                      nextFreezeRechargeDate: nextFreezeRechargeDate,
-                    ),
-
-                    const SizedBox(
-                      height: 16,
-                    ), // Added gap between hero card and Start Routine button
+                        const SizedBox(
+                          height: 16,
+                        ), // Added gap between hero card and Start Routine button
                     // Start My Routine button
-                    if (todoExercises.isNotEmpty)
-                      Builder(
+                        if (todoExercises.isNotEmpty)
+                          Builder(
                         builder: (context) {
                           return Container(
                             width: double.infinity,
@@ -353,12 +373,12 @@ class _StreakScreenState extends State<StreakScreen>
                             ),
                           );
                         },
-                      ),
+                          ),
 
-                    // START AGAIN button (all exercises done today)
-                    if (todoExercises.isEmpty && doneExercises.isNotEmpty)
-                      Builder(
-                        builder: (context) {
+                        // START AGAIN button (all exercises done today)
+                        if (todoExercises.isEmpty && doneExercises.isNotEmpty)
+                          Builder(
+                            builder: (context) {
                           return Column(
                             children: [
                               Container(
@@ -478,13 +498,13 @@ class _StreakScreenState extends State<StreakScreen>
                             ],
                           );
                         },
-                      ),
+                          ),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
-                    // Section title
-                    if (userExercises.isNotEmpty)
-                      Builder(
+                        // Section title
+                        if (userExercises.isNotEmpty)
+                          Builder(
                         builder: (context) {
                           int estimatedSeconds = 0;
                           for (final entry in userExercises) {
@@ -522,18 +542,18 @@ class _StreakScreenState extends State<StreakScreen>
                             ],
                           );
                         },
-                      ),
+                          ),
 
-                    // Per-exercise streak cards
-                    if (userExercises.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 16),
-                          child: Text('no_exercises_started_yet'.tr()),
-                        ),
-                      )
-                    else
-                      ...userExercises.map((entry) {
+                        // Per-exercise streak cards
+                        if (userExercises.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 16),
+                              child: Text('no_exercises_started_yet'.tr()),
+                            ),
+                          )
+                        else
+                          ...userExercises.map((entry) {
                         final id = entry.key;
                         final def = entry.value;
                         final exData = Map<String, dynamic>.from(
@@ -583,17 +603,19 @@ class _StreakScreenState extends State<StreakScreen>
                           } catch (_) {}
                         }
 
-                        return _ExerciseStreakCard(
-                          def: def,
-                          streak: effectiveStreak,
-                          lifetime: lifetime,
-                          doneToday: doneToday,
-                          lastCompletedDate: lastDate,
-                          activeDates: exActiveDates,
-                          frozenDates: exFrozenDates,
-                        );
-                      }),
-                  ],
+                          return _ExerciseStreakCard(
+                            def: def,
+                            streak: effectiveStreak,
+                            lifetime: lifetime,
+                            doneToday: doneToday,
+                            lastCompletedDate: lastDate,
+                            activeDates: exActiveDates,
+                            frozenDates: exFrozenDates,
+                          );
+                        }),
+                      ],
+                    );
+                  },
                 );
               },
             );

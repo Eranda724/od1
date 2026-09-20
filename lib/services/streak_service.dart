@@ -11,7 +11,7 @@ class StreakService {
 
   static String _todayKey() => _dateKey(DateTime.now());
 
-  static ({int freezesAvailable, String? nextFreezeRechargeDate}) _recalculateFreezes({
+  static ({int freezesAvailable, String? nextFreezeRechargeDate}) recalculateFreezes({
     required List<String> frozenDates,
     required int freezeRechargePeriod,
     required DateTime currentDay,
@@ -74,7 +74,7 @@ class StreakService {
 
       if (!streakBroken) {
         // 1. Recalculate available freezes for the current day based on past frozenDates
-        final freezeData = _recalculateFreezes(
+        final freezeData = recalculateFreezes(
           frozenDates: frozenDates,
           freezeRechargePeriod: freezeRechargePeriod,
           currentDay: currentDay,
@@ -90,7 +90,7 @@ class StreakService {
     }
 
     // Final calculation for the end date (toDate)
-    final finalData = _recalculateFreezes(
+    final finalData = recalculateFreezes(
       frozenDates: frozenDates,
       freezeRechargePeriod: freezeRechargePeriod,
       currentDay: toDate,
@@ -296,12 +296,23 @@ class StreakService {
             (userData['overallLastEvaluatedDate'] as String?) ??
             overallLastDate;
 
-        if (overallLastDate == null || prevOverallStreak == 0) {
-          // First ever exercise or fresh start after broken streak
+        if (overallLastDate == null) {
+          // TRUE first-ever exercise. No history exists.
           newOverallStreak = 1;
           globalFreezesAvailable = 2;
           newOverallNextFreezeRechargeDate = null;
           globalFrozenDates.clear();
+        } else if (prevOverallStreak == 0) {
+          // Fresh start after a broken streak. History is preserved.
+          newOverallStreak = 1;
+          // Do NOT clear globalFrozenDates. Recompute live instead:
+          final freezeData = recalculateFreezes(
+            frozenDates: globalFrozenDates,
+            freezeRechargePeriod: freezeRechargePeriod,
+            currentDay: todayObj,
+          );
+          globalFreezesAvailable = freezeData.freezesAvailable;
+          newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
         } else {
           // Sequential freeze evaluation
           final fromDate = DateTime.parse(lastEvaluatedDate!);
@@ -315,10 +326,23 @@ class StreakService {
             activeDates: currentActiveDates,
             freezeRechargePeriod: freezeRechargePeriod,
           );
-          globalFreezesAvailable = result.freezesAvailable;
-          globalFrozenDates = result.frozenDates;
-          newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
-          newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
+          if (result.streakBroken) {
+            // Recompute freezes from existing history without giving free resets.
+            final freezeData = recalculateFreezes(
+              frozenDates: result.frozenDates,
+              freezeRechargePeriod: freezeRechargePeriod,
+              currentDay: todayObj,
+            );
+            globalFreezesAvailable = freezeData.freezesAvailable;
+            globalFrozenDates = result.frozenDates;
+            newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
+            newOverallStreak = 1;
+          } else {
+            globalFreezesAvailable = result.freezesAvailable;
+            globalFrozenDates = result.frozenDates;
+            newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
+            newOverallStreak = prevOverallStreak + 1;
+          }
         }
 
         if (!activeDates.contains(today)) {
@@ -566,11 +590,20 @@ class StreakService {
       final todayObj = DateTime.parse(today);
 
       int newOverallStreak;
-      if (overallLastDate == null || prevOverallStreak == 0) {
+      if (overallLastDate == null) {
         newOverallStreak = 1;
         freezesAvailable = 2;
         newOverallNextFreezeRechargeDate = null;
         frozenDates.clear();
+      } else if (prevOverallStreak == 0) {
+        newOverallStreak = 1;
+        final freezeData = recalculateFreezes(
+          frozenDates: frozenDates,
+          freezeRechargePeriod: freezeRechargePeriod,
+          currentDay: todayObj,
+        );
+        freezesAvailable = freezeData.freezesAvailable;
+        newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
       } else {
         final fromDate = DateTime.parse(lastEvaluatedDate!);
         final result = _applyOverallMissedDays(
@@ -580,10 +613,22 @@ class StreakService {
           activeDates: activeDates,
           freezeRechargePeriod: freezeRechargePeriod,
         );
-        freezesAvailable = result.freezesAvailable;
-        frozenDates = result.frozenDates;
-        newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
-        newOverallStreak = result.streakBroken ? 1 : prevOverallStreak + 1;
+        if (result.streakBroken) {
+          final freezeData = recalculateFreezes(
+            frozenDates: result.frozenDates,
+            freezeRechargePeriod: freezeRechargePeriod,
+            currentDay: todayObj,
+          );
+          freezesAvailable = freezeData.freezesAvailable;
+          frozenDates = result.frozenDates;
+          newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
+          newOverallStreak = 1;
+        } else {
+          freezesAvailable = result.freezesAvailable;
+          frozenDates = result.frozenDates;
+          newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
+          newOverallStreak = prevOverallStreak + 1;
+        }
       }
 
       if (!activeDates.contains(today)) {
@@ -657,49 +702,57 @@ class StreakService {
         final userData = userSnap.data() ?? {};
         final now = DateTime.now();
         final todayObj = DateTime(now.year, now.month, now.day);
-        final yesterday = todayObj.subtract(const Duration(days: 1));
 
         final Map<String, dynamic> updates = {};
 
         // 1. Evaluate Overall Streak
         final overallLastDate = userData['overallLastDate'] as String?;
         final overallStreak = (userData['overallStreak'] ?? 0) as int;
-        if (overallLastDate != null && overallStreak > 0) {
-          final lastEvaluatedDate =
-              (userData['overallLastEvaluatedDate'] as String?) ??
-              overallLastDate;
-          final fromDate = DateTime.parse(lastEvaluatedDate);
+        List<String> frozenDates = List<String>.from(
+          userData['frozenDates'] ?? [],
+        );
 
-          if (fromDate.isBefore(yesterday)) {
+        if (overallLastDate != null) {
+          if (overallStreak > 0) {
+            final lastEvaluatedDate =
+                (userData['overallLastEvaluatedDate'] as String?) ??
+                overallLastDate;
+            final fromDate = DateTime.parse(lastEvaluatedDate);
 
-            List<String> frozenDates = List<String>.from(
-              userData['frozenDates'] ?? [],
-            );
-            final List<String> activeDates = List<String>.from(
-              userData['activeDates'] ?? [],
-            );
+            if (fromDate.isBefore(todayObj)) {
+              final List<String> activeDates = List<String>.from(
+                userData['activeDates'] ?? [],
+              );
 
-            final result = _applyOverallMissedDays(
-              fromDate: fromDate,
-              toDate: todayObj,
-              frozenDates: frozenDates,
-              activeDates: activeDates,
-              freezeRechargePeriod: freezeRechargePeriod,
-            );
+              final result = _applyOverallMissedDays(
+                fromDate: fromDate,
+                toDate: todayObj,
+                frozenDates: frozenDates,
+                activeDates: activeDates,
+                freezeRechargePeriod: freezeRechargePeriod,
+              );
 
-            updates['freezesAvailable'] = result.freezesAvailable;
-            updates['frozenDates'] = result.frozenDates;
-            updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
-            updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
+              updates['freezesAvailable'] = result.freezesAvailable;
+              updates['frozenDates'] = result.frozenDates;
+              updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
+              updates['overallLastEvaluatedDate'] = _dateKey(todayObj);
 
-            if (result.streakBroken) {
-              updates['overallStreak'] = 0;
-              updatedOverallStreak = 0;
-              updates['frozenDates'] = <String>[];
-              updates['freezesAvailable'] = 2;
-              updates['nextFreezeRechargeDate'] = null;
+              if (result.streakBroken) {
+                updates['overallStreak'] = 0;
+                updatedOverallStreak = 0;
+                // NO free reset — frozenDates and freezesAvailable stay as computed above.
+              }
             }
-            // Note: Do NOT tx.set here! All tx.get must happen before any tx.set.
+          } else if (frozenDates.isNotEmpty) {
+            // Streak already 0 — no day-walk needed, just keep the freeze countdown live.
+            final freezeData = recalculateFreezes(
+              frozenDates: frozenDates,
+              freezeRechargePeriod: freezeRechargePeriod,
+              currentDay: todayObj,
+            );
+            updates['freezesAvailable'] = freezeData.freezesAvailable;
+            updates['nextFreezeRechargeDate'] = freezeData.nextFreezeRechargeDate;
+            updates['overallLastEvaluatedDate'] = _dateKey(todayObj);
           }
         }
 
@@ -716,7 +769,7 @@ class StreakService {
               (exData['lastEvaluatedDate'] as String?) ?? lastCompletedDate;
           final fromDate = DateTime.parse(lastEvaluatedDate);
 
-          if (fromDate.isBefore(yesterday)) {
+          if (fromDate.isBefore(todayObj)) {
 
             List<String> globalFrozenDates = List<String>.from(
               userData['frozenDates'] ?? [],
@@ -732,7 +785,7 @@ class StreakService {
             );
 
             final Map<String, dynamic> exUpdates = {
-              'lastEvaluatedDate': _dateKey(yesterday),
+              'lastEvaluatedDate': _dateKey(todayObj),
             };
 
             if (result.streakBroken) {
