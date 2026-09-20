@@ -12,34 +12,20 @@ class StreakService {
   static String _todayKey() => _dateKey(DateTime.now());
 
   static ({int freezesAvailable, String? nextFreezeRechargeDate}) recalculateFreezes({
-    required List<String> frozenDates,
-    required int freezeRechargePeriod,
+    required int dbFreezesAvailable,
+    required String? dbNextFreezeRechargeDate,
     required DateTime currentDay,
   }) {
-    int maxFreezes = 2;
-    int usedInWindow = 0;
-    DateTime? oldestInWindow;
+    int available = dbFreezesAvailable;
+    String? nextRecharge = dbNextFreezeRechargeDate;
 
-    for (String dateStr in frozenDates) {
-      DateTime frozenDate = DateTime.parse(dateStr);
-      int daysSince = currentDay.difference(frozenDate).inDays;
-      
-      // If the freeze was used strictly less than 'freezeRechargePeriod' days ago, it is still recharging
-      if (daysSince >= 0 && daysSince < freezeRechargePeriod) {
-        usedInWindow++;
-        if (oldestInWindow == null || frozenDate.isBefore(oldestInWindow)) {
-          oldestInWindow = frozenDate;
-        }
+    if (nextRecharge != null) {
+      DateTime rechargeDate = DateTime.parse(nextRecharge);
+      // If currentDay is >= rechargeDate, freezes are fully restored.
+      if (!currentDay.isBefore(rechargeDate)) {
+        available = 2;
+        nextRecharge = null;
       }
-    }
-
-    int available = maxFreezes - usedInWindow;
-    if (available < 0) available = 0;
-    if (available > maxFreezes) available = maxFreezes;
-
-    String? nextRecharge;
-    if (available < maxFreezes && oldestInWindow != null) {
-      nextRecharge = _dateKey(oldestInWindow.add(Duration(days: freezeRechargePeriod)));
     }
 
     return (freezesAvailable: available, nextFreezeRechargeDate: nextRecharge);
@@ -58,14 +44,28 @@ class StreakService {
     required List<String> frozenDates,
     required List<String> activeDates,
     required int freezeRechargePeriod,
+    required int initialFreezesAvailable,
+    required String? initialNextFreezeRechargeDate,
   }) {
     bool streakBroken = false;
     final totalDays = toDate.difference(fromDate).inDays;
+    
+    int currentFreezes = initialFreezesAvailable;
+    String? currentNextRecharge = initialNextFreezeRechargeDate;
 
     for (int i = 1; i <= totalDays; i++) {
       final currentDay = fromDate.add(Duration(days: i));
       final currentKey = _dateKey(currentDay);
       final isToday = i == totalDays;
+
+      // 1. Passive Recharge check for the current day
+      final freezeData = recalculateFreezes(
+        dbFreezesAvailable: currentFreezes,
+        dbNextFreezeRechargeDate: currentNextRecharge,
+        currentDay: currentDay,
+      );
+      currentFreezes = freezeData.freezesAvailable;
+      currentNextRecharge = freezeData.nextFreezeRechargeDate;
 
       // Skip today and days the user was actually active (no freeze needed)
       if (isToday || activeDates.contains(currentKey) || frozenDates.contains(currentKey)) {
@@ -73,26 +73,24 @@ class StreakService {
       }
 
       if (!streakBroken) {
-        // 1. Recalculate available freezes for the current day based on past frozenDates
-        final freezeData = recalculateFreezes(
-          frozenDates: frozenDates,
-          freezeRechargePeriod: freezeRechargePeriod,
-          currentDay: currentDay,
-        );
-        final int currentFreezes = freezeData.freezesAvailable;
-
         if (currentFreezes > 0) {
+          currentFreezes--;
           frozenDates.add(currentKey);
+          
+          // If we just hit exactly 0 freezes, start the 15-day timer!
+          if (currentFreezes == 0) {
+            currentNextRecharge = _dateKey(currentDay.add(Duration(days: freezeRechargePeriod)));
+          }
         } else {
           streakBroken = true;
         }
       }
     }
 
-    // Final calculation for the end date (toDate)
+    // Final calculation for the end date (toDate) just to be safe
     final finalData = recalculateFreezes(
-      frozenDates: frozenDates,
-      freezeRechargePeriod: freezeRechargePeriod,
+      dbFreezesAvailable: currentFreezes,
+      dbNextFreezeRechargeDate: currentNextRecharge,
       currentDay: toDate,
     );
 
@@ -179,6 +177,8 @@ class StreakService {
       frozenDates: List.from(frozenDates),
       activeDates: [], // read-only display helper; activeDates not available here
       freezeRechargePeriod: freezeRechargePeriod,
+      initialFreezesAvailable: freezesAvailable,
+      initialNextFreezeRechargeDate: nextFreezeRechargeDate,
     );
 
     return (
@@ -307,8 +307,8 @@ class StreakService {
           newOverallStreak = 1;
           // Do NOT clear globalFrozenDates. Recompute live instead:
           final freezeData = recalculateFreezes(
-            frozenDates: globalFrozenDates,
-            freezeRechargePeriod: freezeRechargePeriod,
+            dbFreezesAvailable: globalFreezesAvailable,
+            dbNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
             currentDay: todayObj,
           );
           globalFreezesAvailable = freezeData.freezesAvailable;
@@ -325,12 +325,14 @@ class StreakService {
             frozenDates: globalFrozenDates,
             activeDates: currentActiveDates,
             freezeRechargePeriod: freezeRechargePeriod,
+            initialFreezesAvailable: globalFreezesAvailable,
+            initialNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
           );
           if (result.streakBroken) {
             // Recompute freezes from existing history without giving free resets.
             final freezeData = recalculateFreezes(
-              frozenDates: result.frozenDates,
-              freezeRechargePeriod: freezeRechargePeriod,
+              dbFreezesAvailable: result.freezesAvailable,
+              dbNextFreezeRechargeDate: result.nextFreezeRechargeDate,
               currentDay: todayObj,
             );
             globalFreezesAvailable = freezeData.freezesAvailable;
@@ -598,8 +600,8 @@ class StreakService {
       } else if (prevOverallStreak == 0) {
         newOverallStreak = 1;
         final freezeData = recalculateFreezes(
-          frozenDates: frozenDates,
-          freezeRechargePeriod: freezeRechargePeriod,
+          dbFreezesAvailable: freezesAvailable,
+          dbNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
           currentDay: todayObj,
         );
         freezesAvailable = freezeData.freezesAvailable;
@@ -612,11 +614,13 @@ class StreakService {
           frozenDates: frozenDates,
           activeDates: activeDates,
           freezeRechargePeriod: freezeRechargePeriod,
+          initialFreezesAvailable: freezesAvailable,
+          initialNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
         );
         if (result.streakBroken) {
           final freezeData = recalculateFreezes(
-            frozenDates: result.frozenDates,
-            freezeRechargePeriod: freezeRechargePeriod,
+            dbFreezesAvailable: result.freezesAvailable,
+            dbNextFreezeRechargeDate: result.nextFreezeRechargeDate,
             currentDay: todayObj,
           );
           freezesAvailable = freezeData.freezesAvailable;
@@ -711,6 +715,8 @@ class StreakService {
         List<String> frozenDates = List<String>.from(
           userData['frozenDates'] ?? [],
         );
+        int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
+        String? nextFreezeRechargeDate = userData['nextFreezeRechargeDate'] as String?;
 
         if (overallLastDate != null) {
           if (overallStreak > 0) {
@@ -730,6 +736,8 @@ class StreakService {
                 frozenDates: frozenDates,
                 activeDates: activeDates,
                 freezeRechargePeriod: freezeRechargePeriod,
+                initialFreezesAvailable: freezesAvailable,
+                initialNextFreezeRechargeDate: nextFreezeRechargeDate,
               );
 
               updates['freezesAvailable'] = result.freezesAvailable;
@@ -746,8 +754,8 @@ class StreakService {
           } else if (frozenDates.isNotEmpty) {
             // Streak already 0 — no day-walk needed, just keep the freeze countdown live.
             final freezeData = recalculateFreezes(
-              frozenDates: frozenDates,
-              freezeRechargePeriod: freezeRechargePeriod,
+              dbFreezesAvailable: freezesAvailable,
+              dbNextFreezeRechargeDate: nextFreezeRechargeDate,
               currentDay: todayObj,
             );
             updates['freezesAvailable'] = freezeData.freezesAvailable;
