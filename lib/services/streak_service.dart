@@ -743,7 +743,11 @@ class StreakService {
               updates['freezesAvailable'] = result.freezesAvailable;
               updates['frozenDates'] = result.frozenDates;
               updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
-              updates['overallLastEvaluatedDate'] = _dateKey(todayObj);
+              // Set to yesterday so tomorrow's run can evaluate today as a potential missed day.
+              // Setting it to todayObj would cause the loop to skip today (isToday=true), meaning
+              // a day missed today would never get evaluated.
+              final yesterday = todayObj.subtract(const Duration(days: 1));
+              updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
 
               if (result.streakBroken) {
                 updates['overallStreak'] = 0;
@@ -760,7 +764,8 @@ class StreakService {
             );
             updates['freezesAvailable'] = freezeData.freezesAvailable;
             updates['nextFreezeRechargeDate'] = freezeData.nextFreezeRechargeDate;
-            updates['overallLastEvaluatedDate'] = _dateKey(todayObj);
+            final yesterday = todayObj.subtract(const Duration(days: 1));
+            updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
           }
         }
 
@@ -792,8 +797,10 @@ class StreakService {
               globalFrozenDates: globalFrozenDates,
             );
 
+            // Set to yesterday so tomorrow's run can evaluate today as a potential missed day.
+            final exYesterday = todayObj.subtract(const Duration(days: 1));
             final Map<String, dynamic> exUpdates = {
-              'lastEvaluatedDate': _dateKey(todayObj),
+              'lastEvaluatedDate': _dateKey(exYesterday),
             };
 
             if (result.streakBroken) {
