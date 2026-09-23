@@ -169,10 +169,13 @@ class FriendsService {
         if (fDoc == null) continue;
         final fData = fDoc.data() as Map<String, dynamic>? ?? {};
         
-        final fEffective = StreakService.getEffectiveOverallStreakData(
-          streak: fData['overallStreak'] ?? 0,
-          freezesAvailable: fData['freezesAvailable'] ?? 2,
+        final fEffective = StreakService.getEffectiveDisplayState(
+          streak: (fData['overallStreak'] ?? 0) as int,
+          freezesAvailable: (fData['freezesAvailable'] ?? 2) as int,
           frozenDates: List<String>.from(fData['frozenDates'] ?? []),
+          nextFreezeRechargeDate:
+              fData['nextFreezeRechargeDate'] as String?,
+          activeDates: List<String>.from(fData['activeDates'] ?? []),
           lastEvaluatedDate: fData['overallLastEvaluatedDate'] as String?,
         );
         final friendStreak = fEffective.streak;

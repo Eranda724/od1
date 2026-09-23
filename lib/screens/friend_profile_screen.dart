@@ -65,10 +65,15 @@ class FriendProfileScreen extends StatelessWidget {
           final myRawLastEvaluatedDate =
               currentUserData['overallLastEvaluatedDate'] as String?;
 
-          final myEffectiveData = StreakService.getEffectiveOverallStreakData(
+          final myEffectiveData = StreakService.getEffectiveDisplayState(
             streak: (currentUserData['overallStreak'] ?? 0) as int,
             freezesAvailable: myRawFreezesAvailable,
             frozenDates: myRawFrozenDates,
+            nextFreezeRechargeDate:
+                currentUserData['nextFreezeRechargeDate'] as String?,
+            activeDates: List<String>.from(
+              currentUserData['activeDates'] ?? [],
+            ),
             lastEvaluatedDate: myRawLastEvaluatedDate,
           );
           final myFrozenDates = myEffectiveData.frozenDates.toSet();
@@ -98,19 +103,23 @@ class FriendProfileScreen extends StatelessWidget {
               final rawLastEvaluatedDate =
                   userData['overallLastEvaluatedDate'] as String?;
 
-              final effectiveData = StreakService.getEffectiveOverallStreakData(
+              final activeDaysList = List<String>.from(
+                userData['activeDates'] ?? [],
+              );
+
+              final effectiveData = StreakService.getEffectiveDisplayState(
                 streak: (userData['overallStreak'] ?? 0) as int,
                 freezesAvailable: rawFreezesAvailable,
                 frozenDates: rawFrozenDates,
+                nextFreezeRechargeDate:
+                    userData['nextFreezeRechargeDate'] as String?,
+                activeDates: activeDaysList,
                 lastEvaluatedDate: rawLastEvaluatedDate,
               );
 
               final frozenDates = effectiveData.frozenDates.toSet();
               final overallStreak = effectiveData.streak;
 
-              final activeDaysList = List<String>.from(
-                userData['activeDates'] ?? [],
-              );
               final activeDays = activeDaysList.toSet();
 
               return SafeArea(

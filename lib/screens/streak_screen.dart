@@ -99,21 +99,28 @@ class _StreakScreenState extends State<StreakScreen>
         final activeDates = List<String>.from(data['activeDates'] ?? []);
         final frozenDates = List<String>.from(data['frozenDates'] ?? []);
         final today = _todayKey();
-        final todayObj = DateTime.parse(today);
 
         final dbFreezesAvailable = (data['freezesAvailable'] ?? 2) as int;
         final dbNextFreezeRechargeDate =
             data['nextFreezeRechargeDate'] as String?;
+        final overallLastEvaluatedDate =
+            (data['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
 
-        // Recompute freezes live to handle instant UI updates when a 15-day period finishes
-        final freezeData = StreakService.recalculateFreezes(
-          dbFreezesAvailable: dbFreezesAvailable,
-          dbNextFreezeRechargeDate: dbNextFreezeRechargeDate,
-          currentDay: todayObj,
+        // Compute effective state in-memory so the calendar always shows the
+        // correct picture even before checkAndUpdateStreak has written to Firestore.
+        final effectiveState = StreakService.getEffectiveDisplayState(
+          streak: overallStreak,
+          freezesAvailable: dbFreezesAvailable,
+          frozenDates: frozenDates,
+          nextFreezeRechargeDate: dbNextFreezeRechargeDate,
+          activeDates: activeDates,
+          lastEvaluatedDate: overallLastEvaluatedDate,
         );
-        final int liveFreezesAvailable = freezeData.freezesAvailable;
+        final int effectiveOverallStreak = effectiveState.streak;
+        final List<String> effectiveFrozenDates = effectiveState.frozenDates;
+        final int liveFreezesAvailable = effectiveState.freezesAvailable;
         final String? liveNextFreezeRechargeDate =
-            freezeData.nextFreezeRechargeDate;
+            effectiveState.nextFreezeRechargeDate;
 
         // Earliest active date = first day the user ever logged an exercise
         final String? userStartDate = activeDates.isNotEmpty
@@ -234,11 +241,11 @@ class _StreakScreenState extends State<StreakScreen>
                     // Overall streak hero card
                     _OverallStreakCard(
                       key: _overallCardKey,
-                      overallStreak: overallStreak,
+                      overallStreak: effectiveOverallStreak,
                       lastDate: overallLastDate,
                       today: today,
                       activeDates: activeDates,
-                      frozenDates: frozenDates,
+                      frozenDates: effectiveFrozenDates,
                       freezesAvailable: liveFreezesAvailable,
                       totalRoutine: totalRoutine,
                       completedRoutine: completedRoutine,
@@ -568,11 +575,11 @@ class _StreakScreenState extends State<StreakScreen>
                             StreakService.getEffectiveExerciseStreakData(
                               streak: streak,
                               lastEvaluatedDate: lastEvaluatedDate,
-                              globalFrozenDates: frozenDates,
+                              globalFrozenDates: effectiveFrozenDates,
                             );
 
                         final int effectiveStreak = effectiveData.streak;
-                        final List<String> exFrozenDates = frozenDates;
+                        final List<String> exFrozenDates = effectiveFrozenDates;
 
                         // Fallback: If database has a legacy streak number but no saved dates yet, fill the UI to match
                         if (effectiveStreak > 0 &&

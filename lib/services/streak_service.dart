@@ -11,188 +11,142 @@ class StreakService {
 
   static String _todayKey() => _dateKey(DateTime.now());
 
-  static ({int freezesAvailable, String? nextFreezeRechargeDate}) recalculateFreezes({
-    required int dbFreezesAvailable,
-    required String? dbNextFreezeRechargeDate,
-    required DateTime currentDay,
-  }) {
-    int available = dbFreezesAvailable;
-    String? nextRecharge = dbNextFreezeRechargeDate;
+  // ─── Core Simulation Engine ────────────────────────────────────────────────
 
-    if (nextRecharge != null) {
-      DateTime rechargeDate = DateTime.parse(nextRecharge);
-      // If currentDay is >= rechargeDate, freezes are fully restored.
-      if (!currentDay.isBefore(rechargeDate)) {
-        available = 2;
-        nextRecharge = null;
-      }
-    }
-
-    return (freezesAvailable: available, nextFreezeRechargeDate: nextRecharge);
-  }
-
-  // Core freeze helper
-  static ({
-    int freezesAvailable,
-    List<String> frozenDates,
-    bool streakBroken,
-    String? nextFreezeRechargeDate,
-  })
-  _applyOverallMissedDays({
-    required DateTime fromDate,
-    required DateTime toDate,
-    required List<String> frozenDates,
-    required List<String> activeDates,
-    required int freezeRechargePeriod,
-    required int initialFreezesAvailable,
-    required String? initialNextFreezeRechargeDate,
-  }) {
-    bool streakBroken = false;
-    final totalDays = toDate.difference(fromDate).inDays;
-    
-    int currentFreezes = initialFreezesAvailable;
-    String? currentNextRecharge = initialNextFreezeRechargeDate;
-
-    for (int i = 1; i <= totalDays; i++) {
-      final currentDay = fromDate.add(Duration(days: i));
-      final currentKey = _dateKey(currentDay);
-      final isToday = i == totalDays;
-
-      // 1. Passive Recharge check for the current day
-      final freezeData = recalculateFreezes(
-        dbFreezesAvailable: currentFreezes,
-        dbNextFreezeRechargeDate: currentNextRecharge,
-        currentDay: currentDay,
-      );
-      currentFreezes = freezeData.freezesAvailable;
-      currentNextRecharge = freezeData.nextFreezeRechargeDate;
-
-      // Skip today and days the user was actually active (no freeze needed)
-      if (isToday || activeDates.contains(currentKey) || frozenDates.contains(currentKey)) {
-        continue;
-      }
-
-      if (!streakBroken) {
-        if (currentFreezes > 0) {
-          currentFreezes--;
-          frozenDates.add(currentKey);
-          
-          // If we just hit exactly 0 freezes, start the 15-day timer!
-          if (currentFreezes == 0) {
-            currentNextRecharge = _dateKey(currentDay.add(Duration(days: freezeRechargePeriod)));
-          }
-        } else {
-          streakBroken = true;
-        }
-      }
-    }
-
-    // Final calculation for the end date (toDate) just to be safe
-    final finalData = recalculateFreezes(
-      dbFreezesAvailable: currentFreezes,
-      dbNextFreezeRechargeDate: currentNextRecharge,
-      currentDay: toDate,
-    );
-
-    return (
-      freezesAvailable: finalData.freezesAvailable,
-      frozenDates: frozenDates,
-      streakBroken: streakBroken,
-      nextFreezeRechargeDate: finalData.nextFreezeRechargeDate,
-    );
-  }
-
-
-
-
-  static ({
-    bool streakBroken,
-  })
-  _applyExerciseMissedDays({
-    required DateTime fromDate,
-    required DateTime toDate,
-    required List<String> globalFrozenDates,
-  }) {
-    bool streakBroken = false;
-    final totalDays = toDate.difference(fromDate).inDays;
-
-    for (int i = 1; i <= totalDays; i++) {
-      final currentDay = fromDate.add(Duration(days: i));
-      final currentKey = _dateKey(currentDay);
-      final isToday = i == totalDays;
-
-      if (!isToday && !streakBroken) {
-        if (!globalFrozenDates.contains(currentKey)) {
-          streakBroken = true;
-        }
-      }
-    }
-
-    return (
-      streakBroken: streakBroken,
-    );
-  }
-
-  /// Calculates the effective streak and freezes for a user based on their last evaluated date.
-  /// This is purely read-only and in-memory. It computes what the streak WOULD be
-  /// if they evaluated right now, without writing to the database.
+  /// Simulates the streak and freeze state day-by-day, covering every past day
+  /// from [fromDate]+1 up to (but NOT including) [toDate] (i.e. yesterday).
+  ///
+  /// For each day D in that range:
+  ///   STEP 1 — Evaluate missed day:
+  ///     • Skip if D is in [activeDates] or already in [frozenDates].
+  ///     • If streak > 0 and D was missed:
+  ///         – freeze available  → consume one; add D to frozenDates.
+  ///                               If balance hits 0, start 15-day recharge timer.
+  ///         – no freeze left    → streak = 0 (D stays grey blank).
+  ///   STEP 2 — End-of-day recharge (fires AFTER miss evaluation):
+  ///     • If nextFreezeRechargeDate ≤ D → restore freezesAvailable = 2.
+  ///
+  /// Today is never evaluated; it is passed only as the exclusive upper bound.
   static ({
     int streak,
     int freezesAvailable,
     List<String> frozenDates,
     String? nextFreezeRechargeDate,
   })
-  getEffectiveOverallStreakData({
+  _simulateForward({
     required int streak,
     required int freezesAvailable,
     required List<String> frozenDates,
-    required String? lastEvaluatedDate,
+    required String? nextFreezeRechargeDate,
+    required List<String> activeDates,
+    required DateTime fromDate,
+    required DateTime toDate, // today — exclusive upper bound
     int freezeRechargePeriod = 15,
-    String? nextFreezeRechargeDate,
   }) {
-    if (streak == 0 || lastEvaluatedDate == null) {
-      return (
-        streak: streak,
-        freezesAvailable: freezesAvailable,
-        frozenDates: frozenDates,
-        nextFreezeRechargeDate: nextFreezeRechargeDate,
-      );
+    // Run from fromDate+1 through yesterday (toDate-1), inclusive.
+    final DateTime yesterday = toDate.subtract(const Duration(days: 1));
+    final int totalDays = yesterday.difference(fromDate).inDays;
+
+    for (int i = 1; i <= totalDays; i++) {
+      final DateTime day = fromDate.add(Duration(days: i));
+      final String dayKey = _dateKey(day);
+
+      final bool isActive = activeDates.contains(dayKey);
+      final bool isAlreadyFrozen = frozenDates.contains(dayKey);
+
+      // STEP 1 — Missed-day evaluation
+      if (!isActive && !isAlreadyFrozen && streak > 0) {
+        if (freezesAvailable > 0) {
+          freezesAvailable--;
+          frozenDates.add(dayKey);
+          if (nextFreezeRechargeDate == null) {
+            // First freeze consumed — start the recharge countdown.
+            nextFreezeRechargeDate =
+                _dateKey(day.add(Duration(days: freezeRechargePeriod)));
+          }
+        } else {
+          // No freeze left — streak breaks; day stays a grey blank.
+          streak = 0;
+        }
+      }
+
+      // STEP 2 — End-of-day recharge (fires AFTER miss evaluation)
+      if (nextFreezeRechargeDate != null) {
+        final DateTime rechargeDate = DateTime.parse(nextFreezeRechargeDate);
+        if (!day.isBefore(rechargeDate)) {
+          freezesAvailable = 2;
+          nextFreezeRechargeDate = null;
+        }
+      }
     }
-
-    final fromDate = DateTime.parse(lastEvaluatedDate);
-    final todayObj = DateTime.parse(_todayKey());
-
-    if (fromDate.isAtSameMomentAs(todayObj) || fromDate.isAfter(todayObj)) {
-      return (
-        streak: streak,
-        freezesAvailable: freezesAvailable,
-        frozenDates: frozenDates,
-        nextFreezeRechargeDate: nextFreezeRechargeDate,
-      );
-    }
-
-    final result = _applyOverallMissedDays(
-      fromDate: fromDate,
-      toDate: todayObj,
-      frozenDates: List.from(frozenDates),
-      activeDates: [], // read-only display helper; activeDates not available here
-      freezeRechargePeriod: freezeRechargePeriod,
-      initialFreezesAvailable: freezesAvailable,
-      initialNextFreezeRechargeDate: nextFreezeRechargeDate,
-    );
 
     return (
-      streak: result.streakBroken ? 0 : streak,
-      freezesAvailable: result.freezesAvailable,
-      frozenDates: result.frozenDates,
-      nextFreezeRechargeDate: result.nextFreezeRechargeDate,
+      streak: streak,
+      freezesAvailable: freezesAvailable,
+      frozenDates: frozenDates,
+      nextFreezeRechargeDate: nextFreezeRechargeDate,
     );
   }
 
+  // ─── Public Display Helper ─────────────────────────────────────────────────
+
+  /// Returns the effective (in-memory) state for UI display.
+  ///
+  /// Computes what the state would be right now without writing to Firestore.
+  /// Requires [activeDates] to correctly skip exercise days.
   static ({
     int streak,
+    int freezesAvailable,
+    List<String> frozenDates,
+    String? nextFreezeRechargeDate,
   })
-  getEffectiveExerciseStreakData({
+  getEffectiveDisplayState({
+    required int streak,
+    required int freezesAvailable,
+    required List<String> frozenDates,
+    required String? nextFreezeRechargeDate,
+    required List<String> activeDates,
+    required String? lastEvaluatedDate,
+    int freezeRechargePeriod = 15,
+    DateTime? todayOverride,
+  }) {
+    if (lastEvaluatedDate == null) {
+      return (
+        streak: streak,
+        freezesAvailable: freezesAvailable,
+        frozenDates: frozenDates,
+        nextFreezeRechargeDate: nextFreezeRechargeDate,
+      );
+    }
+
+    final DateTime fromDate = DateTime.parse(lastEvaluatedDate);
+    final DateTime todayObj = todayOverride ?? DateTime.parse(_todayKey());
+
+    if (!fromDate.isBefore(todayObj)) {
+      return (
+        streak: streak,
+        freezesAvailable: freezesAvailable,
+        frozenDates: frozenDates,
+        nextFreezeRechargeDate: nextFreezeRechargeDate,
+      );
+    }
+
+    return _simulateForward(
+      streak: streak,
+      freezesAvailable: freezesAvailable,
+      frozenDates: List<String>.from(frozenDates),
+      nextFreezeRechargeDate: nextFreezeRechargeDate,
+      activeDates: activeDates,
+      fromDate: fromDate,
+      toDate: todayObj,
+      freezeRechargePeriod: freezeRechargePeriod,
+    );
+  }
+
+  /// Returns the effective exercise-specific streak, protected by global frozen dates.
+  ///
+  /// A per-exercise missed day is forgiven only if that day is globally frozen.
+  static ({int streak}) getEffectiveExerciseStreakData({
     required int streak,
     required String? lastEvaluatedDate,
     required List<String> globalFrozenDates,
@@ -201,25 +155,29 @@ class StreakService {
       return (streak: streak);
     }
 
-    final fromDate = DateTime.parse(lastEvaluatedDate);
-    final todayObj = DateTime.parse(_todayKey());
+    final DateTime fromDate = DateTime.parse(lastEvaluatedDate);
+    final DateTime todayObj = DateTime.parse(_todayKey());
 
-    if (fromDate.isAtSameMomentAs(todayObj) || fromDate.isAfter(todayObj)) {
+    if (!fromDate.isBefore(todayObj)) {
       return (streak: streak);
     }
 
-    final result = _applyExerciseMissedDays(
-      fromDate: fromDate,
-      toDate: todayObj,
-      globalFrozenDates: globalFrozenDates,
-    );
+    final DateTime yesterday = todayObj.subtract(const Duration(days: 1));
+    final int totalDays = yesterday.difference(fromDate).inDays;
 
-    return (
-      streak: result.streakBroken ? 0 : streak,
-    );
+    for (int i = 1; i <= totalDays; i++) {
+      final DateTime day = fromDate.add(Duration(days: i));
+      final String dayKey = _dateKey(day);
+      if (!globalFrozenDates.contains(dayKey)) {
+        // Missed and not globally frozen → exercise streak breaks.
+        return (streak: 0);
+      }
+    }
+
+    return (streak: streak);
   }
 
-  // Log Exercise
+  // ─── Log Exercise ──────────────────────────────────────────────────────────
 
   /// Logs an exercise and returns a map of the updated stats.
   /// Completing any single exercise counts as a valid day for the overall streak.
@@ -234,36 +192,30 @@ class StreakService {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
     final exRef = userRef.collection('exercises').doc(exerciseId);
 
-    final today = _todayKey();
+    final String today = _todayKey();
     final settingsSnap = await FirebaseFirestore.instance
         .collection('app_config')
         .doc('settings')
         .get();
-    final freezeRechargePeriod =
+    final int freezeRechargePeriod =
         (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
-    final result = await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
-      tx,
-    ) async {
-      final snaps = await Future.wait([
-        tx.get(userRef),
-        tx.get(exRef),
-      ]);
+    final result = await FirebaseFirestore.instance
+        .runTransaction<Map<String, int>>((tx) async {
+      final snaps = await Future.wait([tx.get(userRef), tx.get(exRef)]);
       final userSnap = snaps[0];
       final userData = userSnap.data() ?? {};
-
       final exSnap = snaps[1];
       final exerciseData = exSnap.data() ?? {};
 
-      // 1. Overall Streak Logic (Evaluate FIRST to get updated global frozen dates)
-      final overallLastDate = userData['overallLastDate'] as String?;
-      final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
+      // ── 1. Overall Streak ──
+      final String? overallLastDate = userData['overallLastDate'] as String?;
+      final int prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
 
       int newOverallStreak = prevOverallStreak;
-      int prevTodayTimeSpent = (userData['todayTimeSpent'] ?? 0) as int;
+      final int prevTodayTimeSpent = (userData['todayTimeSpent'] ?? 0) as int;
       int newTodayTimeSpent = prevTodayTimeSpent + timeSpentSeconds;
-      
-      // Leaderboard Scores
+
       final newScores = LeaderboardService.calculateNewScores(
         existing: Map<String, dynamic>.from(
           userData['scores'] as Map<String, dynamic>? ?? {},
@@ -272,7 +224,7 @@ class StreakService {
         now: DateTime.now(),
       );
 
-      // Default: same-day exercise — only update scores, time spent, no streak/freeze changes
+      // Default: same-day exercise — only update scores/time spent.
       Map<String, dynamic> overallStreakUpdate = {
         'scores': newScores,
         'todayTimeSpent': newTodayTimeSpent,
@@ -287,63 +239,59 @@ class StreakService {
       );
       String? newOverallNextFreezeRechargeDate =
           userData['nextFreezeRechargeDate'] as String?;
-      
-      final todayObj = DateTime.parse(today);
+
+      final DateTime todayObj = DateTime.parse(today);
 
       if (overallLastDate != today) {
-        // First exercise today — process any missed days since last evaluation
-        final lastEvaluatedDate =
-            (userData['overallLastEvaluatedDate'] as String?) ??
-            overallLastDate;
+        // First exercise today — process any missed days since last evaluation.
+        final String? lastEvaluatedDate =
+            (userData['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
 
         if (overallLastDate == null) {
-          // TRUE first-ever exercise. No history exists.
+          // TRUE first-ever exercise.
           newOverallStreak = 1;
           globalFreezesAvailable = 2;
           newOverallNextFreezeRechargeDate = null;
           globalFrozenDates.clear();
         } else if (prevOverallStreak == 0) {
-          // Fresh start after a broken streak. History is preserved.
+          // Fresh restart after a broken streak.
           newOverallStreak = 1;
-          // Do NOT clear globalFrozenDates. Recompute live instead:
-          final freezeData = recalculateFreezes(
-            dbFreezesAvailable: globalFreezesAvailable,
-            dbNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
-            currentDay: todayObj,
-          );
-          globalFreezesAvailable = freezeData.freezesAvailable;
-          newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
-        } else {
-          // Sequential freeze evaluation
-          final fromDate = DateTime.parse(lastEvaluatedDate!);
-          final List<String> currentActiveDates = List<String>.from(
-            userData['activeDates'] ?? [],
-          );
-          final result = _applyOverallMissedDays(
-            fromDate: fromDate,
-            toDate: todayObj,
+          // Still run simulation to catch any pending recharge.
+          final sim = _simulateForward(
+            streak: 0,
+            freezesAvailable: globalFreezesAvailable,
             frozenDates: globalFrozenDates,
-            activeDates: currentActiveDates,
+            nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
+            activeDates: activeDates,
+            fromDate: DateTime.parse(lastEvaluatedDate!),
+            toDate: todayObj,
             freezeRechargePeriod: freezeRechargePeriod,
-            initialFreezesAvailable: globalFreezesAvailable,
-            initialNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
           );
-          if (result.streakBroken) {
-            // Recompute freezes from existing history without giving free resets.
-            final freezeData = recalculateFreezes(
-              dbFreezesAvailable: result.freezesAvailable,
-              dbNextFreezeRechargeDate: result.nextFreezeRechargeDate,
-              currentDay: todayObj,
-            );
-            globalFreezesAvailable = freezeData.freezesAvailable;
-            globalFrozenDates = result.frozenDates;
-            newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
+          globalFreezesAvailable = sim.freezesAvailable;
+          globalFrozenDates = sim.frozenDates;
+          newOverallNextFreezeRechargeDate = sim.nextFreezeRechargeDate;
+        } else {
+          // Streak was alive — simulate forward and carry the result.
+          final sim = _simulateForward(
+            streak: prevOverallStreak,
+            freezesAvailable: globalFreezesAvailable,
+            frozenDates: globalFrozenDates,
+            nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
+            activeDates: activeDates,
+            fromDate: DateTime.parse(lastEvaluatedDate!),
+            toDate: todayObj,
+            freezeRechargePeriod: freezeRechargePeriod,
+          );
+          globalFreezesAvailable = sim.freezesAvailable;
+          globalFrozenDates = sim.frozenDates;
+          newOverallNextFreezeRechargeDate = sim.nextFreezeRechargeDate;
+
+          if (sim.streak == 0) {
+            // Streak broke during the missed days — restart at 1 today.
             newOverallStreak = 1;
           } else {
-            globalFreezesAvailable = result.freezesAvailable;
-            globalFrozenDates = result.frozenDates;
-            newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
-            newOverallStreak = prevOverallStreak + 1;
+            // Streak survived — increment.
+            newOverallStreak = sim.streak + 1;
           }
         }
 
@@ -351,16 +299,15 @@ class StreakService {
           activeDates.add(today);
         }
 
-        newTodayTimeSpent = timeSpentSeconds; // Reset for the new day
+        newTodayTimeSpent = timeSpentSeconds; // Reset for the new day.
 
-        final currentYear = todayObj.year.toString();
-        final lastActiveYear = userData['lastActiveYear'] as String?;
+        final String currentYear = todayObj.year.toString();
+        final String? lastActiveYear = userData['lastActiveYear'] as String?;
         int prevYearlyActiveDays = (userData['yearlyActiveDays'] ?? 0) as int;
-
         if (lastActiveYear != currentYear) {
           prevYearlyActiveDays = 0;
         }
-        final newYearlyActiveDays = prevYearlyActiveDays + 1;
+        final int newYearlyActiveDays = prevYearlyActiveDays + 1;
 
         overallStreakUpdate = {
           'scores': newScores,
@@ -376,21 +323,21 @@ class StreakService {
           'lastActiveYear': currentYear,
         };
       }
-      
-      // 2. Exercise-specific stats (Evaluate SECOND, using global frozen dates)
-      final prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
 
-      final currentMonthStr = today.substring(0, 7);
-      final lastMonthStr = exerciseData['lastMonthStr'] as String?;
+      // ── 2. Exercise-specific stats ──
+      final int prevLifetime = (exerciseData['lifetimeTotal'] ?? 0) as int;
+
+      final String currentMonthStr = today.substring(0, 7);
+      final String? lastMonthStr = exerciseData['lastMonthStr'] as String?;
       int prevMonthly = (exerciseData['monthlyTotal'] ?? 0) as int;
       if (lastMonthStr != currentMonthStr) {
         prevMonthly = 0;
       }
-      final newMonthly = prevMonthly + reps;
+      final int newMonthly = prevMonthly + reps;
 
-      final prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
-      final lastDate = exerciseData['lastCompletedDate'] as String?;
-      final prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
+      final int prevStreak = (exerciseData['currentStreak'] ?? 0) as int;
+      final String? lastDate = exerciseData['lastCompletedDate'] as String?;
+      final int prevTodayReps = (exerciseData['todayReps'] ?? 0) as int;
 
       int newStreak = prevStreak;
       int newTodayReps = prevTodayReps;
@@ -404,20 +351,18 @@ class StreakService {
       } else {
         newTodayReps = reps;
 
-        final lastEvaluatedDate =
+        final String? lastEvaluatedDate =
             (exerciseData['lastEvaluatedDate'] as String?) ?? lastDate;
+
         if (lastDate == null) {
-          // First ever exercise
           newStreak = 1;
         } else {
-          // Sequential freeze evaluation for this exercise
-          final fromDate = DateTime.parse(lastEvaluatedDate!);
-          final result = _applyExerciseMissedDays(
-            fromDate: fromDate,
-            toDate: todayObj,
-            globalFrozenDates: globalFrozenDates, // Use overall dates
+          final exResult = getEffectiveExerciseStreakData(
+            streak: prevStreak,
+            lastEvaluatedDate: lastEvaluatedDate,
+            globalFrozenDates: globalFrozenDates, // use updated global dates
           );
-          newStreak = result.streakBroken ? 1 : prevStreak + 1;
+          newStreak = exResult.streak == 0 ? 1 : prevStreak + 1;
         }
 
         if (!exActiveDates.contains(today)) {
@@ -425,21 +370,25 @@ class StreakService {
         }
       }
 
-      final newLifetime = prevLifetime + reps;
+      final int newLifetime = prevLifetime + reps;
 
-      tx.set(exRef, {
-        'lifetimeTotal': newLifetime,
-        'monthlyTotal': newMonthly,
-        'lastMonthStr': currentMonthStr,
-        'currentStreak': newStreak,
-        'lastCompletedDate': today,
-        'lastEvaluatedDate': today,
-        'activeDates': exActiveDates,
-        'todayReps': newTodayReps,
-        'exerciseName': exerciseName,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      
+      tx.set(
+        exRef,
+        {
+          'lifetimeTotal': newLifetime,
+          'monthlyTotal': newMonthly,
+          'lastMonthStr': currentMonthStr,
+          'currentStreak': newStreak,
+          'lastCompletedDate': today,
+          'lastEvaluatedDate': today,
+          'activeDates': exActiveDates,
+          'todayReps': newTodayReps,
+          'exerciseName': exerciseName,
+          'updatedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
       tx.set(userRef, overallStreakUpdate, SetOptions(merge: true));
 
       return {
@@ -478,7 +427,8 @@ class StreakService {
 
     for (final pairDoc in pairsSnap.docs) {
       final uids = List<String>.from(pairDoc.data()['uids'] ?? []);
-      final friendUid = uids.firstWhere((id) => id != uid, orElse: () => '');
+      final String friendUid =
+          uids.firstWhere((id) => id != uid, orElse: () => '');
       if (friendUid.isEmpty) continue;
 
       final friendSnap = await FirebaseFirestore.instance
@@ -486,23 +436,27 @@ class StreakService {
           .doc(friendUid)
           .get();
       if (!friendSnap.exists) continue;
-      
+
       final friendData = friendSnap.data()!;
-      final fEffective = getEffectiveOverallStreakData(
+      final fEffective = getEffectiveDisplayState(
         streak: (friendData['overallStreak'] ?? 0) as int,
         freezesAvailable: (friendData['freezesAvailable'] ?? 2) as int,
         frozenDates: List<String>.from(friendData['frozenDates'] ?? []),
-        lastEvaluatedDate: friendData['overallLastEvaluatedDate'] as String?,
+        nextFreezeRechargeDate:
+            friendData['nextFreezeRechargeDate'] as String?,
+        activeDates: List<String>.from(friendData['activeDates'] ?? []),
+        lastEvaluatedDate:
+            friendData['overallLastEvaluatedDate'] as String?,
       );
 
-      final sharedStreak = math.min(newOverallStreak, fEffective.streak);
+      final int sharedStreak = math.min(newOverallStreak, fEffective.streak);
       batch.update(pairDoc.reference, {'sharedStreak': sharedStreak});
     }
 
     await batch.commit();
   }
 
-  // Check Routine Completion
+  // ─── Check Routine Completion ──────────────────────────────────────────────
 
   /// Checks if the user has completed their configured routine today.
   static Future<bool> checkRoutineCompletion(String uid) async {
@@ -514,13 +468,12 @@ class StreakService {
     final userData = userSnap.data() ?? {};
 
     final rawSelected = userData['selectedExercises'];
-    final neverConfigured = rawSelected == null;
+    final bool neverConfigured = rawSelected == null;
 
     List<String> idsToShow;
     if (neverConfigured) {
-      final defsSnap = await FirebaseFirestore.instance
-          .collection('exercises')
-          .get();
+      final defsSnap =
+          await FirebaseFirestore.instance.collection('exercises').get();
       idsToShow = defsSnap.docs.map((d) => d.id).toList();
     } else {
       idsToShow = List<String>.from(rawSelected);
@@ -538,7 +491,7 @@ class StreakService {
       userExData[doc.id] = doc.data();
     }
 
-    final today = _todayKey();
+    final String today = _todayKey();
     int completed = 0;
     for (final id in idsToShow) {
       if (userExData[id]?['lastCompletedDate'] == today) {
@@ -549,34 +502,33 @@ class StreakService {
     return completed == idsToShow.length;
   }
 
-  // Log Routine Completion
+  // ─── Log Routine Completion ────────────────────────────────────────────────
 
   /// Logs the completion of the full routine and updates the overall streak.
   static Future<Map<String, int>> logRoutineCompletion(String uid) async {
     final userRef = FirebaseFirestore.instance.collection('users').doc(uid);
-    final today = _todayKey();
+    final String today = _todayKey();
 
     final settingsSnap = await FirebaseFirestore.instance
         .collection('app_config')
         .doc('settings')
         .get();
-    final freezeRechargePeriod =
+    final int freezeRechargePeriod =
         (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
-    return await FirebaseFirestore.instance.runTransaction<Map<String, int>>((
-      tx,
-    ) async {
+    return await FirebaseFirestore.instance
+        .runTransaction<Map<String, int>>((tx) async {
       final userSnap = await tx.get(userRef);
       final userData = userSnap.data() ?? {};
 
-      final prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
-      final overallLastDate = userData['overallLastDate'] as String?;
+      final int prevOverallStreak = (userData['overallStreak'] ?? 0) as int;
+      final String? overallLastDate = userData['overallLastDate'] as String?;
 
       if (overallLastDate == today) {
         return {'overallStreak': prevOverallStreak};
       }
 
-      final lastEvaluatedDate =
+      final String? lastEvaluatedDate =
           (userData['overallLastEvaluatedDate'] as String?) ?? overallLastDate;
 
       int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
@@ -589,9 +541,9 @@ class StreakService {
       String? newOverallNextFreezeRechargeDate =
           userData['nextFreezeRechargeDate'] as String?;
 
-      final todayObj = DateTime.parse(today);
-
+      final DateTime todayObj = DateTime.parse(today);
       int newOverallStreak;
+
       if (overallLastDate == null) {
         newOverallStreak = 1;
         freezesAvailable = 2;
@@ -599,68 +551,64 @@ class StreakService {
         frozenDates.clear();
       } else if (prevOverallStreak == 0) {
         newOverallStreak = 1;
-        final freezeData = recalculateFreezes(
-          dbFreezesAvailable: freezesAvailable,
-          dbNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
-          currentDay: todayObj,
-        );
-        freezesAvailable = freezeData.freezesAvailable;
-        newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
-      } else {
-        final fromDate = DateTime.parse(lastEvaluatedDate!);
-        final result = _applyOverallMissedDays(
-          fromDate: fromDate,
-          toDate: todayObj,
+        final sim = _simulateForward(
+          streak: 0,
+          freezesAvailable: freezesAvailable,
           frozenDates: frozenDates,
+          nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
           activeDates: activeDates,
+          fromDate: DateTime.parse(lastEvaluatedDate!),
+          toDate: todayObj,
           freezeRechargePeriod: freezeRechargePeriod,
-          initialFreezesAvailable: freezesAvailable,
-          initialNextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
         );
-        if (result.streakBroken) {
-          final freezeData = recalculateFreezes(
-            dbFreezesAvailable: result.freezesAvailable,
-            dbNextFreezeRechargeDate: result.nextFreezeRechargeDate,
-            currentDay: todayObj,
-          );
-          freezesAvailable = freezeData.freezesAvailable;
-          frozenDates = result.frozenDates;
-          newOverallNextFreezeRechargeDate = freezeData.nextFreezeRechargeDate;
-          newOverallStreak = 1;
-        } else {
-          freezesAvailable = result.freezesAvailable;
-          frozenDates = result.frozenDates;
-          newOverallNextFreezeRechargeDate = result.nextFreezeRechargeDate;
-          newOverallStreak = prevOverallStreak + 1;
-        }
+        freezesAvailable = sim.freezesAvailable;
+        frozenDates = sim.frozenDates;
+        newOverallNextFreezeRechargeDate = sim.nextFreezeRechargeDate;
+      } else {
+        final sim = _simulateForward(
+          streak: prevOverallStreak,
+          freezesAvailable: freezesAvailable,
+          frozenDates: frozenDates,
+          nextFreezeRechargeDate: newOverallNextFreezeRechargeDate,
+          activeDates: activeDates,
+          fromDate: DateTime.parse(lastEvaluatedDate!),
+          toDate: todayObj,
+          freezeRechargePeriod: freezeRechargePeriod,
+        );
+        freezesAvailable = sim.freezesAvailable;
+        frozenDates = sim.frozenDates;
+        newOverallNextFreezeRechargeDate = sim.nextFreezeRechargeDate;
+        newOverallStreak = sim.streak == 0 ? 1 : prevOverallStreak + 1;
       }
 
       if (!activeDates.contains(today)) {
         activeDates.add(today);
       }
 
-      tx.set(userRef, {
-        'overallStreak': newOverallStreak,
-        'overallLastDate': today,
-        'overallLastEvaluatedDate': today,
-        'freezesAvailable': freezesAvailable,
-        'nextFreezeRechargeDate': newOverallNextFreezeRechargeDate,
-        'activeDates': activeDates,
-        'frozenDates': frozenDates,
-      }, SetOptions(merge: true));
+      tx.set(
+        userRef,
+        {
+          'overallStreak': newOverallStreak,
+          'overallLastDate': today,
+          'overallLastEvaluatedDate': today,
+          'freezesAvailable': freezesAvailable,
+          'nextFreezeRechargeDate': newOverallNextFreezeRechargeDate,
+          'activeDates': activeDates,
+          'frozenDates': frozenDates,
+        },
+        SetOptions(merge: true),
+      );
 
       return {'overallStreak': newOverallStreak};
     });
   }
 
-  // Check & Update Streak (app-open)
+  // ─── Check & Update Streak (app-open) ──────────────────────────────────────
 
   static Future<void>? _activeCheck;
 
-  /// Runs on every app-open. Lazily evaluates any missed days since last check.
-  /// Deducts freezes one-per-missed-day sequentially. Breaks streak only when
-  /// a missed day has no freeze available. Wrapped in a transaction to prevent
-  /// race conditions with logExercise.
+  /// Runs on every app-open. Evaluates all missed past days (never today)
+  /// and writes the updated state to Firestore.
   static Future<void> checkAndUpdateStreak(String uid) async {
     if (_activeCheck != null) {
       await _activeCheck;
@@ -682,15 +630,14 @@ class StreakService {
           .collection('app_config')
           .doc('settings')
           .get();
-      final freezeRechargePeriod =
+      final int freezeRechargePeriod =
           (settingsSnap.data()?['freezeRechargePeriodDays'] ?? 15) as int;
 
-      // PRE-TRANSACTION QUERY
-      // Fetch references outside the transaction to prevent breaking the transaction's async lifecycle.
-      final exercisesQuerySnap = await userRef.collection('exercises').get();
-      final exerciseRefs = exercisesQuerySnap.docs
-          .map((d) => d.reference)
-          .toList();
+      // Pre-fetch exercise refs outside the transaction.
+      final exercisesQuerySnap =
+          await userRef.collection('exercises').get();
+      final exerciseRefs =
+          exercisesQuerySnap.docs.map((d) => d.reference).toList();
 
       int? updatedOverallStreak;
 
@@ -702,108 +649,92 @@ class StreakService {
           exerciseRefs.map((ref) => tx.get(ref)),
         );
 
-        // LOGIC & WRITE PHASE
         final userData = userSnap.data() ?? {};
-        final now = DateTime.now();
-        final todayObj = DateTime(now.year, now.month, now.day);
-
+        final DateTime todayObj = DateTime.parse(_todayKey());
         final Map<String, dynamic> updates = {};
 
-        // 1. Evaluate Overall Streak
-        final overallLastDate = userData['overallLastDate'] as String?;
-        final overallStreak = (userData['overallStreak'] ?? 0) as int;
+        // ── 1. Overall Streak ──
+        final String? overallLastDate =
+            userData['overallLastDate'] as String?;
+        final int overallStreak = (userData['overallStreak'] ?? 0) as int;
         List<String> frozenDates = List<String>.from(
           userData['frozenDates'] ?? [],
         );
         int freezesAvailable = (userData['freezesAvailable'] ?? 2) as int;
-        String? nextFreezeRechargeDate = userData['nextFreezeRechargeDate'] as String?;
+        String? nextFreezeRechargeDate =
+            userData['nextFreezeRechargeDate'] as String?;
 
         if (overallLastDate != null) {
-          if (overallStreak > 0) {
-            final lastEvaluatedDate =
-                (userData['overallLastEvaluatedDate'] as String?) ??
-                overallLastDate;
-            final fromDate = DateTime.parse(lastEvaluatedDate);
+          final String lastEvaluatedDate =
+              (userData['overallLastEvaluatedDate'] as String?) ??
+              overallLastDate;
+          final DateTime fromDate = DateTime.parse(lastEvaluatedDate);
 
-            if (fromDate.isBefore(todayObj)) {
-              final List<String> activeDates = List<String>.from(
-                userData['activeDates'] ?? [],
-              );
-
-              final result = _applyOverallMissedDays(
-                fromDate: fromDate,
-                toDate: todayObj,
-                frozenDates: frozenDates,
-                activeDates: activeDates,
-                freezeRechargePeriod: freezeRechargePeriod,
-                initialFreezesAvailable: freezesAvailable,
-                initialNextFreezeRechargeDate: nextFreezeRechargeDate,
-              );
-
-              updates['freezesAvailable'] = result.freezesAvailable;
-              updates['frozenDates'] = result.frozenDates;
-              updates['nextFreezeRechargeDate'] = result.nextFreezeRechargeDate;
-              // Set to yesterday so tomorrow's run can evaluate today as a potential missed day.
-              // Setting it to todayObj would cause the loop to skip today (isToday=true), meaning
-              // a day missed today would never get evaluated.
-              final yesterday = todayObj.subtract(const Duration(days: 1));
-              updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
-
-              if (result.streakBroken) {
-                updates['overallStreak'] = 0;
-                updatedOverallStreak = 0;
-                // NO free reset — frozenDates and freezesAvailable stay as computed above.
-              }
-            }
-          } else if (frozenDates.isNotEmpty) {
-            // Streak already 0 — no day-walk needed, just keep the freeze countdown live.
-            final freezeData = recalculateFreezes(
-              dbFreezesAvailable: freezesAvailable,
-              dbNextFreezeRechargeDate: nextFreezeRechargeDate,
-              currentDay: todayObj,
+          if (fromDate.isBefore(todayObj)) {
+            final List<String> activeDates = List<String>.from(
+              userData['activeDates'] ?? [],
             );
-            updates['freezesAvailable'] = freezeData.freezesAvailable;
-            updates['nextFreezeRechargeDate'] = freezeData.nextFreezeRechargeDate;
-            final yesterday = todayObj.subtract(const Duration(days: 1));
+
+            final sim = _simulateForward(
+              streak: overallStreak,
+              freezesAvailable: freezesAvailable,
+              frozenDates: frozenDates,
+              nextFreezeRechargeDate: nextFreezeRechargeDate,
+              activeDates: activeDates,
+              fromDate: fromDate,
+              toDate: todayObj,
+              freezeRechargePeriod: freezeRechargePeriod,
+            );
+
+            updates['freezesAvailable'] = sim.freezesAvailable;
+            updates['frozenDates'] = sim.frozenDates;
+            updates['nextFreezeRechargeDate'] = sim.nextFreezeRechargeDate;
+
+            // Advance the evaluation cursor to yesterday so that tomorrow's
+            // run will pick up today as a potential missed day.
+            final DateTime yesterday =
+                todayObj.subtract(const Duration(days: 1));
             updates['overallLastEvaluatedDate'] = _dateKey(yesterday);
+
+            if (sim.streak == 0 && overallStreak > 0) {
+              updates['overallStreak'] = 0;
+              updatedOverallStreak = 0;
+            }
+
+            // Keep local vars up-to-date for exercise evaluation below.
+            frozenDates = List<String>.from(sim.frozenDates);
+            freezesAvailable = sim.freezesAvailable;
           }
         }
 
-        // 2. Evaluate Individual Exercises
+        // ── 2. Individual Exercise Streaks ──
         for (final doc in exerciseDocs) {
           if (!doc.exists) continue;
 
           final exData = doc.data() ?? {};
-          final lastCompletedDate = exData['lastCompletedDate'] as String?;
-          final currentStreak = (exData['currentStreak'] ?? 0) as int;
+          final String? lastCompletedDate =
+              exData['lastCompletedDate'] as String?;
+          final int currentStreak = (exData['currentStreak'] ?? 0) as int;
           if (lastCompletedDate == null || currentStreak == 0) continue;
 
-          final lastEvaluatedDate =
+          final String lastEvaluatedDate =
               (exData['lastEvaluatedDate'] as String?) ?? lastCompletedDate;
-          final fromDate = DateTime.parse(lastEvaluatedDate);
+          final DateTime fromDate = DateTime.parse(lastEvaluatedDate);
 
           if (fromDate.isBefore(todayObj)) {
-
-            List<String> globalFrozenDates = List<String>.from(
-              userData['frozenDates'] ?? [],
-            );
-            if (updates.containsKey('frozenDates')) {
-              globalFrozenDates = List<String>.from(updates['frozenDates']);
-            }
-
-            final result = _applyExerciseMissedDays(
-              fromDate: fromDate,
-              toDate: todayObj,
-              globalFrozenDates: globalFrozenDates,
+            final exResult = getEffectiveExerciseStreakData(
+              streak: currentStreak,
+              lastEvaluatedDate: lastEvaluatedDate,
+              globalFrozenDates: frozenDates,
             );
 
-            // Set to yesterday so tomorrow's run can evaluate today as a potential missed day.
-            final exYesterday = todayObj.subtract(const Duration(days: 1));
+            final DateTime exYesterday =
+                todayObj.subtract(const Duration(days: 1));
             final Map<String, dynamic> exUpdates = {
               'lastEvaluatedDate': _dateKey(exYesterday),
             };
 
-            if (result.streakBroken) {
+            if (exResult.streak == 0) {
               exUpdates['currentStreak'] = 0;
             }
 
@@ -811,14 +742,12 @@ class StreakService {
           }
         }
 
-        // Perform the userRef write at the very end (if updates exist)
         if (updates.isNotEmpty) {
           tx.set(userRef, updates, SetOptions(merge: true));
         }
       });
-      
-      // If the overall streak broke (became 0), update shared streaks accordingly.
-      // We do this outside the transaction to avoid interfering with the user doc tx.
+
+      // If the overall streak broke, update shared streaks.
       if (updatedOverallStreak != null) {
         await _updateSharedStreaks(
           uid: uid,
