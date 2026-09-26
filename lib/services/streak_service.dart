@@ -54,7 +54,16 @@ class StreakService {
       final bool isActive = activeDates.contains(dayKey);
       final bool isAlreadyFrozen = frozenDates.contains(dayKey);
 
-      // STEP 1 — Missed-day evaluation
+      // STEP 1 — End-of-day recharge (fires BEFORE miss evaluation)
+      if (nextFreezeRechargeDate != null) {
+        final DateTime rechargeDate = DateTime.parse(nextFreezeRechargeDate);
+        if (!day.isBefore(rechargeDate)) {
+          freezesAvailable = 2;
+          nextFreezeRechargeDate = null;
+        }
+      }
+
+      // STEP 2 — Missed-day evaluation
       if (!isActive && !isAlreadyFrozen && streak > 0) {
         if (freezesAvailable > 0) {
           freezesAvailable--;
@@ -67,15 +76,6 @@ class StreakService {
         } else {
           // No freeze left — streak breaks; day stays a grey blank.
           streak = 0;
-        }
-      }
-
-      // STEP 2 — End-of-day recharge (fires AFTER miss evaluation)
-      if (nextFreezeRechargeDate != null) {
-        final DateTime rechargeDate = DateTime.parse(nextFreezeRechargeDate);
-        if (!day.isBefore(rechargeDate)) {
-          freezesAvailable = 2;
-          nextFreezeRechargeDate = null;
         }
       }
     }
@@ -131,7 +131,7 @@ class StreakService {
       );
     }
 
-    return _simulateForward(
+    var sim = _simulateForward(
       streak: streak,
       freezesAvailable: freezesAvailable,
       frozenDates: List<String>.from(frozenDates),
@@ -141,6 +141,21 @@ class StreakService {
       toDate: todayObj,
       freezeRechargePeriod: freezeRechargePeriod,
     );
+
+    // If today is active or we just reached the recharge date today, apply it
+    if (sim.nextFreezeRechargeDate != null) {
+      final DateTime rechargeDate = DateTime.parse(sim.nextFreezeRechargeDate!);
+      if (!todayObj.isBefore(rechargeDate)) {
+        sim = (
+          streak: sim.streak,
+          freezesAvailable: 2,
+          frozenDates: sim.frozenDates,
+          nextFreezeRechargeDate: null,
+        );
+      }
+    }
+
+    return sim;
   }
 
   /// Returns the effective exercise-specific streak, protected by global frozen dates.
@@ -299,6 +314,14 @@ class StreakService {
           activeDates.add(today);
         }
 
+        if (newOverallNextFreezeRechargeDate != null) {
+          final DateTime rechargeDate = DateTime.parse(newOverallNextFreezeRechargeDate!);
+          if (!todayObj.isBefore(rechargeDate)) {
+            globalFreezesAvailable = 2;
+            newOverallNextFreezeRechargeDate = null;
+          }
+        }
+
         newTodayTimeSpent = timeSpentSeconds; // Reset for the new day.
 
         final String currentYear = todayObj.year.toString();
@@ -322,6 +345,17 @@ class StreakService {
           'yearlyActiveDays': newYearlyActiveDays,
           'lastActiveYear': currentYear,
         };
+      } else {
+        // Same-day exercise; just check if recharge happened today
+        if (newOverallNextFreezeRechargeDate != null) {
+          final DateTime rechargeDate = DateTime.parse(newOverallNextFreezeRechargeDate!);
+          if (!todayObj.isBefore(rechargeDate)) {
+            globalFreezesAvailable = 2;
+            newOverallNextFreezeRechargeDate = null;
+            overallStreakUpdate['freezesAvailable'] = globalFreezesAvailable;
+            overallStreakUpdate['nextFreezeRechargeDate'] = newOverallNextFreezeRechargeDate;
+          }
+        }
       }
 
       // ── 2. Exercise-specific stats ──
@@ -585,6 +619,14 @@ class StreakService {
         activeDates.add(today);
       }
 
+      if (newOverallNextFreezeRechargeDate != null) {
+        final DateTime rechargeDate = DateTime.parse(newOverallNextFreezeRechargeDate!);
+        if (!todayObj.isBefore(rechargeDate)) {
+          freezesAvailable = 2;
+          newOverallNextFreezeRechargeDate = null;
+        }
+      }
+
       tx.set(
         userRef,
         {
@@ -675,7 +717,7 @@ class StreakService {
               userData['activeDates'] ?? [],
             );
 
-            final sim = _simulateForward(
+            var sim = _simulateForward(
               streak: overallStreak,
               freezesAvailable: freezesAvailable,
               frozenDates: frozenDates,
@@ -685,6 +727,19 @@ class StreakService {
               toDate: todayObj,
               freezeRechargePeriod: freezeRechargePeriod,
             );
+
+            // If today hits recharge date, process it
+            if (sim.nextFreezeRechargeDate != null) {
+              final DateTime rechargeDate = DateTime.parse(sim.nextFreezeRechargeDate!);
+              if (!todayObj.isBefore(rechargeDate)) {
+                sim = (
+                  streak: sim.streak,
+                  freezesAvailable: 2,
+                  frozenDates: sim.frozenDates,
+                  nextFreezeRechargeDate: null,
+                );
+              }
+            }
 
             updates['freezesAvailable'] = sim.freezesAvailable;
             updates['frozenDates'] = sim.frozenDates;
